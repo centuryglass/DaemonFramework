@@ -1,0 +1,8 @@
+build/
+Tests/__pycache__/
+Tests/supportModules/__pycache__/
+Tests/secured/
+Tests/unsecured/
+Tests/perl/
+Tests/testExec/
+Tests/TestParent
