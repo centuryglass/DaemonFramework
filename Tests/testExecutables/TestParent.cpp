@@ -12,6 +12,7 @@
 
 #include <string>
 #include <iostream>
+#include <stdlib.h>
 
 int main(int argc, char** argv)
 {
@@ -24,11 +25,5 @@ int main(int argc, char** argv)
     }
     std::cout << "TestParent: Starting key daemon using command \"" 
             << command << "\"\n";
-    int retVal = system(command.c_str());
-
-    if (retVal != 0)
-    {
-        return 1;
-    }
-    return 0;
+    return WEXITSTATUS(system(command.c_str()));
 }
