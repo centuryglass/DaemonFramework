@@ -40,8 +40,9 @@ class TestPaths:
                                                          os.pardir))
         self._projectDir = os.path.normpath(os.path.join(self._testDir, \
                                                          os.pardir))
-        self._secureExeDir   = os.path.join(self.testDir, 'secured')
-        self._unsecureExeDir = os.path.join(self.testDir, 'unsecured')
+        self._testExecDir    = os.path.join(self.testDir, 'testExecutables')
+        self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
+        self._unsecureExeDir = os.path.join(self.testExecDir, 'unsecured')
         self._buildDir = os.path.join(self._projectDir, 'build', 'Release')
 
     # Directory paths:
@@ -57,6 +58,10 @@ class TestPaths:
     @property
     def buildDir(self):
         return self._buildDir
+    """Return the path to the main test executable directory."""
+    @property
+    def testExecDir(self):
+        return self._testExecDir
     """Return the path to the secured executable test directory."""
     @property
     def secureExeDir(self):
@@ -76,7 +81,9 @@ class TestPaths:
     def parentApp(self):
         return self._parentApp
     """Return the name of the temporary test output log file."""
-
+    @property
+    def tempLog(self):
+        return self._tempLog
     """Return the name of the test failure log file."""
     @property
     def failureLog(self):
@@ -102,7 +109,7 @@ class TestPaths:
     """Return the path where parent app is found when it is built."""
     @property
     def parentBuildPath(self):
-        return os.path.join(self.testDir, self.parentApp)
+        return os.path.join(self.testExecDir, self.parentApp)
     """Return the path to the parent app's source file."""
     @property
     def parentSourcePath(self):
@@ -121,8 +128,8 @@ class TestPaths:
     """Return the path where temporary log files will be stored."""
     @property
     def tempLogPath(self):
-        return os.path.join(self.testDir, self.failureLog)
+        return os.path.join(self.testDir, self._tempLog)
     """Return the path where the failure log file will be saved."""
     @property
     def failureLogPath(self):
-        return os.path.join(self.testDir, self.failureLog)
+        return os.path.join(self.testDir, self._failureLog)

@@ -17,6 +17,9 @@ class TestResult(Enum):
 
 """Ensures the testing environment is properly set up."""
 def setup():
+    # Remove old failure log instances:
+    if (os.path.isfile(paths.failureLogPath)):
+        os.remove(paths.failureLogPath)
     if (not os.path.isfile(paths.parentBuildPath)): # Ensure TestParent exists
         buildArgs = ['g++', paths.parentSourcePath, '-o', paths.parentBuildPath]
         subprocess.call(buildArgs)
@@ -174,14 +177,19 @@ def checkResult(result, expected, index, description, testFile):
         return True
     else:
         print(index + ' failed!')
-        print('Expected result: ' + expected.name \
-              + ' actual result: ' + result.name)
+        failureDescription = 'Expected result: ' + expected.name \
+                           + ', actual result: ' + result.name
+        print(failureDescription)
         print('Test description: ' + description)
         print('See ' + paths.failureLog + ' for more information.')
         if (testFile != None):
             with open(paths.tempLogPath, 'r') as tempLog:
                 with open(paths.failureLogPath, 'a') as failureLog:
-                    failureLog.write(index + ' ' + description + ':\n')
-                    failureLog.writelines(tempLog.readlines())
+                    failureLog.write('\n' + index + ' ' + description + '\n')
+                    failureLog.write('Error: ' + failureDescription + '\n')
+                    failureLog.write('Test output:\n')
+                    errorLines = tempLog.readlines()
+                    errorLines = [ '\t' + line for line in errorLines]
+                    failureLog.writelines(errorLines)
         os.remove(paths.tempLogPath)
         return False

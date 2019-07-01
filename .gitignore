@@ -1,8 +1,9 @@
 build/
 Tests/__pycache__/
 Tests/supportModules/__pycache__/
-Tests/secured/
-Tests/unsecured/
+Tests/testExecutables/secured/
+Tests/testExecutables/unsecured/
+Tests/testExecutables/TestParent
+Tests/tempLog.txt
+Tests/failureLog.txt
 Tests/perl/
-Tests/testExec/
-Tests/TestParent

@@ -207,7 +207,7 @@ buildConfigTests = BuildConfigTestSet()
 # The application should refuse to run from unsecured directories.
 buildConfigTests.addInstallPath(InstallPath('', \
                                             'empty', \
-                                            TestResult.installError))
+                                            TestResult.buildFailure))
 buildConfigTests.addInstallPath(InstallPath(paths.appUnsecureExePath, \
                                             'unsecured', \
                                             TestResult.runtimeError))
@@ -220,7 +220,7 @@ buildConfigTests.addInstallPath(InstallPath(paths.appSecureExePath, \
 # secured directory.
 buildConfigTests.addParentPath(ParentPath('', \
                                           'empty', \
-                                          TestResult.runtimeError))
+                                          TestResult.buildFailure))
 buildConfigTests.addParentPath(ParentPath(paths.parentUnsecureExePath, \
                                           'unsecured', \
                                           TestResult.runtimeError))
@@ -233,7 +233,7 @@ buildConfigTests.addParentPath(ParentPath(paths.parentSecureExePath, \
 # tracked keys, or fail to build if given a non-numeric limit value.
 buildConfigTests.addKeyLimit(KeyLimit('', \
                                       'empty', \
-                                      TestResult.runtimeError))
+                                      TestResult.buildFailure))
 buildConfigTests.addKeyLimit(KeyLimit('five', \
                                       'bad type', \
                                       TestResult.buildFailure))

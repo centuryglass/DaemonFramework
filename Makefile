@@ -181,7 +181,7 @@ OBJECTS_APP := $(OBJDIR)/Main.o \
                $(OBJDIR)/Process_Security.o \
                $(OBJECTS_APP)
 
-$(OUTDIR)/$(TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
+$(OUTDIR)/$(TARGET_APP) : check-defs $(OBJECTS_APP) $(RESOURCES)
 	@echo Linking "$(TARGET_APP)"
 	-$(V_AT)mkdir -p $(BINDIR)
 	-$(V_AT)mkdir -p $(LIBDIR)
@@ -195,6 +195,15 @@ $(OBJECTS_APP) :
 	@echo "      Compiling: $(<F)"
 	$(V_AT)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CFLAGS) \
 		-o "$@" -c "$<"
+
+check-defs:
+	@if [ -z "$(INSTALL_PATH)" ]; then \
+        echo >&2 "Build failed, INSTALL_PATH not defined."; exit 1; \
+    elif [ -z "$(PARENT_PATH)" ]; then \
+        echo >&2 "Build failed, PARENT_PATH path not defined."; exit 1; \
+    elif [ -z "$(KEY_LIMIT)" ]; then \
+        echo >&2 "Build failed, KEY_LIMIT count not defined."; exit 1; \
+    fi
 
 install:
 	killall $(TARGET_APP);\

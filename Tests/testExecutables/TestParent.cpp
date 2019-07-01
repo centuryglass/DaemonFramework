@@ -1,3 +1,15 @@
+/**
+ * @file  TestParent.cpp
+ * 
+ * @brief  A minimal parent application implementation used when testing
+ *         KeyDaemon.
+ *
+ *  A KeyDaemon installation is intended to support only one executable,
+ * and will refuse to work unless the process that starts it is running that
+ * specific parent executable. TestParent is a minimal application meant to
+ * serve as that parent application when testing KeyDaemon.
+ */
+
 #include <string>
 #include <iostream>
 
