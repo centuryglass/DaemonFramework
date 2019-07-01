@@ -1,9 +1,11 @@
+#pragma once
 /**
  * @file  KeyReader.h
  *
  * @brief  Reads and transmits specific keyboard key events.
  */
-#pragma once
+
+#include "KeyEventType.h"
 #include <pthread.h>
 #include <vector>
 #include <mutex>
@@ -20,18 +22,13 @@ public:
         virtual ~Listener() { }
 
         /**
-         * @brief  Called whenever the KeyReader detects a key press event.
+         * @brief  Called whenever the KeyReader detects a key input event.
          *
          * @param keyCode  The code value of a tracked key that was pressed.
-         */
-        virtual void keyPressed(const int keyCode) = 0;
-
-        /**
-         * @brief  Called whenever the KeyReader detects a key release event.
          *
-         * @param keyCode  The code value of a tracked key that was released.
+         * @param type     The type of key event that was detected.
          */
-        virtual void keyReleased(const int keyCode) = 0;
+        virtual void keyEvent(const int keyCode, const KeyEventType type) = 0;
     };
 
     /**

@@ -3,11 +3,12 @@
 #include <linux/input.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <signal.h>
 #include <iostream>
 #include <algorithm>
 
-static const constexpr char* messagePrefix = "KeyReader: ";
+static const constexpr char* messagePrefix = "KeyDaemon: KeyReader: ";
 static const constexpr int eventBufSize = 16;
 
 // Initializes the KeyReader and starts listening for relevant keyboard events.
@@ -18,31 +19,12 @@ KeyReader::KeyReader(const char* eventFilePath, std::vector<int> keyCodes,
     threadID(pthread_self())
 {
     std::lock_guard<std::mutex> lock(readerMutex);
+    errno = 0;
     keyFile = open(eventFilePath, O_RDONLY);
-    bool errorFound = true;
-    switch (keyFile)
+    if (errno != 0)
     {
-        case EACCES:
-            std::cerr << messagePrefix 
-                    << "Unable to read the keyboard event file.\n";
-            break;
-        case EINTR:
-            std::cerr << messagePrefix
-                << "Opening keyboard event file was interrupted.\n";
-            break;
-        case ENFILE:
-            std::cerr << messagePrefix
-                << "Too many files open for the system to open another.\n";
-            break;
-        case ENOENT:
-            std::cerr << messagePrefix << eventFilePath 
-                << " does not exist.\n";
-            break;
-        default:
-            errorFound = false;
-    };
-    if (errorFound)
-    {
+        std::cerr << messagePrefix << "Failed to open keyboard event file!";
+        perror(messagePrefix);
         keyFile = 0;
         return;
     }
@@ -123,18 +105,22 @@ void KeyReader::readLoop()
     unsigned long lastKeyBits = 0;
     struct input_event events[eventBufSize];
 
-    while (keyFile != 0)
-    {
+    while (keyFile != 0) {
         int eventsRead = 0;
         {
             std::lock_guard<std::mutex> lock(readerMutex);
             if (keyFile != 0)
             {
+                errno = 0;
                 ssize_t readSize = read(keyFile, events,
                         sizeof(struct input_event) * eventBufSize);
                 if (readSize < 0)
                 {
-                    std::cerr << messagePrefix << "Event reading failed.\n";
+                    if (errno != EINTR)
+                    {
+                        std::cerr << messagePrefix << "Event reading failed:\n";
+                        perror(messagePrefix);
+                    }
                     close(keyFile);
                     keyFile = 0;
                 }
@@ -146,22 +132,17 @@ void KeyReader::readLoop()
         }
         for (int i = 0; i < eventsRead; i++)
         {
-            if (events[i].type != EV_KEY)
+            if (events[i].type != EV_KEY || events[i].value < 0
+                    || events[i].value >= (int) KeyEventType::trackedTypeCount)
             {
                 continue;
             }
-            //if (std::binary_search(trackedCodes.begin(), trackedCodes.end(),
-            //            events[i].code))
-            //{
-                if (events[i].value == 1)
-                {
-                    listener->keyPressed(events[i].code);
-                }
-                else if (events[i].value == 0)
-                {
-                    listener->keyReleased(events[i].code);
-                }
-            //}
+            if (std::binary_search(trackedCodes.begin(), trackedCodes.end(),
+                        events[i].code))
+            {
+                listener->keyEvent(events[i].code,
+                        (KeyEventType) events[i].value);
+            }
         }
     }
 }

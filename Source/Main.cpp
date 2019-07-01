@@ -17,15 +17,13 @@ public:
     KeyListener() { }
 
 private:
-    virtual void keyPressed(const int keyCode) override
+    virtual void keyEvent(const int keyCode, const KeyEventType type) override
     {
-        std::cout << "Key " << keyCode << " pressed.\n";
-    }
-
-    virtual void keyReleased(const int keyCode) override
-    {
-        std::cout << "Key " << keyCode << " released.\n";
-        lastCode = keyCode;
+        if (type != KeyEventType::held)
+        {
+            std::cout << "Key " << keyCode << ((type == KeyEventType::pressed)
+                    ? " pressed\n" : " released\n");
+        }
     }
 };
 
@@ -47,7 +45,7 @@ int main(int argc, char** argv)
     }
 
     KeyListener listener;
-    KeyReader reader(KEYPATH, testCodes, &listener);
+    KeyReader reader(keyPath, testCodes, &listener);
     while (security.parentProcessRunning())
     {
 #ifdef TIMEOUT
