@@ -268,3 +268,8 @@ def runTests():
             testsPassed += 1
     print('Passed ' + str(testsPassed) + '/' + str(testCount) \
           + ' build argument tests.\n')
+
+# Run this file's tests alone if executing this module as a script:
+if __name__ == '__main__':
+    testActions.setup()
+    runTests()

@@ -40,7 +40,7 @@ class KeycodeArgTest:
         return self._expectedResult
 
 #### Prepare key code argument tests:
-argTestKeyLimit = 5
+maxKeyCodeLimit = 5
 keyArgTests = [ \
         KeycodeArgTest('3', \
                        'minimum valid key count', \
@@ -92,12 +92,9 @@ def runTests():
     testCount   = len(keyArgTests)
     testsPassed = 0
     paths       = TestPaths()
-    makeVarDefs = MakeVars()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs    = [ makeVarDefs.installPath + '=' + installPath, \
-                    makeVarDefs.parentPath  + '=' + parentPath, \
-                    makeVarDefs.keyLimit    + '=' + str(argTestKeyLimit)]
+    makeArgs = testDefs.getValidTestMakeArgs(maxKeyCodeLimit)
     testActions.uninstall(makeArgs)
     testActions.buildInstall(makeArgs, installPath)
     for index, argTest in enumerate(keyArgTests):
@@ -114,3 +111,8 @@ def runTests():
             testsPassed += 1
     print('Passed ' + str(testsPassed) + '/' + str(testCount) \
             + ' tracked keycode argument tests.\n')
+
+# Run this file's tests alone if executing this module as a script:
+if __name__ == '__main__':
+    testActions.setup()
+    runTests()

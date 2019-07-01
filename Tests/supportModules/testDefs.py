@@ -133,3 +133,22 @@ class TestPaths:
     @property
     def failureLogPath(self):
         return os.path.join(self.testDir, self._failureLog)
+
+"""
+Gets a basic set of build arguments that should always work correctly.
+
+These options use the secure executable directory for installation. To execute
+the KeyDaemon without runtime errors, it needs to be launched through an
+instance of the TestParent executable located in the same directory.
+    
+Keyword Arguments:
+keyLimit -- Optionally sets a specific tracked key code limit. (default: 1)
+"""
+def getValidTestMakeArgs(keyLimit = 1):
+    paths       = TestPaths()
+    makeVarDefs = MakeVars()
+    installPath = paths.appSecureExePath
+    parentPath  = paths.parentSecureExePath
+    return [ makeVarDefs.installPath + '=' + installPath, \
+             makeVarDefs.parentPath  + '=' + parentPath, \
+             makeVarDefs.keyLimit    + '=' + str(keyLimit)]
