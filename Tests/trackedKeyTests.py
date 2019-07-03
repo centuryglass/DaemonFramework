@@ -4,7 +4,7 @@ Tests how KeyDaemon handles different valid and invalid key code arguments.
 
 from supportModules import testDefs, testActions
 from supportModules.testActions import TestResult
-from supportModules.testDefs import MakeVars, TestPaths
+from supportModules.testDefs import MakeVars, TestPaths, KeyCodes
 
 """
 Holds a key code argument string and the expected result of testing that string.
@@ -38,9 +38,21 @@ class KeycodeArgTest:
     @property
     def expectedResult(self):
         return self._expectedResult
+        
+"""
+Returns a string containing three sequential numbers, separated by spaces.
+Keyword Arguments:
+firstNumber -- The first number in the sequence.
+"""
+def numberStringSequence(firstNumber):
+    return str(firstNumber) + ' ' + str(firstNumber + 1) + ' ' \
+         + str(firstNumber + 2)
 
 #### Prepare key code argument tests:
 maxKeyCodeLimit = 5
+codes = KeyCodes()
+maxCode = codes.highestValidCode
+minCode = codes.lowestValidCode
 keyArgTests = [ \
         KeycodeArgTest('3', \
                        'minimum valid key count', \
@@ -54,10 +66,10 @@ keyArgTests = [ \
         KeycodeArgTest('            4   5', \
                        'ignoring whitespace', \
                        TestResult.success), \
-        KeycodeArgTest('237 238 239', \
+        KeycodeArgTest(numberStringSequence(maxCode - 2), \
                        'upper valid keycode range', \
                        TestResult.success), \
-        KeycodeArgTest('1 2 3', \
+        KeycodeArgTest(numberStringSequence(minCode), \
                        'lower valid keycode range', \
                        TestResult.success), \
         KeycodeArgTest('', \
@@ -75,7 +87,7 @@ keyArgTests = [ \
         KeycodeArgTest('-2 -4 -6', \
                        'negative key codes', \
                        TestResult.runtimeError), \
-        KeycodeArgTest('240', \
+        KeycodeArgTest(str(maxCode + 1), \
                        'value outside the valid keycode range', \
                        TestResult.runtimeError), \
         KeycodeArgTest('9223372036854775808', \
