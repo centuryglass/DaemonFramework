@@ -6,11 +6,11 @@
  */
 
 #include "KeyEventType.h"
-#include <pthread.h>
+#include "InputReader.h"
 #include <vector>
-#include <mutex>
+#include <linux/input.h>
 
-class KeyReader
+class KeyReader : public InputReader
 {
 public:
     /**
@@ -43,51 +43,55 @@ public:
      * @param listener       The object that will handle relevant keyboard
      *                       events.
      */
-    KeyReader(const char* eventFilePath, std::vector<int> keyCodes,
+    KeyReader(const char* eventFilePath, const std::vector<int>& keyCodes,
             Listener* listener);
 
-    /**
-     * @brief  Stops event reading and closes the keyboard event file.
-     */
-    ~KeyReader();
-
-    /**
-     * @brief  Checks if the KeyReader is currently reading keyboard input
-     *         events.
-     *
-     * @return  Whether the keyboard event file is open and the loop is running.
-     */
-    bool isReading();
-
-    /**
-     * @brief  Ensures that the KeyReader is not reading keyboard input.
-     */
-    void stopReading();
+    virtual ~KeyReader() { }
 
 private:
+    /**
+     * @brief  Opens the input file, handling errors and using appropriate 
+     *         file reading options.
+     *
+     * @return  A file descriptor for the input file, or <= 0 if opening the
+     *          file failed.
+     */
+    virtual int openFile() override;
 
     /**
-     * @brief  Continually waits for and processes keyboard input events.
+     * @brief  Processes new input from the input file.
+     *
+     * Input data will be available in the same buffer returned by getBuffer().
+     *
+     * @param inputBytes  The number of input bytes read from the file. If this
+     *                    value is less than or equal to zero, there was an
+     *                    error in reading file input.
      */
-    void readLoop();
+    virtual void processInput(const int inputBytes) override;
 
     /**
-     * @brief  Used to start readLoop within a new thread.
+     * @brief  Gets the maximum size in bytes available within the object's 
+     *         file input buffer.
      *
-     * @param keyReader  A pointer to the KeyReader that will run the loop.
-     *
-     * @return           An ignored null value.
+     * @return  Number of bytes available for each input read.
      */
-    static void* threadAction(void* keyReader);
+    virtual int getBufferSize() const override;
 
-    // The ID of the thread that is/was running the read loop:
-    pthread_t threadID = 0;
-    // File descriptor for the keyboard input event file:
-    int keyFile = 0;
+    /**
+     * @brief  Gets the buffer where the InputReader should read in new file
+     *         input. This buffer must have room for at least getBufferSize()
+     *         bytes of data.
+     *
+     * @return  The object's input buffer pointer.
+     */
+    virtual void* getBuffer() override;
+
     // List of relevant key codes to report:
-    std::vector<int> trackedCodes;
-    // Prevents simultaneous access to the keyboard input event file:
-    std::mutex readerMutex;
+    const std::vector<int>& trackedCodes;
     // Handles reported keyboard events:
     Listener* listener = nullptr;
+    // Maximum number of events that can be buffered at once:
+    static const constexpr int eventBufSize = 16;
+    // Keyboard event input buffer:
+    struct input_event eventBuffer[eventBufSize];
 };
