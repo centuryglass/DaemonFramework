@@ -27,6 +27,19 @@ class MakeVars:
     def keyLimit(self):
         return self._keyLimit
 
+"""Defines Linux key code values."""
+class KeyCodes:
+    def __init__(self):
+        self._lowestValidCode = 1
+        self._highestValidCode = 239
+    """Return the lowest valid keyboard event code."""
+    @property
+    def lowestValidCode(self):
+        return self._lowestValidCode
+    """Return the highest valid keyboard event code."""
+    @property
+    def highestValidCode(self):
+        return self._highestValidCode
 
 """Defines path and filename constants used in testing."""
 class TestPaths:
@@ -40,6 +53,7 @@ class TestPaths:
                                                          os.pardir))
         self._projectDir = os.path.normpath(os.path.join(self._testDir, \
                                                          os.pardir))
+        self._includeDir     = os.path.join(self.projectDir, 'Parent_Include')
         self._testExecDir    = os.path.join(self.testDir, 'testExecutables')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
         self._unsecureExeDir = os.path.join(self.testExecDir, 'unsecured')
@@ -58,6 +72,10 @@ class TestPaths:
     @property
     def buildDir(self):
         return self._buildDir
+    """Return the path to the parent application #include directory."""
+    @property
+    def includeDir(self):
+        return self._includeDir
     """Return the path to the main test executable directory."""
     @property
     def testExecDir(self):

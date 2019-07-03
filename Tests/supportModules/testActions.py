@@ -1,7 +1,7 @@
 """
 Handles basic tasks needed to test compiling, installing, and running KeyDaemon.
 """
-import os.path
+import os
 import subprocess
 from supportModules import testDefs
 from enum import Enum
@@ -20,8 +20,24 @@ def setup():
     # Remove old failure log instances:
     if (os.path.isfile(paths.failureLogPath)):
         os.remove(paths.failureLogPath)
-    if (not os.path.isfile(paths.parentBuildPath)): # Ensure TestParent exists
-        buildArgs = ['g++', paths.parentSourcePath, '-o', paths.parentBuildPath]
+    # Build or rebuild TestParent if necessary:
+    buildTestParent = False
+    parentSrcFiles = [paths.parentSourcePath]
+    for filename in os.listdir(paths.includeDir):
+        if (filename.endswith('.cpp')):
+            parentSrcFiles.append(os.path.join(paths.includeDir, filename))
+    if (not os.path.isfile(paths.parentBuildPath)):
+        buildTestParent = True
+    else:
+        buildTime = os.path.getmtime(paths.parentBuildPath)
+        for filename in parentSrcFiles:
+            if (os.path.getmtime(filename) > buildTime):
+                buildTestParent = True
+                break
+    if (buildTestParent):
+        print('(Re)building test parent app "' + paths.parentApp + '".')
+        buildArgs = ['g++', '-I' + paths.includeDir, '-pthread', '-g', '-ggdb']\
+                    + parentSrcFiles + ['-o', paths.parentBuildPath]
         subprocess.call(buildArgs)
     assert(os.path.isfile(paths.parentBuildPath))
     # Ensure unsecured test directory is initialized:
@@ -168,12 +184,13 @@ testFile    -- A file object storing test output from stdout and stderr.
 
 Returns true if the test result was as expected, false otherwise.
 """
-def checkResult(result, expected, index, description, testFile):
+def checkResult(result, expected, index, description, testFile = None):
     if (testFile != None):
         testFile.close()
     if (result.value == expected.value):
         print(index + ' passed with expected result ' + expected.name)
-        os.remove(paths.tempLogPath)
+        if (os.path.isfile(paths.tempLogPath)):
+            os.remove(paths.tempLogPath)
         return True
     else:
         print(index + ' failed!')
@@ -181,8 +198,8 @@ def checkResult(result, expected, index, description, testFile):
                            + ', actual result: ' + result.name
         print(failureDescription)
         print('Test description: ' + description)
-        print('See ' + paths.failureLog + ' for more information.')
         if (testFile != None):
+            print('See ' + paths.failureLog + ' for more information.')
             with open(paths.tempLogPath, 'r') as tempLog:
                 with open(paths.failureLogPath, 'a') as failureLog:
                     failureLog.write('\n' + index + ' ' + description + '\n')
@@ -191,5 +208,6 @@ def checkResult(result, expected, index, description, testFile):
                     errorLines = tempLog.readlines()
                     errorLines = [ '\t' + line for line in errorLines]
                     failureLog.writelines(errorLines)
-        os.remove(paths.tempLogPath)
+        if (os.path.isfile(paths.tempLogPath)):
+            os.remove(paths.tempLogPath)
         return False
