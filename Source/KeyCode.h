@@ -19,8 +19,8 @@ namespace KeyCode
      * @param argv  An array of arguments. All arguments from index 1 onward
      *              must be valid key codes.
      *
-     * @return      The list of parsed codes, or an empty list if the codes were
-     *              invalid or any errors occur.
+     * @return      The sorted list of parsed codes, or an empty list if the
+     *              codes were invalid or any errors occur.
      */
     std::vector<int> parseCodes(const int argc, char** argv);
 }

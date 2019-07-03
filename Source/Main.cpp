@@ -1,5 +1,6 @@
 #include "KeyReader.h"
 #include "KeyCode.h"
+#include "CodePipe.h"
 #include "Process_Security.h"
 #include <iostream>
 #include <unistd.h>
@@ -11,24 +12,11 @@
 static const constexpr char* keyPath = "/dev/input/event7";
 static int lastCode = 0;
 
-class KeyListener : public KeyReader::Listener
-{
-public:
-    KeyListener() { }
-
-private:
-    virtual void keyEvent(const int keyCode, const KeyEventType type) override
-    {
-        if (type != KeyEventType::held)
-        {
-            std::cout << "Key " << keyCode << ((type == KeyEventType::pressed)
-                    ? " pressed\n" : " released\n");
-        }
-    }
-};
 
 int main(int argc, char** argv)
 {
+    std::cout << "Launched KeyDaemon.\n";
+    CodePipe pipe(".keyPipe");
     Process::Security security;
     if (! security.appProcessSecured() || ! security.parentProcessSecured())
     {
@@ -43,13 +31,13 @@ int main(int argc, char** argv)
         std::cerr << "Failed to get valid test codes, stopping key daemon.\n";
         return 1;
     }
-
-    KeyListener listener;
-    KeyReader reader(keyPath, testCodes, &listener);
+    KeyReader reader(keyPath, testCodes, &pipe);
     while (security.parentProcessRunning())
     {
 #ifdef TIMEOUT
         sleep(TIMEOUT);
+        std::cout << "KeyDaemon: Timeout period ended, exiting normally.\n";
+        reader.stopReading();
         return 0;
 #else
         sleep(5);

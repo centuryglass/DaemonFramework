@@ -1,5 +1,6 @@
 #include "KeyCode.h"
 #include <iostream>
+#include <algorithm>
 #include <linux/input-event-codes.h>
 #include <unistd.h>
 #include <errno.h>
@@ -59,6 +60,8 @@ std::vector<int> KeyCode::parseCodes(const int argc, char** argv)
         }
         keyCodes.push_back((int) codeValue);
     }
+    // Make sure key codes are sorted for fast code lookup:
+    std::sort(keyCodes.begin(), keyCodes.end());
     return keyCodes;
 #else
     std::cerr << "KEY_LIMIT is not defined. This value must be defined at "

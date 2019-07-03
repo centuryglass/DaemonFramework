@@ -7,3 +7,4 @@ Tests/testExecutables/TestParent
 Tests/tempLog.txt
 Tests/failureLog.txt
 Tests/perl/
+.keyPipe
