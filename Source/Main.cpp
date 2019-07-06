@@ -2,21 +2,18 @@
 #include "KeyCode.h"
 #include "CodePipe.h"
 #include "Process_Security.h"
+#include "KeyEventFiles.h"
 #include <iostream>
+#include <vector>
 #include <unistd.h>
 
-#ifndef KEYPATH
-    #define KEYPATH ""
-#endif
-
-static const constexpr char* keyPath = "/dev/input/event7";
-static int lastCode = 0;
+// Seconds to wait between each check on whether the parent process is running:
+static const constexpr int secondsBetweenParentChecks = 5;
 
 
 int main(int argc, char** argv)
 {
     std::cout << "Launched KeyDaemon.\n";
-    CodePipe pipe(".keyPipe");
     Process::Security security;
     if (! security.appProcessSecured() || ! security.parentProcessSecured())
     {
@@ -31,17 +28,55 @@ int main(int argc, char** argv)
         std::cerr << "Failed to get valid test codes, stopping key daemon.\n";
         return 1;
     }
-    KeyReader reader(keyPath, testCodes, &pipe);
-    while (security.parentProcessRunning())
+
+    CodePipe pipe(".keyPipe");
+
+    // Create KeyReader objects for each keyboard event file:
+    std::vector<KeyReader*> eventFileReaders;
+    std::vector<std::string> eventFilePaths = KeyEventFiles::getPaths();
+    std::cout << "Found " << eventFilePaths.size() << " paths.\n";
+    for (const std::string& path : eventFilePaths)
     {
+        eventFileReaders.push_back(
+                new KeyReader(path.c_str(), testCodes, &pipe));
+    }
+    std::cout << "Created " << eventFileReaders.size() << " readers.\n";
+
+    // Allow KeyReaders to run, periodically removing failed readers and
+    // checking that the parent is still running.
+    while (security.parentProcessRunning() && ! eventFileReaders.empty())
+    {
+        // Find and remove failed file readers:
+        for (int i = 0; i < eventFileReaders.size(); i++)
+        {
+            if (! eventFileReaders[i]->isReading())
+            {
+                std::cerr << "Reader for path \"" 
+                        << eventFileReaders[i]->getPath() 
+                        << "\" stopped unexpectedly.\n";
+                KeyReader* removedReader = eventFileReaders[i];
+                eventFileReaders.erase(eventFileReaders.begin() + i);
+                delete removedReader;
+                i--;
+            }
+        }
 #ifdef TIMEOUT
         sleep(TIMEOUT);
         std::cout << "KeyDaemon: Timeout period ended, exiting normally.\n";
-        reader.stopReading();
-        return 0;
+        break;
 #else
-        sleep(5);
+        sleep(secondsBetweenParentChecks);
 #endif
     }
+    for (KeyReader* reader : eventFileReaders)
+    {
+        std::cout << "KeyDaemon: Killing reader with path "
+                << reader->getPath() << "\n";
+        reader->stopReading();
+        std::cout << "KeyDaemon: Stopped reader with path "
+                << reader->getPath() << "\n";
+        delete reader;
+    }
+    eventFileReaders.clear();
+    return 0;
 }
-

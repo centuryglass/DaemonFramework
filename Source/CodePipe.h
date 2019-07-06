@@ -6,6 +6,7 @@
  */
 
 #include "KeyReader.h"
+#include <mutex>
 
 class CodePipe;
 
@@ -50,4 +51,6 @@ public:
 private:
     // Named pipe file descriptor:
     int pipeFile = 0;
+    // Protects the pipe from concurrent access:
+    std::mutex lock;
 };

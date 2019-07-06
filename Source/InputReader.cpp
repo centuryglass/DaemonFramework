@@ -2,9 +2,14 @@
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/select.h>
 
-
+// Print the application and class name before all info/error messages:
 static const constexpr char* messagePrefix = "KeyDaemon: InputReader: ";
+
+// Milliseconds to wait on file input before pausing to see if the thread should
+// stop:
+static const constexpr int readTimeoutMS = 300;
 
 
 // Saves the file path and prepares to read the input file.
@@ -63,14 +68,8 @@ void InputReader::stopReading()
         closeInputFile();
         return;
     }
-    while (! readerMutex.try_lock())
-    {
-        // thread is currently reading, interrupt it and try again.
-        pthread_kill(threadID, SIGINT);
-    }
-    // mutex locked, close the file and unlock.
+    std::lock_guard<std::mutex> lock(readerMutex);
     closeInputFile();
-    readerMutex.unlock();
 }
 
 
@@ -86,27 +85,33 @@ void InputReader::readLoop()
 {
     while (inputFile != 0) 
     {
-        int eventsRead = 0;
+        std::lock_guard<std::mutex> lock(readerMutex);
+        if (inputFile != 0)
         {
-            std::lock_guard<std::mutex> lock(readerMutex);
-            if (inputFile != 0)
+            // Use select to wait for file input until the timeout period ends:
+            fd_set readSet;
+            fd_set emptyWriteSet, emptyExceptSet;
+            FD_ZERO(&readSet);
+            FD_ZERO(&emptyWriteSet);
+            FD_ZERO(&emptyExceptSet);
+            FD_SET(inputFile, &readSet);
+            struct timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = readTimeoutMS;
+            if (select(inputFile + 1, &readSet, &emptyWriteSet, &emptyExceptSet,
+                        &timeout) == 1)
             {
                 errno = 0;
                 ssize_t readSize = read(inputFile, getBuffer(),
                         getBufferSize());
-                if (readSize <= 0)
+                if (errno != 0 || readSize == 0)
                 {
-                    if (errno != EINTR && errno != 0)
-                    {
-                        std::cerr << messagePrefix << "Input reading failed:\n";
-                        perror(messagePrefix);
-                    }
-                    else
-                    {
-                        std::cout << messagePrefix 
-                                << "Stopping interrupted thread.\n";
-                    }
+                    std::cerr << messagePrefix << "Input reading failed, "
+                            << readSize << " bytes apparently read.\n";
+                    perror(messagePrefix);
                     closeInputFile();
+                    std::cout << messagePrefix << "Closed file "
+                            << getPath() << "\n";
                 }
                 else
                 {

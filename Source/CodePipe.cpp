@@ -40,6 +40,7 @@ CodePipe::~CodePipe()
 // Invalid codes will be ignored.
 void CodePipe::keyEvent(const int code, const KeyEventType type)
 {
+    std::lock_guard<std::mutex> pipeLock(lock);
     if (pipeFile == 0)
     {
         std::cerr << messagePrefix

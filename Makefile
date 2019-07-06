@@ -175,6 +175,7 @@ build : $(OUTDIR)/$(TARGET_APP)
 
 OBJECTS_APP := $(OBJDIR)/Main.o \
                $(OBJDIR)/InputReader.o \
+               $(OBJDIR)/KeyEventFiles.o \
                $(OBJDIR)/KeyReader.o \
                $(OBJDIR)/KeyCode.o \
                $(OBJDIR)/CodePipe.o \
@@ -246,6 +247,8 @@ $(OBJDIR)/Main.o: \
 	Source/Main.cpp
 $(OBJDIR)/InputReader.o: \
 	Source/InputReader.cpp
+$(OBJDIR)/KeyEventFiles.o: \
+	Source/KeyEventFiles.cpp
 $(OBJDIR)/KeyReader.o: \
 	Source/KeyReader.cpp
 $(OBJDIR)/KeyCode.o: \
