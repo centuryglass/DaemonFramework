@@ -41,6 +41,7 @@ public:
 
     virtual ~CodePipe() { }
 
+private:
     /**
      * @brief  Opens the pipe file, handling errors and using appropriate file
      *         reading options.
@@ -78,7 +79,6 @@ public:
      */
     virtual void* getBuffer() override;
 
-private:
     // The object that will handle key input events:
     Listener* listener = nullptr;
     // The maximum number of bytes to read from the pipe at one time:

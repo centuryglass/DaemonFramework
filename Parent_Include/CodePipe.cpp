@@ -44,7 +44,11 @@ void CodePipe::processInput(const int inputBytes)
         return;
     }
     int code = 0;
-    assert(inputBytes < bufSize);
+    if (inputBytes >= bufSize)
+    {
+        printf("KeyDaemon Parent CodePipe: invalid read size %d\n", inputBytes);
+        assert(inputBytes < bufSize);
+    }
     for (int i = 0; i < (inputBytes - 1); i++)
     {
         int charValue = buffer[i] - '0'; 
