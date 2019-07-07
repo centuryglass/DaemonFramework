@@ -26,11 +26,8 @@ class PipeWriter : public KeyReader::Listener
 public:
     /**
      * @brief  Opens the pipe file on construction.
-     *
-     * @param pipePath  The path where the pipe will be opened in the file
-     *                  system.
      */
-    PipeWriter(const char* pipePath);
+    PipeWriter();
 
     /**
      * @brief  Closes the pipe on destruction.

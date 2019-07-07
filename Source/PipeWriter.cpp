@@ -9,13 +9,17 @@
 #include <stdlib.h>
 #include <iostream>
 
+#ifndef KEY_PIPE_PATH
+  #error "KeyDaemon: PipeWriter: KEY_PIPE_PATH not defined!"
+#endif
+
 static const constexpr char* messagePrefix = "KeyDaemon: PipeWriter: ";
 
 // Opens the pipe file on construction.
-PipeWriter::PipeWriter(const char* pipePath)
+PipeWriter::PipeWriter()
 {
     errno = 0;
-    pipeFile = open(pipePath, O_WRONLY); 
+    pipeFile = open(KEY_PIPE_PATH, O_WRONLY); 
     if (errno != 0)
     {
         std::cerr << messagePrefix << "Failed to open key code pipe!\n";

@@ -15,23 +15,27 @@ define HELPTEXT
 # keyboard input, several limitations must be defined at compile time.
 #
 #
-# INSTALL_PATH:  Full path to where the executable should be created. This
-#               should be a directory specific to your application, that can
-#               only be modified by root. If the KeyDaemon detects that it is
-#               not running from this path it will immediately exit.
+# INSTALL_PATH:    Full path to where the executable should be created. This
+#                 should be a directory specific to your application, that can
+#                 only be modified by root. If the KeyDaemon detects that it is
+#                 not running from this path it will immediately exit.
 #
-# PARENT_PATH:   The path to the executable that is allowed to use the
-#               KeyDaemon. When KeyDaemon is launched, it will immediately exit
-#               unless it detects that it was launched by this executable.
+# PARENT_PATH:     The path to the executable that is allowed to use the
+#                 KeyDaemon. When KeyDaemon is launched, it will immediately
+#                 exit unless it detects that it was launched by this
+#                 executable.
 #
-#                For additional security, this executable must be located in a
-#               directory that can only be modified by root. If this isn't the
-#               case, KeyDaemon will immediately exit even if launched by the
-#               correct executable, since there would be no guarantee that the
-#               executable hasn't been replaced.
+#                  For additional security, this executable must be located in a
+#                 directory that can only be modified by root. If this isn't the
+#                 case, KeyDaemon will immediately exit even if launched by the
+#                 correct executable, since there would be no guarantee that the
+#                 executable hasn't been replaced.
 #
-# KEY_LIMIT:     The maximum number of keys that KeyDaemon may track. Set this
-#               to the lowest number required by your application.
+# KEY_PIPE_PATH:   The path where the KeyDaemon will find the pipe file it 
+#                 uses to communicate with its parent application.
+#
+# KEY_LIMIT:       The maximum number of keys that KeyDaemon may track. Set this
+#                 to the lowest number required by your application.
 endef
 export HELPTEXT
 
@@ -77,6 +81,10 @@ endif
 
 ifneq ($(KEY_LIMIT),)
     CPPFLAGS := -DKEY_LIMIT="$(KEY_LIMIT)" $(CPPFLAGS)
+endif
+
+ifneq ($(KEY_PIPE_PATH),)
+    CPPFLAGS := -DKEY_PIPE_PATH="\"$(KEY_PIPE_PATH)\"" $(CPPFLAGS)
 endif
 
 ifneq ($(TIMEOUT),)
