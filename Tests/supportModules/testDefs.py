@@ -6,6 +6,7 @@ class MakeVars:
     def __init__(self):
         self._installPath = 'INSTALL_PATH'
         self._parentPath  = 'PARENT_PATH'
+        self._pipePath    = 'KEY_PIPE_PATH'
         self._keyLimit    = 'KEY_LIMIT'
     """Return the KeyDaemon install path variable name."""
     @property
@@ -18,6 +19,10 @@ class MakeVars:
     @property
     def parentPath(self):
         return self._parentPath
+    """Return the KeyDaemon pipe file path variable name."""
+    @property
+    def pipePath(self):
+        return self._pipePath
     """
     Return the maximum tracked key codes variable name.
     KeyDaemon will only track a limited number of key codes, not exceeding this
@@ -48,6 +53,7 @@ class TestPaths:
         self._parentApp  = 'TestParent'
         self._tempLog    = 'tempLog.txt'
         self._failureLog = 'failureLog.txt'
+        self._pipeFile   = '.keyPipe'
         self._moduleDir  = os.path.dirname(os.path.realpath(__file__))
         self._testDir    = os.path.normpath(os.path.join(self._moduleDir, \
                                                          os.pardir))
@@ -106,6 +112,10 @@ class TestPaths:
     @property
     def failureLog(self):
         return self._failureLog
+    """Return the name of the pipe file used to share keyboard events."""
+    @property
+    def pipeFile(self):
+        return self._pipeFile
 
     # KeyDaemon executable paths:
     """Return the path where the KeyDaemon is found after compilation."""
@@ -142,7 +152,10 @@ class TestPaths:
     @property
     def parentUnsecureExePath(self):
         return os.path.join(self.unsecureExeDir, self.parentApp)
-
+    """Return the path where the daemon's pipe file will be created."""
+    @property
+    def keyPipePath(self):
+        return os.path.join(self.testExecDir, self.pipeFile)
     """Return the path where temporary log files will be stored."""
     @property
     def tempLogPath(self):
@@ -167,6 +180,8 @@ def getValidTestMakeArgs(keyLimit = 1):
     makeVarDefs = MakeVars()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
+    pipePath    = paths.keyPipePath
     return [ makeVarDefs.installPath + '=' + installPath, \
              makeVarDefs.parentPath  + '=' + parentPath, \
-             makeVarDefs.keyLimit    + '=' + str(keyLimit)]
+             makeVarDefs.pipePath    + '=' + pipePath, \
+             makeVarDefs.keyLimit    + '=' + str(keyLimit) ]

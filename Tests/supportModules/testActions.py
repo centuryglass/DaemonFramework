@@ -7,6 +7,7 @@ from supportModules import testDefs
 from enum import Enum
 
 paths = testDefs.TestPaths()
+makeVars = testDefs.MakeVars()
 
 """Defines possible test results, from least to most successful.""" 
 class TestResult(Enum):
@@ -15,20 +16,33 @@ class TestResult(Enum):
     runtimeError = 2
     success = 3
 
-"""Ensures the testing environment is properly set up."""
-def setup():
-    # Remove old failure log instances:
-    if (os.path.isfile(paths.failureLogPath)):
-        os.remove(paths.failureLogPath)
-    # Build or rebuild TestParent if necessary:
+"""
+Builds and installs the TestParent application, setting the KeyDaemon file path.
+Keyword Arguments:
+daemonPath  -- The path to the KeyDaemon executable launched by the TestParent.
+               (default: The secure daemon test executable path.)
+"""
+def buildParent(daemonPath = paths.appSecureExePath):
     buildTestParent = False
+    # Check if test parent is already built and has the right daemon path:
+    if (not os.path.isfile(paths.parentBuildPath)):
+        buildTestParent = True
+    else:
+        printPathArg = '-PrintDaemonPath'
+        with open(paths.tempLogPath, 'w') as tempLog:
+            subprocess.run([paths.parentBuildPath, printPathArg], \
+                           stdout = tempLog)
+        with open(paths.tempLogPath, 'r') as tempLog:
+            currentPathDef = tempLog.readline()
+            if (currentPathDef != daemonPath):
+                buildTestParent = True
+    # If test parent exists with the right path, only rebuild if source files
+    # were updated:
     parentSrcFiles = [paths.parentSourcePath]
     for filename in os.listdir(paths.includeDir):
         if (filename.endswith('.cpp')):
             parentSrcFiles.append(os.path.join(paths.includeDir, filename))
-    if (not os.path.isfile(paths.parentBuildPath)):
-        buildTestParent = True
-    else:
+    if (not buildTestParent):
         buildTime = os.path.getmtime(paths.parentBuildPath)
         for filename in parentSrcFiles:
             if (os.path.getmtime(filename) > buildTime):
@@ -36,27 +50,34 @@ def setup():
                 break
     if (buildTestParent):
         print('(Re)building test parent app "' + paths.parentApp + '".')
-        buildArgs = ['g++', '-I' + paths.includeDir, '-pthread', '-g', '-ggdb']\
+        buildArgs = ['g++', '-I' + paths.includeDir, '-pthread', '-g', '-ggdb',\
+                     '-D' + makeVars.installPath + '="' + daemonPath + '"', \
+                     '-D' + makeVars.pipePath + '="' + paths.keyPipePath + '"']\
                     + parentSrcFiles + ['-o', paths.parentBuildPath]
         subprocess.call(buildArgs)
+        subprocess.call('cp ' + paths.parentBuildPath + ' ' \
+                              + paths.parentUnsecureExePath, shell = True)
+        subprocess.call('sudo cp ' + paths.parentBuildPath + ' ' \
+                                   + paths.parentSecureExePath, shell = True)
     assert(os.path.isfile(paths.parentBuildPath))
+
+"""Ensures the testing environment is properly set up."""
+def setup():
+    # Remove old failure log instances:
+    if (os.path.isfile(paths.failureLogPath)):
+        os.remove(paths.failureLogPath)
     # Ensure unsecured test directory is initialized:
     if (not os.path.isdir(paths.unsecureExeDir)):
         os.mkdir(paths.unsecureExeDir)
         subprocess.call('chmod "o=w" ' + paths.unsecureExeDir, shell = True)
-    if (not os.path.isdir(paths.parentUnsecureExePath)):
-        subprocess.call('cp ' + paths.parentBuildPath + ' ' \
-                              + paths.parentUnsecureExePath, shell = True)
     # Ensure secured test directory is initialized:
     if (not os.path.isdir(paths.secureExeDir)):
         os.mkdir(paths.secureExeDir)
         subprocess.call('sudo chown root.root ' + paths.secureExeDir, \
                         shell = True)
         subprocess.call('sudo chmod "o-w" ' + paths.secureExeDir, shell = True)
-    if (not os.path.isdir(paths.parentSecureExePath)):
-        subprocess.call('sudo cp ' + paths.parentBuildPath + ' ' \
-                                   + paths.parentSecureExePath, shell = True)
-        os.chdir(paths.projectDir)
+    buildParent() # Rebuild test parent if necessary.
+    os.chdir(paths.projectDir)
 
 """
 Uninstalls KeyDaemon and deletes all build files.
@@ -98,6 +119,8 @@ if installation fails, or TestResult.success if no errors occur.
 def buildInstall(makeArgs, installPath, outFile = subprocess.DEVNULL, \
                  runtime = 1):
     os.chdir(paths.projectDir)
+    # Make sure the TestParent sets the correct daemon path:
+    buildParent(installPath)
     # Try to build:
     subprocess.call(['make', 'TIMEOUT=' + str(runtime)] + makeArgs, \
                     stdout = outFile, \

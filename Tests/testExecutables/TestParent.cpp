@@ -19,7 +19,12 @@
 #include <pthread.h>
 #include "../../Parent_Include/PipeReader.h"
 
-#define KEY_PIPE_PATH ".keyPipe";
+// Optional argument to print the daemon path and exit:
+#define PRINT_PATH_ARG "-PrintDaemonPath"
+
+#ifndef INSTALL_PATH
+    #error "KeyDaemon install path INSTALL_PATH not defined!"
+#endif
 
 std::atomic_int returnValue;
 
@@ -69,6 +74,11 @@ private:
 
 int main(int argc, char** argv)
 {
+    if (argc > 1 && std::string(argv[1]) == PRINT_PATH_ARG)
+    {
+        std::cout << INSTALL_PATH;
+        return 0;
+    }
     const int maxInt = std::numeric_limits<int>::max();
     returnValue = maxInt;
     Listener eventListener;
