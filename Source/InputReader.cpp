@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <assert.h>
 
 // Print the application and class name before all info/error messages:
 static const constexpr char* messagePrefix = "KeyDaemon: InputReader: ";
@@ -23,32 +24,40 @@ InputReader::~InputReader()
 }
 
 
-// Checks if the InputReader is currently reading keyboard input events.
-bool InputReader::isReading()
-{
-    return inputFile != 0;
-}
-
-
 // Opens the input file and starts the input read loop if not already reading.
 bool InputReader::startReading()
 {
-    std::lock_guard<std::mutex> lock(readerMutex);
-    if (isReading())
     {
-        return true;
+        std::lock_guard<std::mutex> lock(readerMutex);
+        if (currentState == State::closed || currentState == State::failed)
+        {
+            return false;
+        }
+        if (currentState != State::initializing)
+        {
+            return true;
+        }
+        currentState = State::opening;
     }
     inputFile = openFile();
-    if (inputFile == 0)
+
     {
-        std::cerr << messagePrefix << "Failed to open input file at \""
-                << path << "\"\n";
-        return false;
+        std::lock_guard<std::mutex> lock(readerMutex);
+        if (inputFile == 0)
+        {
+            currentState = State::failed;
+            std::cerr << messagePrefix << "Failed to open input file at \""
+                    << path << "\"\n";
+            return false;
+        }
+        currentState = State::opened;
     }
+
     int threadError = pthread_create(&threadID, nullptr, threadAction,
             (void *) this);
     if (threadError != 0)
     {
+        std::lock_guard<std::mutex> lock(readerMutex);
         std::cerr << messagePrefix << "Couldn't create new thread.\n";
         threadID = 0;
         closeInputFile();
@@ -65,11 +74,18 @@ void InputReader::stopReading()
     // loop will terminate before it would try the next read call.
     if (pthread_equal(pthread_self(), threadID))
     {
+        assert (currentState == State::reading 
+                || currentState == State::processing);
         closeInputFile();
+        currentState = State::closed; // readerMutex should already be locked
         return;
     }
     std::lock_guard<std::mutex> lock(readerMutex);
-    closeInputFile();
+    if (currentState != State::closed && currentState != State::failed)
+    {
+        closeInputFile();
+        currentState = State::closed;
+    }
 }
 
 
@@ -80,12 +96,20 @@ const char* InputReader::getPath() const
 }
 
 
+// Gets the current state of the input reader.
+InputReader::State InputReader::getState()
+{
+    std::lock_guard<std::mutex> lock(readerMutex);
+    return currentState;
+}
+
 // Continually waits for and processes input events.
 void InputReader::readLoop()
 {
     while (inputFile != 0) 
     {
         std::lock_guard<std::mutex> lock(readerMutex);
+        currentState = State::reading;
         if (inputFile != 0)
         {
             // Use select to wait for file input until the timeout period ends:
@@ -101,6 +125,7 @@ void InputReader::readLoop()
             if (select(inputFile + 1, &readSet, &emptyWriteSet, &emptyExceptSet,
                         &timeout) == 1)
             {
+                currentState = State::processing;
                 errno = 0;
                 ssize_t readSize = read(inputFile, getBuffer(),
                         getBufferSize());
@@ -112,6 +137,7 @@ void InputReader::readLoop()
                     closeInputFile();
                     std::cout << messagePrefix << "Closed file "
                             << getPath() << "\n";
+                    currentState = State::closed;
                 }
                 else
                 {

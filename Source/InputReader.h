@@ -26,14 +26,6 @@ public:
     ~InputReader();
 
     /**
-     * @brief  Checks if the InputReader is currently reading keyboard input
-     *         events.
-     *
-     * @return  Whether the input file is open and the loop is running.
-     */
-    bool isReading();
-
-    /**
      * @brief  Opens the input file and starts the input read loop if not
      *         already reading.
      *
@@ -53,6 +45,27 @@ public:
      * @return  The input file path.
      */
     const char* getPath() const;
+
+    /**
+     * @brief  Values used to store the current state of the reader.
+     */
+    enum class State
+    {
+        initializing, // Not yet started accessing the input file.
+        opening,      // Opening the input file.
+        opened,       // Input file open, but not trying to read input yet.
+        reading,      // Waiting to read data from the input file.
+        processing,   // Handling data read from the input file.
+        closed,       // Input file has been closed.
+        failed        // Opening the file failed.
+    };
+
+    /**
+     * @brief  Gets the current state of the input reader.
+     *
+     * @return  The stored reader state.
+     */
+    State getState();
 
 private:
     /**
@@ -119,6 +132,8 @@ private:
     pthread_t threadID = 0;
     // File descriptor for the input file:
     int inputFile = 0;
+    // Current reader state:
+    State currentState = State::initializing;
     // Prevents simultaneous access to the input event file:
     std::mutex readerMutex;
 };
