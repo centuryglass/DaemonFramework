@@ -126,7 +126,8 @@ class BuildConfigTest:
         varNames = testDefs.MakeVars()
         return [varNames.installPath + '=' + str(self._installPath.path), \
                 varNames.parentPath  + '=' + str(self._parentPath.path), \
-                varNames.keyLimit    + '=' + str(self._keyLimit.limit)]
+                varNames.keyLimit    + '=' + str(self._keyLimit.limit), \
+                varNames.pipePath    + '=' + paths.keyPipePath]
     """Return the full description of this test's build arguments."""
     def description(self):
         return self._installPath.description() + ' ' \
@@ -180,14 +181,14 @@ class BuildConfigTestSet:
         installPathCount = len(self._installPaths)
         parentPathCount  = len(self._parentPaths)
         keyLimitCount    = len(self._keyLimits)
-        installIndex = index % installPathCount
-        index = index // installPathCount
+        keyLimitIndex = index % keyLimitCount
+        index = index // keyLimitCount
         parentIndex = index % parentPathCount
         index = index // parentPathCount
-        assert index < keyLimitCount
-        return BuildConfigTest(self._installPaths[installIndex], \
+        assert index < installPathCount
+        return BuildConfigTest(self._installPaths[index], \
                                self._parentPaths[parentIndex], \
-                               self._keyLimits[index])
+                               self._keyLimits[keyLimitIndex])
     """Allow the test set to be used as an iterator."""
     def __iter__(self):
         return self
