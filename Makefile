@@ -178,7 +178,7 @@ OBJECTS_APP := $(OBJDIR)/Main.o \
                $(OBJDIR)/KeyEventFiles.o \
                $(OBJDIR)/KeyReader.o \
                $(OBJDIR)/KeyCode.o \
-               $(OBJDIR)/CodePipe.o \
+               $(OBJDIR)/PipeWriter.o \
                $(OBJDIR)/Process_Data.o \
                $(OBJDIR)/Process_State.o \
                $(OBJDIR)/Process_Security.o \
@@ -253,8 +253,8 @@ $(OBJDIR)/KeyReader.o: \
 	Source/KeyReader.cpp
 $(OBJDIR)/KeyCode.o: \
 	Source/KeyCode.cpp
-$(OBJDIR)/CodePipe.o: \
-	Source/CodePipe.cpp
+$(OBJDIR)/PipeWriter.o: \
+	Source/PipeWriter.cpp
 $(OBJDIR)/Process_Data.o: \
 	Source/Process/Process_Data.cpp
 $(OBJDIR)/Process_State.o: \

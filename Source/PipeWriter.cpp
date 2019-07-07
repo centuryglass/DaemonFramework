@@ -1,4 +1,4 @@
-#include "CodePipe.h"
+#include "PipeWriter.h"
 #include <linux/input-event-codes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,10 +9,10 @@
 #include <stdlib.h>
 #include <iostream>
 
-static const constexpr char* messagePrefix = "KeyDaemon: CodePipe: ";
+static const constexpr char* messagePrefix = "KeyDaemon: PipeWriter: ";
 
 // Opens the pipe file on construction.
-CodePipe::CodePipe(const char* pipePath)
+PipeWriter::PipeWriter(const char* pipePath)
 {
     errno = 0;
     pipeFile = open(pipePath, O_WRONLY); 
@@ -26,7 +26,7 @@ CodePipe::CodePipe(const char* pipePath)
 
 
 // Closes the pipe on destruction.
-CodePipe::~CodePipe()
+PipeWriter::~PipeWriter()
 {
     if (pipeFile != 0)
     {
@@ -38,7 +38,7 @@ CodePipe::~CodePipe()
 
 // Sends a key code to the supported application through the named pipe.
 // Invalid codes will be ignored.
-void CodePipe::keyEvent(const int code, const KeyEventType type)
+void PipeWriter::keyEvent(const int code, const KeyEventType type)
 {
     std::lock_guard<std::mutex> pipeLock(lock);
     if (pipeFile == 0)

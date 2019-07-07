@@ -1,6 +1,6 @@
 #include "KeyReader.h"
 #include "KeyCode.h"
-#include "CodePipe.h"
+#include "PipeWriter.h"
 #include "Process_Security.h"
 #include "KeyEventFiles.h"
 #include <iostream>
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    CodePipe pipe(".keyPipe");
+    PipeWriter pipe(".keyPipe");
 
     // Create KeyReader objects for each keyboard event file:
     std::vector<KeyReader*> eventFileReaders;
@@ -49,7 +49,10 @@ int main(int argc, char** argv)
         // Find and remove failed file readers:
         for (int i = 0; i < eventFileReaders.size(); i++)
         {
-            if (! eventFileReaders[i]->isReading())
+            InputReader::State readerState = eventFileReaders[i]->getState();
+            if (readerState == InputReader::State::closed 
+                    || readerState == InputReader::State::failed)
+
             {
                 std::cerr << "Reader for path \"" 
                         << eventFileReaders[i]->getPath() 
@@ -70,11 +73,7 @@ int main(int argc, char** argv)
     }
     for (KeyReader* reader : eventFileReaders)
     {
-        std::cout << "KeyDaemon: Killing reader with path "
-                << reader->getPath() << "\n";
         reader->stopReading();
-        std::cout << "KeyDaemon: Stopped reader with path "
-                << reader->getPath() << "\n";
         delete reader;
     }
     eventFileReaders.clear();

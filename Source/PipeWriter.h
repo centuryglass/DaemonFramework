@@ -1,6 +1,6 @@
 #pragma once
 /**
- * @file  CodePipe.h
+ * @file  PipeWriter.h
  *
  * @brief  Sends relevant keyboard codes to the supported application.
  */
@@ -8,20 +8,20 @@
 #include "KeyReader.h"
 #include <mutex>
 
-class CodePipe;
+class PipeWriter;
 
 /**
  * @brief  Sends keyboard input codes to the application supported by the
  *         KeyDaemon.
  *
- *  On construction, CodePipe opens a named pipe at the given path string. All
+ *  On construction, PipeWriter opens a named pipe at the given path string. All
  * key codes will be transmitted through this pipe to the supported target
  * application.
  *
- *  If the CodePipe object cannot open the named pipe, it will print an error
+ *  If the PipeWriter object cannot open the named pipe, it will print an error
  * message and force close the KeyDaemon.
  */
-class CodePipe : public KeyReader::Listener
+class PipeWriter : public KeyReader::Listener
 {
 public:
     /**
@@ -30,12 +30,12 @@ public:
      * @param pipePath  The path where the pipe will be opened in the file
      *                  system.
      */
-    CodePipe(const char* pipePath);
+    PipeWriter(const char* pipePath);
 
     /**
      * @brief  Closes the pipe on destruction.
      */
-    virtual ~CodePipe();
+    virtual ~PipeWriter();
 
     /**
      * @brief  Sends a key code to the supported application through the named

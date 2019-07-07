@@ -1,6 +1,6 @@
 #pragma once
 /**
- * @file  CodePipe.h
+ * @file  PipeReader.h
  *
  * @brief  Opens the named pipe the KeyDaemon will use to send in key codes.
  */
@@ -8,16 +8,16 @@
 #include "InputReader.h"
 #include "KeyEventType.h"
 
-class CodePipe : public InputReader
+class PipeReader : public InputReader
 {
 public:
     /**
-     * @brief  Handles key events read by the CodePipe.
+     * @brief  Handles key events read by the PipeReader.
      */
     class Listener
     {
     private:
-        friend CodePipe;
+        friend PipeReader;
 
         /**
          * @brief  Processes a new keyboard input event.
@@ -33,13 +33,11 @@ public:
      * @brief  Opens a new named pipe at the given path on construction, and 
      *         starts listening for input in a new thread.
      *
-     * @param path      The path to where the pipe should be opened.
-     *
      * @param listener  The object that will handle keyboard input.
      */
-    CodePipe(const char* path, Listener* listener);
+    PipeReader(Listener* listener);
 
-    virtual ~CodePipe() { }
+    virtual ~PipeReader() { }
 
 private:
     /**

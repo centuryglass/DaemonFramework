@@ -17,9 +17,9 @@
 #include <atomic>
 #include <unistd.h>
 #include <pthread.h>
-#include "../../Parent_Include/CodePipe.h"
+#include "../../Parent_Include/PipeReader.h"
 
-static const constexpr char* pipePath = ".keyPipe";
+#define KEY_PIPE_PATH ".keyPipe";
 
 std::atomic_int returnValue;
 
@@ -30,8 +30,8 @@ struct SharedArgs
     char** argv;
 };
 
-// Used to run KeyDaemon within a new thread.
-void* threadAction(void* args)
+// Runs KeyDaemon within a new thread.
+void* daemonThreadAction(void* args)
 {
     SharedArgs* launchArgs = static_cast<SharedArgs*>(args);
     std::cout << "TestParent: Running from " << launchArgs->argv[0] << "\n";
@@ -47,8 +47,16 @@ void* threadAction(void* args)
     return nullptr;
 }
 
-// Prints key codes read from the CodePipe:
-class Listener : public CodePipe::Listener
+// Starts the key pipe reader within a new thread.
+void* pipeThreadAction(void* codePipe)
+{
+    PipeReader* pipe = static_cast<PipeReader*>(codePipe);
+    pipe->startReading();
+    return nullptr;
+}
+
+// Prints key codes read from the PipeReader:
+class Listener : public PipeReader::Listener
 {
 private:
     virtual void keyEvent(const int keyCode, const KeyEventType type)
@@ -64,17 +72,21 @@ int main(int argc, char** argv)
     const int maxInt = std::numeric_limits<int>::max();
     returnValue = maxInt;
     Listener eventListener;
-    CodePipe pipeReader(pipePath, &eventListener);
+    PipeReader pipeReader(&eventListener);
     pthread_t daemonThread = 0;
     SharedArgs args = {argc, argv};
-    int threadError = pthread_create(&daemonThread, nullptr, threadAction,
+    int threadError = pthread_create(&daemonThread, nullptr, daemonThreadAction,
             (void *) &args);
     if (threadError != 0)
     {
         std::cerr << "Failed to start KeyDaemon thread.\n";
         return 1;
     }
-    pipeReader.startReading();
+    // pipeReader starts in its own thread so that the application doesn't hang
+    // if the KeyDaemon fails and the pipe can't be opened:
+    pthread_t pipeOpenThread = 0;
+    threadError = pthread_create(&pipeOpenThread, nullptr, pipeThreadAction,
+            (void *) &pipeReader);
     pthread_join(daemonThread, nullptr);
     return returnValue;
 }

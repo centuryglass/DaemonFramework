@@ -1,4 +1,4 @@
-#include "CodePipe.h"
+#include "PipeReader.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -7,11 +7,15 @@
 #include <assert.h>
 #include <pthread.h>
 
+#ifndef KEY_PIPE_PATH
+  #error "Parent_Include::PipeReader: KEY_PIPE_PATH must be defined."
+#endif
+
 
 // Opens a new named pipe at the given path on construction, and starts
 // listening for input in a new thread.
-CodePipe::CodePipe(const char* path, Listener* listener) :
-    InputReader(path), listener(listener)
+PipeReader::PipeReader(Listener* listener) :
+    InputReader(KEY_PIPE_PATH), listener(listener)
 {
     errno = 0;
     if (mkfifo(getPath(), S_IRUSR) != 0)
@@ -22,7 +26,7 @@ CodePipe::CodePipe(const char* path, Listener* listener) :
 
 
 // Opens the pipe file, handling errors and reading options.
-int CodePipe::openFile()
+int PipeReader::openFile()
 {
     errno = 0;
     int pipeFileDescriptor = open(getPath(), O_RDONLY);
@@ -36,7 +40,7 @@ int CodePipe::openFile()
 
 
 // Processes new input from the pipe file.
-void CodePipe::processInput(const int inputBytes)
+void PipeReader::processInput(const int inputBytes)
 {
     if (listener == nullptr)
     {
@@ -46,7 +50,7 @@ void CodePipe::processInput(const int inputBytes)
     int code = 0;
     if (inputBytes >= bufSize)
     {
-        printf("KeyDaemon Parent CodePipe: invalid read size %d\n", inputBytes);
+        printf("KeyDaemon Parent PipeReader: invalid read size %d\n", inputBytes);
         assert(inputBytes < bufSize);
     }
     for (int i = 0; i < (inputBytes - 1); i++)
@@ -63,7 +67,7 @@ void CodePipe::processInput(const int inputBytes)
 
 // Gets the maximum size in bytes available within the object's pipe input
 // buffer.
-int CodePipe::getBufferSize() const
+int PipeReader::getBufferSize() const
 {
     return bufSize;
 }
@@ -71,7 +75,7 @@ int CodePipe::getBufferSize() const
 
 // Gets the buffer where the InputReader should read in new pipe input. This
 // buffer must have room for at least getBufferSize() bytes of data.
-void* CodePipe::getBuffer()
+void* PipeReader::getBuffer()
 {
     return (void*) buffer;
 }
