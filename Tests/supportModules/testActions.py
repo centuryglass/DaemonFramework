@@ -145,7 +145,7 @@ parentPath  -- The path to the executable that is allowed to launch KeyDaemon.
                If this is not a valid file, KeyDaemon will be launched directly.
 
 keyArgs     -- The list tracked keycodes passed to the KeyDaemon on launch.
-               The default value of "1" is just an arbitrary valid code.
+               The default value of 1 is just an arbitrary valid code.
 
 outFile     -- The file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
@@ -153,13 +153,12 @@ outFile     -- The file where test output from stdout and stderr will be sent.
 Return TestResult.runtimeError if the KeyDaemon aborted due to invalid input or
 insufficient security, TestResult.success if the KeyDaemon ran successfully.
 """
-def runTest(installPath, parentPath, keyArgs = '"1"', \
+def runTest(installPath, parentPath, keyArgs = '1', \
             outFile = subprocess.DEVNULL): 
     os.chdir(paths.projectDir)
     runTestArgs = []
     if (os.path.isfile(parentPath)):
         runTestArgs.append(parentPath)
-    runTestArgs.append(installPath)
     runTestArgs.append(keyArgs)
     completedProcess = subprocess.run(runTestArgs, \
                                   stdout = outFile, \
@@ -176,15 +175,15 @@ parentPath -- The path to the executable that is allowed to launch KeyDaemon.
               If this is not a valid file, KeyDaemon will be launched directly.
 
 keyArgs:   -- The list of tracked keycodes to pass to the KeyDaemon on launch.
-              The default value of "1" is just an arbitrary valid code.
+              The default value of 1 is just an arbitrary valid code.
 
 outFile:  --  The file where test output from stdout and stderr will be sent.
-             The default subprocess.DEVNULL value discards all output.
+              The default subprocess.DEVNULL value discards all output.
 
 Return a testDefs.TestResult result code describing whether or not the test
 failed, and if so, what step it failed on.
 """
-def fullTest(makeArgs, installPath, parentPath, keyArgs = '"1"', \
+def fullTest(makeArgs, installPath, parentPath, keyArgs = '1', \
              outFile = subprocess.DEVNULL):
     os.chdir(paths.projectDir)
     uninstall(makeArgs, outFile)
