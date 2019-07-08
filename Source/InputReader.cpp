@@ -1,12 +1,13 @@
 #include "InputReader.h"
-#include <iostream>
+#include "Debug.h"
 #include <unistd.h>
 #include <signal.h>
 #include <sys/select.h>
-#include <assert.h>
 
+#ifdef DEBUG
 // Print the application and class name before all info/error messages:
-static const constexpr char* messagePrefix = "KeyDaemon: InputReader: ";
+static const constexpr char* messagePrefix = "KeyDaemon: InputReader::";
+#endif
 
 // Milliseconds to wait on file input before pausing to see if the thread should
 // stop:
@@ -31,8 +32,8 @@ bool InputReader::startReading()
         std::lock_guard<std::mutex> lock(readerMutex);
         if (currentState == State::closed || currentState == State::failed)
         {
-            std::cerr << messagePrefix << __func__
-                    << ": InputReader already failed or was closed.\n";
+            DBG(messagePrefix << __func__
+                    << ": InputReader already failed or was closed.");
             return false;
         }
         if (currentState != State::initializing)
@@ -48,9 +49,14 @@ bool InputReader::startReading()
         if (inputFile == 0)
         {
             currentState = State::failed;
-            std::cerr << messagePrefix << __func__ 
-                    << ": Failed to open input file at \"" << path << "\"\n";
+            DBG(messagePrefix << __func__ << ": Failed to open input file at \""
+                    << path << "\"");
             return false;
+        }
+        else
+        {
+            DBG_V(messagePrefix << __func__ << ": Opened input file at \""
+                    << path << "\"");
         }
         currentState = State::opened;
     }
@@ -60,8 +66,8 @@ bool InputReader::startReading()
     if (threadError != 0)
     {
         std::lock_guard<std::mutex> lock(readerMutex);
-        std::cerr << messagePrefix << __func__
-                << ": Couldn't create new reader thread.\n";
+        DBG(messagePrefix << __func__
+                << ": Couldn't create new reader thread.");
         threadID = 0;
         closeInputFile();
         return false;
@@ -77,13 +83,17 @@ void InputReader::stopReading()
     // loop will terminate before it would try the next read call.
     if (pthread_equal(pthread_self(), threadID))
     {
-        assert (currentState == State::reading 
+        ASSERT(currentState == State::reading 
                 || currentState == State::processing);
+        DBG_V(messagePrefix << __func__ << ": closing reader for file \""
+                << getPath() << "\" from within its own reading thread.");
         closeInputFile();
         currentState = State::closed; // readerMutex should already be locked
         return;
     }
     std::lock_guard<std::mutex> lock(readerMutex);
+    DBG_V(messagePrefix << __func__ << ": closing reader for file \""
+            << getPath() << "\".");
     if (currentState != State::closed && currentState != State::failed)
     {
         closeInputFile();
@@ -134,12 +144,14 @@ void InputReader::readLoop()
                         getBufferSize());
                 if (errno != 0 || readSize == 0)
                 {
-                    std::cerr << messagePrefix << "Input reading failed, "
-                            << readSize << " bytes apparently read.\n";
-                    perror(messagePrefix);
+                    DBG(messagePrefix << __func__ << ": Input reading failed, "
+                            << readSize << " bytes apparently read.");
+                    #ifdef DEBUG
+                        perror(messagePrefix);
+                    #endif
                     closeInputFile();
-                    std::cout << messagePrefix << "Closed file "
-                            << getPath() << "\n";
+                    DBG(messagePrefix << __func__  << ": Closed file \"" 
+                            << getPath() << "\".");
                     currentState = State::closed;
                 }
                 else

@@ -1,4 +1,3 @@
-#pragma once
 /**
  * @file  Process_Security.h
  *
@@ -6,6 +5,7 @@
  *         and parent process.
  */
 
+#pragma once
 #include "Process_Data.h"
 #include <string>
 

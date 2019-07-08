@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  Process_State.h
  *
  * @brief  Lists all possible Linux process states.
  */
 
+#pragma once
 #include <string>
 
 namespace Process

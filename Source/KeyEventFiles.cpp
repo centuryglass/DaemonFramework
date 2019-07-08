@@ -1,10 +1,12 @@
 #include "KeyEventFiles.h"
-#include <iostream>
+#include "Debug.h"
 #include <fstream>
 #include <sstream>
 
-// Text to print before all console messages:
-static const constexpr char* messagePrefix = "KeyDaemon: KeyEventFiles:";
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix = "KeyDaemon: KeyEventFiles::";
+#endif
 
 // Directory where input device event queues are found:
 static const std::string eventDirPath = "/dev/input/";
@@ -26,8 +28,8 @@ std::vector<std::string> KeyEventFiles::getPaths()
     std::ifstream devFileReader(devFilePath);
     if (!devFileReader.is_open())
     {
-        std::cerr << messagePrefix << "Failed to open device file "
-                << devFilePath << "\n";
+        DBG(messagePrefix << __func__ << ": Failed to open device file \""
+                << devFilePath << "\"");
         return paths;
     }
     string line;
@@ -57,5 +59,7 @@ std::vector<std::string> KeyEventFiles::getPaths()
             }
         }
     }
+    DBG_V(messagePrefix << __func__ << ": Found " << paths.size()
+            << " keyboard event file paths.");
     return paths;
 }

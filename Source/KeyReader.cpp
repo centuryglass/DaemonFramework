@@ -1,14 +1,16 @@
 #include "KeyReader.h"
+#include "Debug.h"
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#include <iostream>
 #include <algorithm>
 
-// Text to print before all console messages:
-static const constexpr char* messagePrefix = "KeyDaemon: KeyReader: ";
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix = "KeyDaemon: KeyReader::";
+#endif
 
 // Initializes the KeyReader and starts listening for relevant keyboard events.
 KeyReader::KeyReader(const char* eventFilePath,
@@ -19,8 +21,15 @@ KeyReader::KeyReader(const char* eventFilePath,
 {
     if (! startReading())
     {
-        std::cerr << messagePrefix 
-                << "Failed to start listening to key events.";
+        DBG(messagePrefix << __func__ 
+                << ": Failed to start listening for key events from \""
+                << eventFilePath << "\"");
+    }
+    else
+    {
+        DBG_V(messagePrefix << __func__ 
+                << ": Started listening for key events from \"" << eventFilePath
+                << "\"");
     }
 }
 
@@ -33,10 +42,16 @@ int KeyReader::openFile()
     int keyEventFileDescriptor = open(getPath(), O_RDONLY);
     if (errno != 0)
     {
-        std::cerr << messagePrefix << "Failed to open keyboard event file!";
-        perror(messagePrefix);
+        DBG(messagePrefix << __func__ 
+                << ": Failed to open keyboard event file \"" << getPath() 
+                << "\"");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
         return 0;
     }
+    DBG_V(messagePrefix << __func__ 
+            << ": Opened keyboard event file \"" << getPath() << "\"");
     return keyEventFileDescriptor;
 }
 
@@ -48,10 +63,15 @@ void KeyReader::processInput(const int inputBytes)
     {
         // There's no point in listening for events if there's no listener to
         // hear them.
+        DBG(messagePrefix << __func__ 
+                << ": No listener found, ignoring input and closing file \""
+                << getPath() << "\"");
         stopReading();
         return;
     }
     const int eventsRead = inputBytes / sizeof(struct input_event);
+    DBG_V(messagePrefix << __func__ << ": Read " << eventsRead 
+            << " input events from \"" << getPath() << "\":");
     if (eventsRead > 0)
     {
         for (int i = 0; i < eventsRead; i++)
@@ -60,13 +80,29 @@ void KeyReader::processInput(const int inputBytes)
                     || eventBuffer[i].value 
                     >= (int) KeyEventType::trackedTypeCount)
             {
+                DBG_V(messagePrefix << __func__ << ": Event " << i
+                        << ": Ignoring irrelevant event with type "
+                        << eventBuffer[i].type << ", value " 
+                        << eventBuffer[i].value);
                 continue;
             }
             if (std::binary_search(trackedCodes.begin(), trackedCodes.end(),
                         eventBuffer[i].code))
             {
+                DBG_V(messagePrefix << __func__ << ": Event " << i
+                        << ": Sending tracked event of type "
+                        << eventBuffer[i].type << ", value " 
+                        << eventBuffer[i].value << ", code "
+                        << eventBuffer[i].code << " to Listener.");
                 listener->keyEvent(eventBuffer[i].code,
                         (KeyEventType) eventBuffer[i].value);
+            }
+            else
+            {
+                DBG_V(messagePrefix << __func__ << ": Event " << i
+                        << ": Ignoring event of type " << eventBuffer[i].type
+                        << ", value " << eventBuffer[i].value 
+                        << " with untracked code " << eventBuffer[i].code);
             }
         }
     }

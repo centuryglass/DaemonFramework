@@ -1,4 +1,3 @@
-#pragma once
 /**
  * @file  InputReader.h
  *
@@ -6,6 +5,7 @@
  *         within a new thread.
  */
 
+#pragma once
 #include <pthread.h>
 #include <vector>
 #include <mutex>

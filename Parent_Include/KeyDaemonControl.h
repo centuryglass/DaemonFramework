@@ -1,4 +1,3 @@
-#pragma once
 /**
  * @file  KeyDaemonControl.h
  *
@@ -6,6 +5,7 @@
  *         creates a PipeReader to receive piped key codes.
  */
 
+#pragma once
 #include "PipeReader.h"
 #include <pthread.h>
 #include <vector>

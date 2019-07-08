@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  Process_Data.h
  *
  * @brief  Stores information about a Linux process.
  */
 
+#pragma once
 #include <sys/types.h>
 #include <vector>
 #include <string>

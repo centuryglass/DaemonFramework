@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  KeyCode.h
  *
  * @brief  Reads and validates keyboard code values.
  */
 
+#pragma once
 #include <vector>
 
 namespace KeyCode

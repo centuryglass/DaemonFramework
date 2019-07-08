@@ -1,5 +1,6 @@
 #include "Process_Data.h"
 #include "Process_State.h"
+#include "../Debug.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -25,7 +26,7 @@ Process::Data::Data(const int processId) :
 Data(pathPre + std::to_string(processId) + pathPost)
 {
     // The parsed ID should always match the constructor ID if valid:
-    assert(!isValid() || this->processId == processId);
+    ASSERT(!isValid() || this->processId == processId);
 }
 
 

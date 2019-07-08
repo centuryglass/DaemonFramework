@@ -17,12 +17,16 @@
 #include <unistd.h>
 #include "../../Parent_Include/KeyDaemonControl.h"
 
+// Print the application name before all info/error output:
+static const constexpr char* messagePrefix = "TestParent: ";
+
 // Optional argument to print the daemon path and exit:
 #define PRINT_PATH_ARG "-PrintDaemonPath"
 
 #ifndef INSTALL_PATH
     #error "KeyDaemon install path INSTALL_PATH not defined!"
 #endif
+
 
 // Prints key codes read from the PipeReader:
 class Listener : public PipeReader::Listener
@@ -40,7 +44,7 @@ int main(int argc, char** argv)
 {
     if (argc != 2)
     {
-        std::cerr << "TestParent: Found " << argc 
+        std::cerr << messagePrefix << "Found " << argc 
                 << " arguments, expected 2.\n";
         return -1;
     }
@@ -51,10 +55,11 @@ int main(int argc, char** argv)
     }
     Listener eventListener;
     KeyDaemonControl daemonController(&eventListener);
+    std::cout << messagePrefix << "Starting KeyDaemon:\n";
     daemonController.startDaemon(argv[1]);
     if (!daemonController.isDaemonRunning())
     {
-        std::cerr << "TestParent: Failed to start KeyDaemon thread.\n";
+        std::cerr << messagePrefix << "Failed to start KeyDaemon thread.\n";
         return 1;
     }
     return daemonController.waitToExit();

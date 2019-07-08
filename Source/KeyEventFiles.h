@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  KeyEventFiles.h
  *
  * @brief  Finds, identifies, and opens Linux keyboard event files.
  */
 
+#pragma once
 #include <vector>
 #include <string>
 

@@ -1,13 +1,12 @@
 #include "KeyDaemonControl.h"
+#include "Debug.h"
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <stdio.h>
 #include <pthread.h>
-#include <assert.h>
 #include <string>
 #include <sstream>
-#include <iostream>
 
 #ifndef KEY_PIPE_PATH
   #error "Parent_Include::KeyDaemonControl: KEY_PIPE_PATH must be defined."
@@ -17,17 +16,23 @@
   #error "Parent_Include::KeyDaemonControl: INSTALL_PATH must be defined."
 #endif
 
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix
+    = "KeyDaemon Parent: KeyDaemonControl::";
+#endif
+
 // Seconds to wait before assuming the daemon process needs to be killed:
 static const constexpr int daemonTermTimeout = 2;
 
-// Prefix to print before error messages:
-static const constexpr char* messagePrefix = "KeyDaemonControl: ";
 
 // Starts the key pipe reader within a new thread.
 void* pipeThreadAction(void* codePipe)
 {
+    DBG_V(messagePrefix << __func__ << ": Opening PipeReader:");
     PipeReader* pipe = static_cast<PipeReader*>(codePipe);
     pipe->startReading();
+    DBG_V(messagePrefix << __func__ << ": PipeReader opened.");
     return nullptr;
 }
 
@@ -41,13 +46,14 @@ void KeyDaemonControl::startDaemon(const char** trackedKeyCodeArgs)
 {
     if (daemonProcess != 0)
     {
+        DBG(messagePrefix << __func__
+                << ": Aborting, daemon process is already running.");
         return;
     }
     if (trackedKeyCodeArgs == nullptr)
     {
-        std::cerr << messagePrefix << __func__ 
-                << ": No valid code arguments provided.\n";
-        assert(false);
+        DBG(messagePrefix << __func__ << ": No valid code arguments provided.");
+        ASSERT(false);
         return;
     }
     if (pipeReader.getState() == InputReader::State::initializing)
@@ -56,29 +62,23 @@ void KeyDaemonControl::startDaemon(const char** trackedKeyCodeArgs)
                 pipeThreadAction, &pipeReader);
         if (threadError != 0)
         {
-            std::cerr << messagePrefix << __func__
-                    << ": Failed to start pipeReader thread.\n";
+            DBG(messagePrefix << __func__
+                    << ": Failed to start pipeReader thread.");
             return;
         }
     }
     else
     {
-        std::cerr << messagePrefix << __func__ << ": pipeReader was not in "
-                << "expected state State::initializing.\n";
-        assert(false);
+        DBG(messagePrefix << __func__ << ": PipeReader was not in "
+                << "expected state State::initializing.");
+        ASSERT(false);
     }
-    std::cout << "Codes: ";
-    int idx = 0;
-    for (const char* arg = *trackedKeyCodeArgs; *arg != '\0'; arg++)
-    {
-        std::cout << idx << "[" << arg << "] ";
-        idx++;
-    }
-    std::cout << "\n";
 
     daemonProcess = fork();
     if (daemonProcess == 0) // If runnning the new process
     {
+        DBG_V(messagePrefix << __func__
+                << ": Daemon process started, launching " << INSTALL_PATH);
         int result = execv(INSTALL_PATH, (char* const*) trackedKeyCodeArgs);
     }
 }
@@ -89,6 +89,8 @@ void KeyDaemonControl::startDaemon(const char* trackedKeyCodeString)
 {
     if (daemonProcess != 0)
     {
+        DBG(messagePrefix << __func__
+                << ": Aborting, daemon process is already running.");
         return;
     }
     using std::string;
@@ -116,6 +118,8 @@ void KeyDaemonControl::startDaemon(const std::vector<int>& trackedKeyCodes)
 {
     if (daemonProcess != 0)
     {
+        DBG(messagePrefix << __func__
+                << ": Aborting, daemon process is already running.");
         return;
     }
     using std::string;
@@ -141,20 +145,29 @@ void KeyDaemonControl::stopDaemon()
 {
     if (daemonProcess != 0)
     {
+        DBG_V(messagePrefix << __func__ << ": Terminating daemon process "
+                << (int) daemonProcess);
         kill(daemonProcess, SIGTERM);
         sleep(daemonTermTimeout);
         if (isDaemonRunning()) // SIGTERM ignored, take more aggressive measures
         {
+            DBG_V(messagePrefix << __func__ 
+                    << ": Daemon process ignored SIGTERM, sending SIGKILL.");
             kill(daemonProcess, SIGKILL);
             int daemonStatus;
             waitpid(daemonProcess, &daemonStatus, 0);
             exitCode = WEXITSTATUS(daemonStatus);
             daemonProcess = 0;
+            DBG(messagePrefix << __func__
+                    << ": Daemon process exited with code " << exitCode);
         }
         // If the pipeReader is still opening, it's stuck and the pipeInitThread
         // will need to be forcibly killed.
         if (pipeReader.getState() == InputReader::State::opening)
         {
+            DBG_V(messagePrefix << __func__
+                    << ": PipeReader stuck opening the key event pipe, "
+                    << "cancelling the reader thread.");
             int cancelResult = pthread_cancel(pipeInitThread);
             if (cancelResult == 0)
             {
@@ -162,12 +175,16 @@ void KeyDaemonControl::stopDaemon()
             }
             else
             {
-                std::cerr << messagePrefix << __func__ 
+                DBG(messagePrefix << __func__ 
                         << ": pthread_cancel returned error code "
-                        << cancelResult << ".\n";
+                        << cancelResult);
             }
         }
-        pipeReader.stopReading();
+        else
+        {
+            DBG_V(messagePrefix << __func__ << ": Closing PipeReader:");
+            pipeReader.stopReading();
+        }
     }
 }
 
@@ -184,8 +201,10 @@ bool KeyDaemonControl::isDaemonRunning()
     pid_t waitResult = waitpid(daemonProcess, &daemonStatus, WNOHANG);
     if (waitResult == -1)
     {
-        std::cerr << messagePrefix << __func__ << " Error checking status:\n";
-        perror(messagePrefix);
+        DBG(messagePrefix << __func__ << ": Error checking status:\n");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
         daemonProcess = 0;
         return false;
     }
@@ -200,9 +219,10 @@ bool KeyDaemonControl::isDaemonRunning()
         return false;
     }
     // Result should always be one of the options above
-    std::cerr << messagePrefix << __func__ << ": Invalid wait result "
-            << (int) waitResult << "\n";
-    assert(false);
+    DBG(messagePrefix << __func__ << ": Invalid wait result "
+            << (int) waitResult);
+    ASSERT(false);
+    return false;
 }
 
 
@@ -222,9 +242,8 @@ int KeyDaemonControl::getExitCode()
 {
     if (isDaemonRunning())
     {
-        std::cerr << messagePrefix << __func__ 
-                << ": Daemon is still running!\n";
-        assert(false);
+        DBG(messagePrefix << __func__ << ": Daemon is still running!");
+        ASSERT(false);
         return 0;
     }
     return exitCode;
@@ -234,11 +253,14 @@ int KeyDaemonControl::getExitCode()
 // Waits until the daemon process terminates and gets the process exit code.
 int KeyDaemonControl::waitToExit()
 {
+    DBG_V(messagePrefix << __func__ << ": Waiting for daemon to exit...");
     if (isDaemonRunning())
     {
         int daemonStatus;
         waitpid(daemonProcess, &daemonStatus, 0);
         return WEXITSTATUS(daemonStatus);
     }
+    DBG_V(messagePrefix << __func__ << ": Daemon exited with code "
+            << exitCode);
     return exitCode;
 }

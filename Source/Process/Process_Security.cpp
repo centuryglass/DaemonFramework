@@ -1,12 +1,14 @@
 #include "Process_Security.h"
 #include "Process_State.h"
+#include "../Debug.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-#include <iostream>
 
-static const constexpr char* errorPrefix = "KeyDaemon: Process::Security::";
-
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix = "KeyDaemon: Process::Security::";
+#endif
 
 /**
  * @brief  Given a file path, return the path to that file's directory.
@@ -21,8 +23,8 @@ static std::string getDirectoryPath(const std::string& filePath)
     const size_t lastDirChar = filePath.find_last_of('/');
     if (lastDirChar == std::string::npos)
     {
-        std::cerr << errorPrefix << __func__
-                << ": Failed to find executable directory from path.\n";
+        DBG(messagePrefix << __func__
+                << ": Failed to find executable directory from path.");
         return std::string();
     }
     return filePath.substr(0, lastDirChar);
@@ -92,16 +94,15 @@ bool Process::Security::processSecured
 {
     if (! process.isValid())
     {
-        std::cerr << errorPrefix << __func__
-                << ": Process is not valid.\n";
+        DBG(messagePrefix << __func__ << ": Process is not valid.");
         return false;
     }
 
     if (path != process.getExecutablePath())
     {
-        std::cerr << errorPrefix << __func__
+        DBG(messagePrefix << __func__
                 << ": Process running from invalid executable path \""
-                << process.getExecutablePath() << "\".\n";
+                << process.getExecutablePath() << "\".");
         return false;
     }
     return true;
@@ -118,47 +119,45 @@ bool Process::Security::directorySecured(const std::string& dirPath) const
         switch (errno)
         {
             case EACCES:
-                std::cerr << errorPrefix << __func__
-                        << ": Failed to search path, security is uncertain.\n";
+                DBG(messagePrefix << __func__
+                        << ": Failed to search path, security is uncertain.");
                 return false;
             case EIO:
-                std::cerr << errorPrefix << __func__
-                        << ": Failed to read from file system.\n";
+                DBG(messagePrefix << __func__
+                        << ": Failed to read from file system.");
                 return false;
             case ELOOP:
-                std::cerr << errorPrefix << __func__
-                        << ": Encountered a symbolic link loop in the path.\n";
+                DBG(messagePrefix << __func__
+                        << ": Encountered a symbolic link loop in the path.");
                 return false;
             case ENAMETOOLONG:
             case ENOENT:
             case ENOTDIR:
             case EOVERFLOW:
-                std::cerr << errorPrefix << __func__
-                        << ": Invalid directory path.\n";
+                DBG(messagePrefix << __func__ << ": Invalid directory path.");
                 return false;
             default:
-                std::cerr << errorPrefix << __func__
-                        << ": Unexpected error type " << errno << "\n";
+                DBG(messagePrefix << __func__ << ": Unexpected error type " 
+                        << errno);
                 return false;
         }
     }
     if (! S_ISDIR(dirStats.st_mode))
     {
-        std::cerr << errorPrefix << __func__ << ": Path \"" << dirPath
-                << "\" was not a directory.\n";
+        DBG(messagePrefix << __func__ << ": Path \"" << dirPath
+                << "\" was not a directory.");
         return false;
     }
     if (dirStats.st_uid != 0 || dirStats.st_gid != 0)
     {
-        std::cerr << errorPrefix << __func__ << ": Directory \"" << dirPath 
-                << "\" is not exclusively owned by root.\n";
+        DBG(messagePrefix << __func__ << ": Directory \"" << dirPath 
+                << "\" is not exclusively owned by root.");
         return false;
     }
     if ((dirStats.st_mode & S_IWOTH) != 0)
     {
-        std::cerr << errorPrefix << __func__
-                << ": Write permissions for \"" << dirPath 
-                << "\" are not restricted to root.\n";
+        DBG(messagePrefix << __func__ << ": Write permissions for \"" << dirPath 
+                << "\" are not restricted to root.");
         return false;
     }
     return true;

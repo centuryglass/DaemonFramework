@@ -1,4 +1,3 @@
-#pragma once
 /**
  * @file  KeyEventType.h
  *
@@ -6,6 +5,7 @@
  *         sending keyboard events to KeyDaemon's parent process.
  */
 
+#pragma once
 enum class KeyEventType
 {
     released = 0,

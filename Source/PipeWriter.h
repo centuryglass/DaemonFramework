@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  PipeWriter.h
  *
  * @brief  Sends relevant keyboard codes to the supported application.
  */
 
+#pragma once
 #include "KeyReader.h"
 #include <mutex>
 

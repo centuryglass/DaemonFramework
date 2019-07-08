@@ -1,14 +1,20 @@
 #include "PipeReader.h"
+#include "Debug.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <assert.h>
 #include <pthread.h>
 
 #ifndef KEY_PIPE_PATH
   #error "Parent_Include::PipeReader: KEY_PIPE_PATH must be defined."
+#endif
+
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix 
+        = "KeyDaemon Parent: PipeReader::";
 #endif
 
 
@@ -20,7 +26,18 @@ PipeReader::PipeReader(Listener* listener) :
     errno = 0;
     if (mkfifo(getPath(), S_IRUSR) != 0)
     {
-        perror("PipeReader: Failed to create pipe for KeyDaemon");
+        DBG(messagePrefix << __func__ 
+                << ": Failed to create pipe for KeyDaemon at path \""
+                << KEY_PIPE_PATH << "\"");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
+    }
+    else
+    {
+        DBG_V(messagePrefix << __func__ 
+                << ": Created named FIFO pipe for KeyDaemon at path \""
+                << KEY_PIPE_PATH << "\"");
     }
 }
 
@@ -32,8 +49,19 @@ int PipeReader::openFile()
     int pipeFileDescriptor = open(getPath(), O_RDONLY);
     if (errno != 0)
     {
-        perror("PipeReader: Failed to open pipe for KeyDaemon");
+        DBG(messagePrefix << __func__ 
+                << ": Failed to open pipe for KeyDaemon at path \""
+                << KEY_PIPE_PATH << "\"");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
         return 0;
+    }
+    else
+    {
+        DBG_V(messagePrefix << __func__ 
+                << ": Opened pipe for KeyDaemon at path \"" << KEY_PIPE_PATH
+                << "\"");
     }
     return pipeFileDescriptor;
 }
@@ -44,23 +72,27 @@ void PipeReader::processInput(const int inputBytes)
 {
     if (listener == nullptr)
     {
+        DBG(messagePrefix << __func__ << ": No Listener, closing pipe.");
         stopReading();
         return;
     }
     int code = 0;
     if (inputBytes >= bufSize)
     {
-        printf("PipeReader: invalid read size %d\n", inputBytes);
-        assert(inputBytes < bufSize);
+        DBG(messagePrefix << __func__ << ": Invalid read size "
+                << inputBytes << ", expected <" << bufSize);
+        ASSERT(inputBytes < bufSize);
     }
     for (int i = 0; i < (inputBytes - 1); i++)
     {
         int charValue = buffer[i] - '0'; 
-        assert(charValue >= 0 && charValue <= 9);
+        ASSERT(charValue >= 0 && charValue <= 9);
         code *= 10;
         code += charValue;
     }
     KeyEventType type = (KeyEventType) buffer[inputBytes - 1];
+    DBG_V(messagePrefix << __func__ << ": Sending code " << code << ", type "
+            << (int) type << " to Listener.");
     listener->keyEvent(code, type);
 }
 

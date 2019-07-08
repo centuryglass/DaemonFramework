@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  PipeReader.h
  *
  * @brief  Opens the named pipe the KeyDaemon will use to send in key codes.
  */
 
+#pragma once
 #include "InputReader.h"
 #include "KeyEventType.h"
 

@@ -1,4 +1,5 @@
 #include "PipeWriter.h"
+#include "Debug.h"
 #include <linux/input-event-codes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,14 +8,15 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 
 #ifndef KEY_PIPE_PATH
   #error "KeyDaemon: PipeWriter: KEY_PIPE_PATH not defined!"
 #endif
 
-// Text to print before all console messages:
-static const constexpr char* messagePrefix = "KeyDaemon: PipeWriter: ";
+#ifdef DEBUG
+// Print the application and class name before all info/error messages:
+static const constexpr char* messagePrefix = "KeyDaemon: PipeWriter::";
+#endif
 
 // Opens the pipe file on construction.
 PipeWriter::PipeWriter()
@@ -23,16 +25,23 @@ PipeWriter::PipeWriter()
     pipeFile = open(KEY_PIPE_PATH, O_WRONLY); 
     if (errno != 0)
     {
-        std::cerr << messagePrefix << "Failed to open key code pipe!\n";
-        perror(messagePrefix);
+        DBG(messagePrefix << __func__ << ": Failed to open key code pipe \""
+                << KEY_PIPE_PATH << "\"");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
         pipeFile = 0;
     }
+    DBG_V(messagePrefix << __func__ << ": Opened key code pipe \""
+            << KEY_PIPE_PATH << "\"");
 }
 
 
 // Closes the pipe on destruction.
 PipeWriter::~PipeWriter()
 {
+    DBG_V(messagePrefix << __func__ << ": Closing key code pipe \""
+            << KEY_PIPE_PATH << "\"");
     if (pipeFile != 0)
     {
         close(pipeFile);
@@ -48,29 +57,29 @@ void PipeWriter::keyEvent(const int code, const KeyEventType type)
     std::lock_guard<std::mutex> pipeLock(lock);
     if (pipeFile == 0)
     {
-        std::cerr << messagePrefix
-            << "Failed to write key code, pipe file isn't open.\n";
+        DBG(messagePrefix << __func__
+                << ": Failed to write key code, pipe file isn't open.");
         return;
     }
     if (code <= KEY_RESERVED || code >= KEY_UNKNOWN)
     {
-        std::cerr << messagePrefix << "Code \"" << code
-                << "\" is not within the range of valid keyboard codes.\n";
+        DBG(messagePrefix << __func__ << ": Code \"" << code
+                << "\" is not within the range of valid keyboard codes.");
         return;
     }
     char codeBuffer[5];
     const int charCount = sprintf(codeBuffer, "%d", code);
     if (charCount <= 0)
     {
-        std::cerr << messagePrefix << "Code \"" << code
-                << "\" couldn't be converted to string.\n";
+        DBG(messagePrefix << __func__ << ": Code \"" << code
+                << "\" couldn't be converted to string.");
         return;
     }
     if (charCount > 3)
     {
-        std::cerr << messagePrefix << "Code \"" << code
+        DBG(messagePrefix << __func__ << ": Code \"" << code
                 << "\" was converted to " << charCount 
-                << " characters, but should have used no more than three.\n";
+                << " characters, but should have used no more than three.");
         return;
     }
     codeBuffer[charCount + 1] = '\0';
@@ -78,8 +87,10 @@ void PipeWriter::keyEvent(const int code, const KeyEventType type)
     errno = 0;
     if (write(pipeFile, codeBuffer, charCount + 1) == -1)
     {
-        std::cerr << messagePrefix
-            << "Failed to write key code to pipe file.\n";
-        perror(messagePrefix);
+        DBG(messagePrefix << __func__
+            << ": Failed to write key code to pipe file.");
+        #ifdef DEBUG
+            perror(messagePrefix);
+        #endif
     }
 }

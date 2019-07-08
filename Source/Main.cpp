@@ -4,10 +4,15 @@
 #include "Process_Security.h"
 #include "KeyEventFiles.h"
 #include "ExitCode.h"
-#include <iostream>
+#include "Debug.h"
 #include <vector>
 #include <unistd.h>
 #include <signal.h>
+
+#ifdef DEBUG
+// Text to print before all info/error messages:
+static const constexpr char* messagePrefix = "KeyDaemon: Main: ";
+#endif
 
 // Seconds to wait between each check on whether the parent process is running:
 static const constexpr int secondsBetweenParentChecks = 2;
@@ -15,12 +20,11 @@ static const constexpr int secondsBetweenParentChecks = 2;
 // Whether the daemon has received a termination signal:
 volatile sig_atomic_t termSignalReceived = 0;
 
-// Text to print before all console messages:
-static const constexpr char* messagePrefix = "KeyDaemon: Main: ";
-
 // Sets termSignalReceived when a termination signal is caught:
 void flagTermSignal(int signum)
 {
+    ASSERT(signum == SIGTERM);
+    DBG(messagePrefix << __func__ << ": Received SIGTERM");
     termSignalReceived = 1;
 }
 
@@ -36,18 +40,24 @@ int main(int argc, char** argv)
     Process::Security security;
     if (! security.validDaemonPath())
     {
+        DBG(messagePrefix << "Exiting, invalid daemon executable path.");
         return (int) ExitCode::badDaemonPath;
     }
     if (! security.validParentPath())
     {
+        DBG(messagePrefix << "Exiting, invalid parent executable path.");
         return (int) ExitCode::badParentPath;
     }
     if (! security.daemonPathSecured())
     {
+        DBG(messagePrefix 
+                << "Exiting, daemon executable is in an unsecured directory.");
         return (int) ExitCode::insecureDaemonDir;
     }
     if (! security.parentPathSecured())
     {
+        DBG(messagePrefix 
+                << "Exiting, parent executable is in an unsecured directory.");
         return (int) ExitCode::insecureParentDir;
     }
     
@@ -55,6 +65,7 @@ int main(int argc, char** argv)
     std::vector<int> testCodes = KeyCode::parseCodes(argc, argv);
     if (testCodes.empty())
     {
+        DBG(messagePrefix << "Exiting: tracked key codes were invalid.");
         return (int) ExitCode::badTrackedKeys;
     }
     PipeWriter pipe;
@@ -62,6 +73,8 @@ int main(int argc, char** argv)
     // Create KeyReader objects for each keyboard event file:
     std::vector<KeyReader*> eventFileReaders;
     std::vector<std::string> eventFilePaths = KeyEventFiles::getPaths();
+    DBG_V(messagePrefix << "Creating KeyReader objects for "
+            << eventFilePaths.size() << " event files:");
     for (const std::string& path : eventFilePaths)
     {
         eventFileReaders.push_back(
@@ -69,6 +82,7 @@ int main(int argc, char** argv)
     }
     if (eventFileReaders.empty())
     {
+        DBG(messagePrefix << "Exiting: no valid event files found.");
         return (int) ExitCode::missingKeyEventFiles;
     }
 
@@ -85,9 +99,11 @@ int main(int argc, char** argv)
                     || readerState == InputReader::State::failed)
 
             {
-                std::cerr << messagePrefix << "Reader for path \"" 
+                DBG(messagePrefix << "Reader for path \"" 
                         << eventFileReaders[i]->getPath() 
-                        << "\" stopped unexpectedly.\n";
+                        << "\" stopped unexpectedly, " 
+                        << (eventFileReaders.size() - 1) 
+                        << " readers remaining.");
                 KeyReader* removedReader = eventFileReaders[i];
                 eventFileReaders.erase(eventFileReaders.begin() + i);
                 delete removedReader;
@@ -96,15 +112,14 @@ int main(int argc, char** argv)
         }
 #ifdef TIMEOUT
         sleep(TIMEOUT);
-        std::cout << messagePrefix
-                << "Timeout period ended, exiting normally.\n";
+        DBG(messagePrefix << "Timeout period ended, shutting down daemon.");
         break;
 #else
         sleep(secondsBetweenParentChecks);
 #endif
     }
-    std::cout << messagePrefix << __func__ << ": Closing " 
-            << eventFileReaders.size() << " KeyReader objects:\n";
+    DBG_V(messagePrefix << __func__ << ": Closing " << eventFileReaders.size()
+            << " KeyReader objects:");
 
     for (KeyReader* reader : eventFileReaders)
     {
@@ -112,6 +127,6 @@ int main(int argc, char** argv)
         delete reader;
     }
     eventFileReaders.clear();
-    std::cout << messagePrefix << __func__ << ": Exiting:\n";
+    DBG(messagePrefix << "Exiting KeyDaemon.");
     return (int) ExitCode::success;
 }

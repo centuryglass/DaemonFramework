@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  KeyReader.h
  *
  * @brief  Reads and transmits specific keyboard key events.
  */
 
+#pragma once
 #include "KeyEventType.h"
 #include "InputReader.h"
 #include <vector>

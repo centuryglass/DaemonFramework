@@ -1,10 +1,10 @@
-#pragma once
 /**
  * @file  ExitCode.h
  *
  * @brief  Defines the exit codes the KeyDaemon may return.
  */
 
+#pragma once
 enum class ExitCode
 {
     // Normal exit, no errors:
