@@ -36,6 +36,15 @@ define HELPTEXT
 #
 # KEY_LIMIT:       The maximum number of keys that KeyDaemon may track. Set this
 #                 to the lowest number required by your application.
+#
+# CONFIG:          Set to 'Debug' to disable optimization, and enable debugging
+#                 and console output messages.  Set to 'Release' to enable
+#                 optimization and disable debugging and console output
+#                 messages.
+#
+# V:               Enable or disable verbose build output. In builds where
+#                 CONFIG=Debug, this will also enable verbose KeyDaemon debug
+#                 output.
 endef
 export HELPTEXT
 
@@ -129,6 +138,9 @@ ifeq ($(CONFIG),Debug)
     BUILD_TESTS ?= 1
     # Debug-specific preprocessor definitions:
     CONFIG_FLAGS = -DDEBUG=1 -D_DEBUG=1
+    ifeq ($(V), 1)
+        CONFIG_FLAGS := -DDEBUG_VERBOSE=1 $(CONFIG_FLAGS)
+    endif
 endif
 
 ifeq ($(CONFIG),Release)
