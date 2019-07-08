@@ -3,6 +3,7 @@
 #include "PipeWriter.h"
 #include "Process_Security.h"
 #include "KeyEventFiles.h"
+#include "ExitCode.h"
 #include <iostream>
 #include <vector>
 #include <unistd.h>
@@ -33,20 +34,28 @@ int main(int argc, char** argv)
 
     // Check security requirements:
     Process::Security security;
-    if (! security.appProcessSecured() || ! security.parentProcessSecured())
+    if (! security.validDaemonPath())
     {
-        std::cerr << messagePrefix
-                << "Insufficient security, stopping key daemon.\n";
-        return 1;
+        return (int) ExitCode::badDaemonPath;
+    }
+    if (! security.validParentPath())
+    {
+        return (int) ExitCode::badParentPath;
+    }
+    if (! security.daemonPathSecured())
+    {
+        return (int) ExitCode::insecureDaemonDir;
+    }
+    if (! security.parentPathSecured())
+    {
+        return (int) ExitCode::insecureParentDir;
     }
     
     // read code arguments:
     std::vector<int> testCodes = KeyCode::parseCodes(argc, argv);
     if (testCodes.empty())
     {
-        std::cerr << messagePrefix
-                << "Failed to get valid test codes, stopping key daemon.\n";
-        return 1;
+        return (int) ExitCode::badTrackedKeys;
     }
     PipeWriter pipe;
 
@@ -57,6 +66,10 @@ int main(int argc, char** argv)
     {
         eventFileReaders.push_back(
                 new KeyReader(path.c_str(), testCodes, &pipe));
+    }
+    if (eventFileReaders.empty())
+    {
+        return (int) ExitCode::missingKeyEventFiles;
     }
 
     // Allow KeyReaders to run, periodically removing failed readers and
@@ -90,11 +103,15 @@ int main(int argc, char** argv)
         sleep(secondsBetweenParentChecks);
 #endif
     }
+    std::cout << messagePrefix << __func__ << ": Closing " 
+            << eventFileReaders.size() << " KeyReader objects:\n";
+
     for (KeyReader* reader : eventFileReaders)
     {
         reader->stopReading();
         delete reader;
     }
     eventFileReaders.clear();
-    return 0;
+    std::cout << messagePrefix << __func__ << ": Exiting:\n";
+    return (int) ExitCode::success;
 }

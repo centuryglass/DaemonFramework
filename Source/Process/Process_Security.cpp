@@ -7,61 +7,70 @@
 
 static const constexpr char* errorPrefix = "KeyDaemon: Process::Security::";
 
+
+/**
+ * @brief  Given a file path, return the path to that file's directory.
+ *
+ * @param filePath  An absolute path to any file.
+ *
+ * @return          The path of the directory containing that file, or the empty
+ *                  string if filePath was formatted incorrectly.
+ */
+static std::string getDirectoryPath(const std::string& filePath)
+{
+    const size_t lastDirChar = filePath.find_last_of('/');
+    if (lastDirChar == std::string::npos)
+    {
+        std::cerr << errorPrefix << __func__
+                << ": Failed to find executable directory from path.\n";
+        return std::string();
+    }
+    return filePath.substr(0, lastDirChar);
+}
+
+
 // Loads process data on construction.
 Process::Security::Security()
 {
-    appProcess = Data(getpid());
-    if (appProcess.isValid())
+    daemonProcess = Data(getpid());
+    if (daemonProcess.isValid())
     {
-        parentProcess = Data(appProcess.getParentId());
+        parentProcess = Data(daemonProcess.getParentId());
     }
 }
 
 
-// Checks if this application's process is secure.
-bool Process::Security::appProcessSecured()
+// Checks if the KeyDaemon executable is running from the expected path.
+bool Process::Security::validDaemonPath()
 {
-#ifdef INSTALL_PATH
-    std::string installPath(INSTALL_PATH);
-    appProcess.update();
-    if (! processSecured(appProcess, installPath))
-    {
-        std::cerr << errorPrefix << __func__
-                << ": This application's process is insecure.\n";
-        return false;
-    }
-    return true;
-#else
-    std::cerr << errorPrefix << __func__
-        << ": No install path defined, security cannot be verified.\n";
-    return false;
-#endif
+    const std::string installPath(INSTALL_PATH);
+    return processSecured(daemonProcess, installPath);
 }
 
 
-// Checks if this application's parent process is secure.
-bool Process::Security::parentProcessSecured()
+// Checks if the KeyDaemon was launched by an executable at the expected path.
+bool Process::Security::validParentPath()
 {
-#ifdef PARENT_PATH
-    std::string parentPath(PARENT_PATH);
-    if (! parentProcessRunning())
-    {
-        std::cerr << errorPrefix << __func__
-                << ": The application's parent process is no longer alive.\n";
-        return false;
-    }
-    if(! processSecured(parentProcess, parentPath))
-    {
-        std::cerr << errorPrefix << __func__
-                << ": The application's parent process is insecure.\n";
-        return false;
-    }
-    return parentProcessRunning();
-#else
-    std::cerr << errorPrefix << __func__
-        << ": No parent path defined, security cannot be verified.\n";
-    return false;
-#endif
+    const std::string parentPath(PARENT_PATH);
+    return processSecured(parentProcess, parentPath);
+}
+
+
+// Checks if the KeyDaemon's directory is secure.
+bool Process::Security::daemonPathSecured()
+{
+    const std::string installPath(INSTALL_PATH);
+    const std::string installDir(getDirectoryPath(installPath));
+    return directorySecured(installDir);
+}
+
+
+// Checks if the parent application's directory is secure.
+bool Process::Security::parentPathSecured()
+{
+    const std::string parentPath(PARENT_PATH);
+    const std::string parentDir(getDirectoryPath(parentPath));
+    return directorySecured(parentDir);
 }
 
 
@@ -75,7 +84,6 @@ bool Process::Security::parentProcessRunning()
             && processState != State::dead
             && processState != State::invalid;
 }
-
 
 // Checks if a specific process is running from a specific expected path within
 // a secure directory.
@@ -94,22 +102,6 @@ bool Process::Security::processSecured
         std::cerr << errorPrefix << __func__
                 << ": Process running from invalid executable path \""
                 << process.getExecutablePath() << "\".\n";
-        return false;
-    }
-
-    const size_t lastDirChar = path.find_last_of('/');
-    if (lastDirChar == std::string::npos)
-    {
-        std::cerr << errorPrefix << __func__
-                << ": Failed to find executable directory from path.\n";
-        return false;
-    }
-
-    const std::string dirPath = path.substr(0, lastDirChar);
-    if (! directorySecured(dirPath))
-    {
-        std::cerr << errorPrefix << __func__
-                << ": Process is running from an unsecured directory.\n";
         return false;
     }
     return true;

@@ -23,7 +23,7 @@ public:
     /**
      * @brief  Stops reading and closes the input file.
      */
-    ~InputReader();
+    virtual ~InputReader();
 
     /**
      * @brief  Opens the input file and starts the input read loop if not

@@ -52,22 +52,38 @@ public:
     ~Security() { }
 
     /**
-     * @brief  Checks if this application's process is secure.
+     * @brief  Checks if the KeyDaemon executable is running from the expected
+     *         path.
      *
-     * @return  Whether the process is running the expected executable path, 
-     *          the executable directory is secure, and no other process is 
-     *          running from the same executable path.
+     * @return   Whether the KeyDaemon is running from the correct executable
+     *           path, as set at compile time.
      */
-    bool appProcessSecured();
+    bool validDaemonPath();
 
     /**
-     * @brief  Checks if this application's parent process is secure.
+     * @brief  Checks if the KeyDaemon was launched by an executable at the
+     *         expected path.
      *
-     * @return  Whether the parent process is running the expected executable
-     *          path, the executable directory is secure, and the parent process
-     *          is still running.
+     * @return  Whether the KeyDaemon's parent process is running from the
+     *          correct executable path, as set at compile time.
      */
-    bool parentProcessSecured();
+    bool validParentPath();
+
+    /**
+     * @brief  Checks if the KeyDaemon's directory is secure.
+     *
+     * @return  Whether the KeyDaemon's executable is in a directory that can
+     *          only be modified by root.
+     */
+    bool daemonPathSecured();
+
+    /**
+     * @brief  Checks if the parent application's directory is secure.
+     *
+     * @return  Whether the parent application's directory can only be modified
+     *          by root.
+     */
+    bool parentPathSecured();
 
     /**
      * @brief  Checks if this application's parent process is still running.
@@ -85,7 +101,7 @@ private:
      *
      * @param path     A path to an executable the process should be running.
      *
-     * @return         Whether the process meets all security conditions.
+     * @return         Whether the process is running from the expected path.
      */
     bool processSecured
     (const Process::Data& process, const std::string& path) const;
@@ -100,8 +116,8 @@ private:
      */
     bool directorySecured(const std::string& dirPath) const;
 
-    // This application's process data:
-    Process::Data appProcess;
+    // The KeyDaemon's process data:
+    Process::Data daemonProcess;
     // The parent process data:
     Process::Data parentProcess;
 };
