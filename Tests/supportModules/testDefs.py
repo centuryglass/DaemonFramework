@@ -63,7 +63,7 @@ class TestPaths:
         self._testExecDir    = os.path.join(self.testDir, 'testExecutables')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
         self._unsecureExeDir = os.path.join(self.testExecDir, 'unsecured')
-        self._buildDir = os.path.join(self._projectDir, 'build', 'Release')
+        self._buildDir = os.path.join(self._projectDir, 'build', 'Debug')
 
     # Directory paths:
     """Return the path to the main project directory. """
@@ -74,7 +74,7 @@ class TestPaths:
     @property
     def testDir(self):
         return self._testDir
-    """Return the path to the project's Release build directory."""
+    """Return the path to the project's Debug build directory."""
     @property
     def buildDir(self):
         return self._buildDir
@@ -184,4 +184,5 @@ def getValidTestMakeArgs(keyLimit = 1):
     return [ makeVarDefs.installPath + '=' + installPath, \
              makeVarDefs.parentPath  + '=' + parentPath, \
              makeVarDefs.pipePath    + '=' + pipePath, \
-             makeVarDefs.keyLimit    + '=' + str(keyLimit) ]
+             makeVarDefs.keyLimit    + '=' + str(keyLimit), \
+             'CONFIG=Debug' ]

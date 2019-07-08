@@ -127,7 +127,8 @@ class BuildConfigTest:
         return [varNames.installPath + '=' + str(self._installPath.path), \
                 varNames.parentPath  + '=' + str(self._parentPath.path), \
                 varNames.keyLimit    + '=' + str(self._keyLimit.limit), \
-                varNames.pipePath    + '=' + paths.keyPipePath]
+                varNames.pipePath    + '=' + paths.keyPipePath, \
+                'CONFIG=Debug' ]
     """Return the full description of this test's build arguments."""
     def description(self):
         return self._installPath.description() + ' ' \

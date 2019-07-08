@@ -22,7 +22,7 @@ def runTest(timeout = 10):
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
     codeRange   = codes.highestValidCode - codes.lowestValidCode
-    makeArgs = testDefs.getValidTestMakeArgs(codeRange)
+    makeArgs    = testDefs.getValidTestMakeArgs(codeRange)
     testActions.uninstall(makeArgs)
     result = testActions.buildInstall(makeArgs, installPath, runtime = timeout)
     if (not testActions.checkResult(result, TestResult.success, \

@@ -15,7 +15,7 @@ def runTest():
     paths       = testDefs.TestPaths()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs = testDefs.getValidTestMakeArgs()
+    makeArgs    = testDefs.getValidTestMakeArgs()
     result = testActions.fullTest(makeArgs, installPath, parentPath, \
                                   outFile = None)
     testActions.checkResult(result, TestResult.success, '1/1', \
