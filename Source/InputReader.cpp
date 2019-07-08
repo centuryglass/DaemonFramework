@@ -31,6 +31,8 @@ bool InputReader::startReading()
         std::lock_guard<std::mutex> lock(readerMutex);
         if (currentState == State::closed || currentState == State::failed)
         {
+            std::cerr << messagePrefix << __func__
+                    << ": InputReader already failed or was closed.\n";
             return false;
         }
         if (currentState != State::initializing)
@@ -46,8 +48,8 @@ bool InputReader::startReading()
         if (inputFile == 0)
         {
             currentState = State::failed;
-            std::cerr << messagePrefix << "Failed to open input file at \""
-                    << path << "\"\n";
+            std::cerr << messagePrefix << __func__ 
+                    << ": Failed to open input file at \"" << path << "\"\n";
             return false;
         }
         currentState = State::opened;
@@ -58,7 +60,8 @@ bool InputReader::startReading()
     if (threadError != 0)
     {
         std::lock_guard<std::mutex> lock(readerMutex);
-        std::cerr << messagePrefix << "Couldn't create new thread.\n";
+        std::cerr << messagePrefix << __func__
+                << ": Couldn't create new reader thread.\n";
         threadID = 0;
         closeInputFile();
         return false;

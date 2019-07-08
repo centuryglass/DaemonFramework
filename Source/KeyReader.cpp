@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 
+// Text to print before all console messages:
 static const constexpr char* messagePrefix = "KeyDaemon: KeyReader: ";
-static const constexpr int eventBufSize = 16;
 
 // Initializes the KeyReader and starts listening for relevant keyboard events.
 KeyReader::KeyReader(const char* eventFilePath,

@@ -20,7 +20,7 @@ PipeReader::PipeReader(Listener* listener) :
     errno = 0;
     if (mkfifo(getPath(), S_IRUSR) != 0)
     {
-        perror("Failed to create pipe for KeyDaemon");
+        perror("PipeReader: Failed to create pipe for KeyDaemon");
     }
 }
 
@@ -32,7 +32,7 @@ int PipeReader::openFile()
     int pipeFileDescriptor = open(getPath(), O_RDONLY);
     if (errno != 0)
     {
-        perror("Failed to open pipe for KeyDaemon");
+        perror("PipeReader: Failed to open pipe for KeyDaemon");
         return 0;
     }
     return pipeFileDescriptor;
@@ -50,7 +50,7 @@ void PipeReader::processInput(const int inputBytes)
     int code = 0;
     if (inputBytes >= bufSize)
     {
-        printf("KeyDaemon Parent PipeReader: invalid read size %d\n", inputBytes);
+        printf("PipeReader: invalid read size %d\n", inputBytes);
         assert(inputBytes < bufSize);
     }
     for (int i = 0; i < (inputBytes - 1); i++)

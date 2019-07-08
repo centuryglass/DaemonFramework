@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+// Text to print before all console messages:
 static const constexpr char* messagePrefix = "KeyDaemon: KeyEventFiles:";
 
 // Directory where input device event queues are found:
@@ -51,8 +52,6 @@ std::vector<std::string> KeyEventFiles::getPaths()
                 if (isKbdFile && ! eventFile.empty())
                 {
                     paths.push_back(eventDirPath + eventFile);
-                    std::cout << "Found keyboard event file " << eventDirPath
-                            << eventFile << "\n";
                     break;
                 }
             }

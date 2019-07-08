@@ -13,6 +13,7 @@
   #error "KeyDaemon: PipeWriter: KEY_PIPE_PATH not defined!"
 #endif
 
+// Text to print before all console messages:
 static const constexpr char* messagePrefix = "KeyDaemon: PipeWriter: ";
 
 // Opens the pipe file on construction.
@@ -53,7 +54,7 @@ void PipeWriter::keyEvent(const int code, const KeyEventType type)
     }
     if (code <= KEY_RESERVED || code >= KEY_UNKNOWN)
     {
-        std::cerr << messagePrefix << "Error: Code \"" << code
+        std::cerr << messagePrefix << "Code \"" << code
                 << "\" is not within the range of valid keyboard codes.\n";
         return;
     }
@@ -61,13 +62,13 @@ void PipeWriter::keyEvent(const int code, const KeyEventType type)
     const int charCount = sprintf(codeBuffer, "%d", code);
     if (charCount <= 0)
     {
-        std::cerr << messagePrefix << "Error: Code \"" << code
+        std::cerr << messagePrefix << "Code \"" << code
                 << "\" couldn't be converted to string.\n";
         return;
     }
     if (charCount > 3)
     {
-        std::cerr << messagePrefix << "Error: Code \"" << code
+        std::cerr << messagePrefix << "Code \"" << code
                 << "\" was converted to " << charCount 
                 << " characters, but should have used no more than three.\n";
         return;

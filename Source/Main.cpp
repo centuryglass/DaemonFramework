@@ -14,6 +14,9 @@ static const constexpr int secondsBetweenParentChecks = 2;
 // Whether the daemon has received a termination signal:
 volatile sig_atomic_t termSignalReceived = 0;
 
+// Text to print before all console messages:
+static const constexpr char* messagePrefix = "KeyDaemon: Main: ";
+
 // Sets termSignalReceived when a termination signal is caught:
 void flagTermSignal(int signum)
 {
@@ -23,7 +26,6 @@ void flagTermSignal(int signum)
 
 int main(int argc, char** argv)
 {
-    std::cout << "Launched KeyDaemon.\n";
     // Initialize termination signal handling:
     struct sigaction action = {};
     action.sa_handler = flagTermSignal;
@@ -33,7 +35,8 @@ int main(int argc, char** argv)
     Process::Security security;
     if (! security.appProcessSecured() || ! security.parentProcessSecured())
     {
-        std::cerr << "Insufficient security, stopping key daemon.\n";
+        std::cerr << messagePrefix
+                << "Insufficient security, stopping key daemon.\n";
         return 1;
     }
     
@@ -41,7 +44,8 @@ int main(int argc, char** argv)
     std::vector<int> testCodes = KeyCode::parseCodes(argc, argv);
     if (testCodes.empty())
     {
-        std::cerr << "Failed to get valid test codes, stopping key daemon.\n";
+        std::cerr << messagePrefix
+                << "Failed to get valid test codes, stopping key daemon.\n";
         return 1;
     }
     PipeWriter pipe;
@@ -49,13 +53,11 @@ int main(int argc, char** argv)
     // Create KeyReader objects for each keyboard event file:
     std::vector<KeyReader*> eventFileReaders;
     std::vector<std::string> eventFilePaths = KeyEventFiles::getPaths();
-    std::cout << "Found " << eventFilePaths.size() << " paths.\n";
     for (const std::string& path : eventFilePaths)
     {
         eventFileReaders.push_back(
                 new KeyReader(path.c_str(), testCodes, &pipe));
     }
-    std::cout << "Created " << eventFileReaders.size() << " readers.\n";
 
     // Allow KeyReaders to run, periodically removing failed readers and
     // checking that the parent is still running.
@@ -70,7 +72,7 @@ int main(int argc, char** argv)
                     || readerState == InputReader::State::failed)
 
             {
-                std::cerr << "Reader for path \"" 
+                std::cerr << messagePrefix << "Reader for path \"" 
                         << eventFileReaders[i]->getPath() 
                         << "\" stopped unexpectedly.\n";
                 KeyReader* removedReader = eventFileReaders[i];
@@ -81,7 +83,8 @@ int main(int argc, char** argv)
         }
 #ifdef TIMEOUT
         sleep(TIMEOUT);
-        std::cout << "KeyDaemon: Timeout period ended, exiting normally.\n";
+        std::cout << messagePrefix
+                << "Timeout period ended, exiting normally.\n";
         break;
 #else
         sleep(secondsBetweenParentChecks);
