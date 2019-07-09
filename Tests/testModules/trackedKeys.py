@@ -2,6 +2,9 @@
 Tests how KeyDaemon handles different valid and invalid key code arguments.
 """
 
+import sys, os
+moduleDir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(moduleDir, os.pardir))
 from supportModules import keyCodes, make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 

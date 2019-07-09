@@ -8,6 +8,9 @@ possible definitions for each of those arguments, and verifies that all possible
 combinations of those arguments succeed or fail as expected. 
 """
 
+import sys, os
+moduleDir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(moduleDir, os.pardir))
 from supportModules import make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod

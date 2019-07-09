@@ -1,7 +1,9 @@
 build/
 Tests/__pycache__/
 Tests/supportModules/__pycache__/
+Tests/testModulesModules/__pycache__/
 Tests/testExecutables/secured/
+Tests/testExecutables/.keyPipe
 Tests/testExecutables/unsecured/
 Tests/testExecutables/TestParent
 Tests/tempLog.txt

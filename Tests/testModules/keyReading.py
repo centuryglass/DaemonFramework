@@ -6,6 +6,9 @@ codes, and gives the tester a short period to press keys and see that the
 KeyDaemon responds appropriately.
 """
 
+import sys, os
+moduleDir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(moduleDir, os.pardir))
 from supportModules import keyCodes, make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 
