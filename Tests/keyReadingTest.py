@@ -6,9 +6,9 @@ codes, and gives the tester a short period to press keys and see that the
 KeyDaemon responds appropriately.
 """
 
-from supportModules import testDefs, testActions, make
+from supportModules import testDefs, testActions, make, keyCodes
 from supportModules.testActions import TestResult
-from supportModules.testDefs import TestPaths, KeyCodes
+from supportModules.testDefs import TestPaths
 
 """ 
 Starts the key event reading test.
@@ -19,7 +19,7 @@ testArgs -- A testActions.TestArgs argument object.
 def runTest(testArgs):
     print('Testing key event reading:')
     paths       = TestPaths()
-    codes       = KeyCodes()
+    codes       = keyCodes.constants
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
     codeRange   = codes.highestValidCode - codes.lowestValidCode

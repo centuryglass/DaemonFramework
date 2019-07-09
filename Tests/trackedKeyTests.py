@@ -2,9 +2,9 @@
 Tests how KeyDaemon handles different valid and invalid key code arguments.
 """
 
-from supportModules import testDefs, testActions, make
+from supportModules import testDefs, testActions, make, keyCodes
 from supportModules.testActions import TestResult
-from supportModules.testDefs import TestPaths, KeyCodes
+from supportModules.testDefs import TestPaths
 
 """
 Holds a key code argument string and the expected result of testing that string.
@@ -50,7 +50,7 @@ def numberStringSequence(firstNumber):
 
 #### Prepare key code argument tests:
 maxKeyCodeLimit = 5
-codes = KeyCodes()
+codes = keyCodes.constants
 maxCode = codes.highestValidCode
 minCode = codes.lowestValidCode
 keyArgTests = [ \

@@ -1,20 +1,6 @@
 """testDefs defines constant values used when testing the KeyDaemon project."""
 import os
 
-"""Defines Linux key code values."""
-class KeyCodes:
-    def __init__(self):
-        self._lowestValidCode = 1
-        self._highestValidCode = 239
-    """Return the lowest valid keyboard event code."""
-    @property
-    def lowestValidCode(self):
-        return self._lowestValidCode
-    """Return the highest valid keyboard event code."""
-    @property
-    def highestValidCode(self):
-        return self._highestValidCode
-
 """Defines path and filename constants used in testing."""
 class TestPaths:
     def __init__(self):
