@@ -45,6 +45,13 @@ public:
      */
     virtual void keyEvent(const int code, const KeyEventType type) override;
 
+    /**
+     * @brief  Closes the pipe file.
+     *
+     *  Any keyEvent() calls after the pipe file is closed will be ignored.
+     */
+    void closePipe();
+
 private:
     // Named pipe file descriptor:
     int pipeFile = 0;

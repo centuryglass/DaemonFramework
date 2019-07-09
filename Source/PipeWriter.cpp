@@ -40,13 +40,7 @@ PipeWriter::PipeWriter()
 // Closes the pipe on destruction.
 PipeWriter::~PipeWriter()
 {
-    DBG_V(messagePrefix << __func__ << ": Closing key code pipe \""
-            << KEY_PIPE_PATH << "\"");
-    if (pipeFile != 0)
-    {
-        close(pipeFile);
-        pipeFile = 0;
-    }
+    closePipe();
 }
 
 
@@ -92,5 +86,19 @@ void PipeWriter::keyEvent(const int code, const KeyEventType type)
         #ifdef DEBUG
             perror(messagePrefix);
         #endif
+    }
+}
+
+
+// Closes the pipe file.
+void PipeWriter::closePipe()
+{
+    std::lock_guard<std::mutex> pipeLock(lock);
+    DBG_V(messagePrefix << __func__ << ": Closing key code pipe \""
+            << KEY_PIPE_PATH << "\"");
+    if (pipeFile != 0)
+    {
+        close(pipeFile);
+        pipeFile = 0;
     }
 }

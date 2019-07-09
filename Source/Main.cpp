@@ -127,6 +127,7 @@ int main(int argc, char** argv)
         delete reader;
     }
     eventFileReaders.clear();
+    pipe.closePipe();
     DBG(messagePrefix << "Exiting KeyDaemon.");
     return (int) ExitCode::success;
 }
