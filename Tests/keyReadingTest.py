@@ -6,7 +6,7 @@ codes, and gives the tester a short period to press keys and see that the
 KeyDaemon responds appropriately.
 """
 
-from supportModules import testDefs, testActions
+from supportModules import testDefs, testActions, make
 from supportModules.testActions import TestResult
 from supportModules.testDefs import TestPaths, KeyCodes
 
@@ -23,17 +23,19 @@ def runTest(testArgs):
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
     codeRange   = codes.highestValidCode - codes.lowestValidCode
-    makeArgs    = testDefs.getMakeArgs(keyLimit = codeRange, \
-                                       debugBuild = testArgs.debugBuild, \
-                                       verbose = testArgs.verbose, 
-                                       timeout = 10)
-    testActions.uninstall(makeArgs)
-    result = testActions.buildInstall(makeArgs, installPath, \
+    makeArgs    = make.getBuildArgs(keyLimit = codeRange, \
+                                    debugBuild = testArgs.debugBuild, \
+                                    verbose = testArgs.verbose, 
+                                    timeout = 10)
+    make.uninstall(makeArgs)
+    result = testActions.testBuildInstall(makeArgs, installPath, \
                                       debugBuild = testArgs.debugBuild)
-    if (not testActions.checkResult(result, TestResult.success, \
-                                    'keyReadingTest', \
-                                    'Build/install KeyDaemon')):
-        return;
+    resultWasExpected = testActions.checkResult(result, TestResult.success, \
+                                                'keyReadingTest', \
+                                                'Build/install KeyDaemon')
+    if not resultWasExpected:
+        print('Failed to build KeyDaemon for key event reading test.')
+        return
     # Generate the list of all valid key codes:
     keyArgs = str(codes.lowestValidCode)
     for i in range(codes.lowestValidCode + 1, codes.highestValidCode):
@@ -44,16 +46,17 @@ def runTest(testArgs):
     print('Please press any keyboard key, ' \
           + 'and verify that the code is registered.')
     result = testActions.runTest(installPath, parentPath, keyArgs, None)
-    if (not testActions.checkResult(result, TestResult.success, \
-                                    'keyReadingTest', \
-                                    'running KeyDaemon')):
+    resultWasExpected = testActions.checkResult(result, TestResult.success, \
+                                                'keyReadingTest', \
+                                                'running KeyDaemon')
+    if not resultWasExpected:
         print('Failed to run KeyDaemon for key event reading test.')
 
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
     args = testActions.readArgs()
-    if (args.printHelp):
+    if args.printHelp:
         testDefs.printHelp('keyReadingTest.py', \
                            'Test if KeyDaemon correctly detects key events.')
     testActions.setup()

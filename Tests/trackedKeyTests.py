@@ -2,9 +2,9 @@
 Tests how KeyDaemon handles different valid and invalid key code arguments.
 """
 
-from supportModules import testDefs, testActions
+from supportModules import testDefs, testActions, make
 from supportModules.testActions import TestResult
-from supportModules.testDefs import MakeVars, TestPaths, KeyCodes
+from supportModules.testDefs import TestPaths, KeyCodes
 
 """
 Holds a key code argument string and the expected result of testing that string.
@@ -110,10 +110,10 @@ def runTests(testArgs):
     paths       = TestPaths()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs = testDefs.getMakeArgs(keyLimit = maxKeyCodeLimit, \
+    makeArgs    = make.getBuildArgs(keyLimit = maxKeyCodeLimit, \
                                     testArgs = testArgs)
-    testActions.uninstall(makeArgs)
-    testActions.buildInstall(makeArgs, installPath)
+    make.uninstall(makeArgs)
+    make.buildInstall(makeArgs, installPath)
     for index, argTest in enumerate(keyArgTests):
         logFile = open(paths.tempLogPath, 'w')
         indexString = 'Test ' + str(index + 1) + '/' + str(testCount)
@@ -124,7 +124,7 @@ def runTests(testArgs):
                                                 indexString, \
                                                 argTest.description, \
                                                 logFile)
-        if (resultMatched):
+        if resultMatched:
             testsPassed += 1
     print('Passed ' + str(testsPassed) + '/' + str(testCount) \
             + ' tracked keycode argument tests.\n')
@@ -132,7 +132,7 @@ def runTests(testArgs):
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
     args = testActions.readArgs()
-    if (args.printHelp):
+    if args.printHelp:
         testDefs.printHelp('trackedKeyTests.py', \
                            'Test different types of valid and invalid tracked '\
                            + 'key code KeyDaemon argument lists.')

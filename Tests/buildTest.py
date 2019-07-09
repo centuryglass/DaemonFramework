@@ -2,12 +2,11 @@
 Tests that KeyDaemon can be successfully compiled, installed, and executed.
 """
 
-from supportModules import testActions, testDefs
+from supportModules import testActions, testDefs, make
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
 paths = testDefs.TestPaths()
-makeVars = testDefs.MakeVars()
 
 """
 Attempts to build, install and run KeyDaemon with basic build options.
@@ -19,7 +18,7 @@ def runTest(testArgs):
     paths       = testDefs.TestPaths()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs    = testDefs.getMakeArgs(testArgs = testArgs)
+    makeArgs    = make.getBuildArgs(testArgs = testArgs)
     result = testActions.fullTest(makeArgs, installPath, parentPath, \
                                   outFile = None, \
                                   debugBuild = testArgs.debugBuild)
@@ -29,7 +28,7 @@ def runTest(testArgs):
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
     args = testActions.readArgs()
-    if (args.printHelp):
+    if args.printHelp:
         testDefs.printHelp('buildTest.py', \
                            'Test if KeyDaemon builds and runs with basic ' \
                            + 'valid arguments.')

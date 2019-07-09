@@ -1,53 +1,6 @@
 """testDefs defines constant values used when testing the KeyDaemon project."""
 import os
 
-"""Defines all relevant makefile variable names."""
-class MakeVars:
-    def __init__(self):
-        self._installPath = 'INSTALL_PATH'
-        self._parentPath  = 'PARENT_PATH'
-        self._pipePath    = 'KEY_PIPE_PATH'
-        self._keyLimit    = 'KEY_LIMIT'
-        self._timeout     = 'TIMEOUT'
-        self._configMode  = 'CONFIG'
-        self._verbose     = 'V'
-    """Return the KeyDaemon install path variable name."""
-    @property
-    def installPath(self):
-        return self._installPath
-    """
-    Return the KeyDaemon parent process path variable name.
-    KeyDaemon will only run if launched by an executable stored at this path.
-    """
-    @property
-    def parentPath(self):
-        return self._parentPath
-    """Return the KeyDaemon pipe file path variable name."""
-    @property
-    def pipePath(self):
-        return self._pipePath
-    """
-    Return the maximum tracked key codes variable name.
-    KeyDaemon will only track a limited number of key codes, not exceeding this
-    value.
-    """
-    @property
-    def keyLimit(self):
-        return self._keyLimit
-    """Return the KeyDaemon timeout period build variable name."""
-    @property
-    def timeout(self):
-        return self._timeout
-    """Return the Debug/Release mode build variable name."""
-    @property
-    def configMode(self):
-        return self._configMode
-    """Return the KeyDaemon verbose outbut build variable name."""
-    @property
-    def verbose(self):
-        return self._verbose
-makeVars = MakeVars()
-
 """Defines Linux key code values."""
 class KeyCodes:
     def __init__(self):
@@ -194,54 +147,6 @@ class TestPaths:
         return os.path.join(self.testDir, self._failureLog)
 paths = TestPaths()
 
-"""
-Gets a complete list of build arguments to pass to the 'make' command.
-
-All parameters have default test values provided. If all defaults are used, the
-KeyDaemon should always build, install, and run correctly.
-    
-Keyword Arguments:
-installPath  -- The path where the KeyDaemon will be installed.
-                (default: paths.appSecureExePath)
-parentPath   -- The path where the KeyDaemon's parent application should have.
-                (default: paths.parentSecureExePath)
-pipePath     -- The path to the named pipe the KeyDaemon uses to send codes.
-                (default: paths.keyPipePath)
-keyLimit     -- The maximum number of tracked key codes allowed. (default: 1)
-testArgs     -- A testActions.TestArgs object. (default: None)
-                If not None, this object's properties override all parameters
-                listed below.
-debugBuild   -- Whether the KeyDaemon builds in debug mode instead of release.
-                (default: True)
-verbose      -- Whether the KeyDaemon prints verbose build and runtime messages.
-                (default: False)
-timeout      -- Seconds before the KeyDaemon exits, or False to disable timeout.
-                (default: 1)
-"""
-def getMakeArgs(installPath = paths.appSecureExePath, \
-                         parentPath = paths.parentSecureExePath, \
-                         pipePath = paths.keyPipePath, \
-                         keyLimit = 1, \
-                         testArgs = None, \
-                         debugBuild = True, \
-                         verbose = False,
-                         timeout = 1):
-    if testArgs is not None:
-        debugBuild = testArgs.debugBuild
-        verbose = testArgs.verbose
-        if testArgs.timeout is not None:
-            timeout = testArgs.timeout
-    argList = [makeVars.installPath + '=' + installPath, \
-               makeVars.parentPath  + '=' + parentPath, \
-               makeVars.pipePath    + '=' + pipePath, \
-               makeVars.keyLimit    + '=' + str(keyLimit), \
-               makeVars.configMode  + '=' + 'Debug' if debugBuild \
-                                                       else 'Release']
-    if verbose:
-        argList.append(makeVars.verbose + '= 1')
-    if timeout:
-        argList.append(makeVars.timeout + '=' + str(timeout))
-    return argList
 
 """
 Prints help text describing the purpose of a test and all available command

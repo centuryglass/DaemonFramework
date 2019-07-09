@@ -4,10 +4,10 @@ Handles basic tasks needed to test compiling, installing, and running KeyDaemon.
 import os
 import subprocess
 from supportModules import testDefs
+from supportModules import make
 from enum import Enum
 
 paths = testDefs.TestPaths()
-makeVars = testDefs.MakeVars()
 
 """Defines possible test results, from least to most successful.""" 
 class TestResult(Enum):
@@ -48,13 +48,13 @@ def readArgs():
     timeout   = None
     import sys
     for arg in sys.argv[1:]:
-        if (arg == '-v'):
+        if arg == '-v':
             verbose = True
-        elif (arg == '-r'):
+        elif arg == '-r':
             debug = False  #Use release mode instead
-        elif (arg == '-h' or arg == '--help'):
+        elif arg == '-h' or arg == '--help':
             printHelp = True
-        elif (arg[:3] == '-t='):
+        elif arg[:3] == '-t=':
             timeout = int(arg[3:])
         else:
             print('Warning: argument "' + arg + '" not recognized.')
@@ -70,7 +70,7 @@ daemonPath  -- The path to the KeyDaemon executable launched by the TestParent.
 def buildParent(daemonPath = paths.appSecureExePath):
     buildTestParent = False
     # Check if test parent is already built and has the right daemon path:
-    if (not os.path.isfile(paths.parentBuildPath)):
+    if not os.path.isfile(paths.parentBuildPath):
         buildTestParent = True
     else:
         printPathArg = '-PrintDaemonPath'
@@ -85,18 +85,19 @@ def buildParent(daemonPath = paths.appSecureExePath):
     # were updated:
     parentSrcFiles = [paths.parentSourcePath]
     for filename in os.listdir(paths.includeDir):
-        if (filename.endswith('.cpp')):
+        if filename.endswith('.cpp'):
             parentSrcFiles.append(os.path.join(paths.includeDir, filename))
-    if (not buildTestParent):
+    if not buildTestParent:
         buildTime = os.path.getmtime(paths.parentBuildPath)
         for filename in parentSrcFiles:
-            if (os.path.getmtime(filename) > buildTime):
+            if os.path.getmtime(filename) > buildTime:
                 buildTestParent = True
                 break
-    if (buildTestParent):
+    if buildTestParent:
+        varNames = make.varNames
         buildArgs = ['g++', '-I' + paths.includeDir, '-pthread', '-g', '-ggdb',\
-                     '-D' + makeVars.installPath + '="' + daemonPath + '"', \
-                     '-D' + makeVars.pipePath + '="' + paths.keyPipePath + '"']\
+                     '-D' + varNames.installPath + '="' + daemonPath + '"', \
+                     '-D' + varNames.pipePath + '="' + paths.keyPipePath + '"']\
                     + parentSrcFiles + ['-o', paths.parentBuildPath]
         subprocess.call(buildArgs)
         subprocess.call('cp ' + paths.parentBuildPath + ' ' \
@@ -108,14 +109,14 @@ def buildParent(daemonPath = paths.appSecureExePath):
 """Ensures the testing environment is properly set up."""
 def setup():
     # Remove old failure log instances:
-    if (os.path.isfile(paths.failureLogPath)):
+    if os.path.isfile(paths.failureLogPath):
         os.remove(paths.failureLogPath)
     # Ensure unsecured test directory is initialized:
-    if (not os.path.isdir(paths.unsecureExeDir)):
+    if not os.path.isdir(paths.unsecureExeDir):
         os.mkdir(paths.unsecureExeDir)
         subprocess.call('chmod "o=w" ' + paths.unsecureExeDir, shell = True)
     # Ensure secured test directory is initialized:
-    if (not os.path.isdir(paths.secureExeDir)):
+    if not os.path.isdir(paths.secureExeDir):
         os.mkdir(paths.secureExeDir)
         subprocess.call('sudo chown root.root ' + paths.secureExeDir, \
                         shell = True)
@@ -123,24 +124,6 @@ def setup():
     buildParent() # Rebuild test parent if necessary.
     os.chdir(paths.projectDir)
 
-"""
-Uninstalls KeyDaemon and deletes all build files.
-
-Keyword Arguments:
-makeArgs -- The set of command line arguments to pass to the `make` process.
-            These are required to ensure that KeyDaemon is removed from the
-            correct installation path.
-
-outFile  -- A file where test output from stdout and stderr will be sent.
-            The default subprocess.DEVNULL value discards all output.
-"""
-def uninstall(makeArgs, outFile = subprocess.DEVNULL):
-    os.chdir(paths.projectDir)
-    subprocess.call(['make', 'uninstall'] + makeArgs, \
-                    stdout = outFile, \
-                    stderr = outFile)
-    subprocess.call(['make', 'clean'] + makeArgs, stdout = outFile, \
-                    stderr = outFile)
 
 """
 Builds and install KeyDaemon, returning an appropriate ResultCode.
@@ -155,28 +138,21 @@ installPath -- The full path where the KeyDaemon executable will be installed.
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 
-debugBuild  -- Whether the Keydaemon builds in debug or release mode.
-               (default: True)
+debugBuild  -- Whether the Keydaemon builds in debug mode. (default: True)
 
 Return TestResult.buildFailure if compilation fails, TestResult.installError
 if installation fails, or TestResult.success if no errors occur.
 """
-def buildInstall(makeArgs, installPath, outFile = subprocess.DEVNULL, \
+def testBuildInstall(makeArgs, installPath, outFile = subprocess.DEVNULL, \
                  debugBuild = True):
-    os.chdir(paths.projectDir)
     # Make sure the TestParent sets the correct daemon path:
     buildParent(installPath)
-    # Try to build:
-    subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
+    make.buildInstall(makeArgs, installPath, outFile, debugBuild)
     buildPath = paths.daemonDebugBuildPath if debugBuild \
                 else paths.daemonReleaseBuildPath
-    if (not os.path.isfile(buildPath)):
+    if not os.path.isfile(buildPath):
         return TestResult.buildFailure
-    # Try to install:
-    subprocess.call(['make', 'install'] + makeArgs, \
-                    stdout = outFile, \
-                    stderr = outFile)
-    if (not os.path.isfile(installPath)):
+    if not os.path.isfile(installPath):
         return TestResult.installError
     return TestResult.success
 
@@ -202,7 +178,7 @@ def runTest(installPath, parentPath, keyArgs = '1', \
             outFile = subprocess.DEVNULL): 
     os.chdir(paths.projectDir)
     runTestArgs = []
-    if (os.path.isfile(parentPath)):
+    if os.path.isfile(parentPath):
         runTestArgs.append(parentPath)
     else:
         runTestArgs.append(installPath)
@@ -210,7 +186,7 @@ def runTest(installPath, parentPath, keyArgs = '1', \
     completedProcess = subprocess.run(runTestArgs, \
                                   stdout = outFile, \
                                   stderr = outFile)
-    if (completedProcess.returncode == 0):
+    if completedProcess.returncode == 0:
         return TestResult.success
     return TestResult.runtimeError
 
@@ -240,9 +216,9 @@ failed, and if so, what step it failed on.
 def fullTest(makeArgs, installPath, parentPath, keyArgs = '1', \
              outFile = subprocess.DEVNULL, debugBuild = True):
     os.chdir(paths.projectDir)
-    uninstall(makeArgs, outFile)
-    makeResult = buildInstall(makeArgs, installPath, outFile, debugBuild)
-    if (makeResult != TestResult.success):
+    make.uninstall(makeArgs, outFile)
+    makeResult = testBuildInstall(makeArgs, installPath, outFile, debugBuild)
+    if makeResult != TestResult.success:
         return makeResult
     return runTest(installPath, parentPath, keyArgs, outFile)
 
@@ -261,9 +237,9 @@ testFile    -- A file object storing test output from stdout and stderr.
 Returns true if the test result was as expected, false otherwise.
 """
 def checkResult(result, expected, index, description, testFile = None):
-    if (testFile != None):
+    if testFile is not None:
         testFile.close()
-    if (result.value == expected.value):
+    if result.value == expected.value:
         print(index + ' passed with expected result ' + expected.name)
         if (os.path.isfile(paths.tempLogPath)):
             os.remove(paths.tempLogPath)
@@ -274,7 +250,7 @@ def checkResult(result, expected, index, description, testFile = None):
                            + ', actual result: ' + result.name
         print(failureDescription)
         print('Test description: ' + description)
-        if (testFile != None):
+        if testFile is not None:
             print('See ' + paths.failureLog + ' for more information.')
             with open(paths.tempLogPath, 'r') as tempLog:
                 with open(paths.failureLogPath, 'a') as failureLog:
@@ -284,6 +260,6 @@ def checkResult(result, expected, index, description, testFile = None):
                     errorLines = tempLog.readlines()
                     errorLines = [ '\t' + line for line in errorLines]
                     failureLog.writelines(errorLines)
-        if (os.path.isfile(paths.tempLogPath)):
+        if os.path.isfile(paths.tempLogPath):
             os.remove(paths.tempLogPath)
         return False

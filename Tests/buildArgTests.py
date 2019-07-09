@@ -8,12 +8,11 @@ possible definitions for each of those arguments, and verifies that all possible
 combinations of those arguments succeed or fail as expected. 
 """
 
-from supportModules import testActions, testDefs
+from supportModules import testActions, testDefs, make
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
 paths = testDefs.paths
-makeVars = testDefs.makeVars
 
 """An abstract basis for classes that store information about a tested path."""
 class AbstractPath(ABC):
@@ -115,10 +114,10 @@ class BuildConfigTest:
         # of all of their build options:
         worstResult = installPath.expectedResult
         nextResult = parentPath.expectedResult
-        if(nextResult.value < worstResult.value):
+        if nextResult.value < worstResult.value:
             worstResult = nextResult
         nextResult = keyLimit.expectedResult
-        if(nextResult.value < worstResult.value):
+        if nextResult.value < worstResult.value:
             worstResult = nextResult
         self._expectedResult = worstResult
     """
@@ -127,10 +126,10 @@ class BuildConfigTest:
     testArgs -- A testActions.TestArgs argument object.
     """
     def getMakeArgs(self, testArgs):
-        return testDefs.getMakeArgs(installPath = self._installPath.path, \
-                                    parentPath  = self._parentPath.path, \
-                                    keyLimit    = self._keyLimit.limit, \
-                                    testArgs    = testArgs)
+        return make.getBuildArgs(installPath = self._installPath.path, \
+                                 parentPath  = self._parentPath.path, \
+                                 keyLimit    = self._keyLimit.limit, \
+                                 testArgs    = testArgs)
 
     """Return the full description of this test's build arguments."""
     def description(self):
@@ -274,7 +273,7 @@ def runTests(testArgs):
                                       debugBuild = testArgs.debugBuild)
         resultMatched = testActions.checkResult(result, expected, indexStr, \
                                                 description, logFile)
-        if (resultMatched):
+        if resultMatched:
             testsPassed += 1
     print('Passed ' + str(testsPassed) + '/' + str(testCount) \
           + ' build argument tests.\n')
