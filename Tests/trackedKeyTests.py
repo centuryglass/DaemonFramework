@@ -2,7 +2,7 @@
 Tests how KeyDaemon handles different valid and invalid key code arguments.
 """
 
-from supportModules import testDefs, testActions, make, keyCodes, pathConstants
+from supportModules import keyCodes, make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 
 """
@@ -100,7 +100,7 @@ keyArgTests = [ \
 """
 Run all tracked key code argument tests. 
 Keyword Arguments:
-testArgs -- A testActions.TestArgs argument object.
+testArgs -- A testArgs.Values argument object.
 """
 def runTests(testArgs):
     print('Running tracked keycode argument tests:')
@@ -130,7 +130,7 @@ def runTests(testArgs):
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
-    args = testActions.readArgs()
+    args = testArgs.read()
     if args.printHelp:
         testDefs.printHelp('trackedKeyTests.py', \
                            'Test different types of valid and invalid tracked '\

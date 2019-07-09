@@ -8,7 +8,7 @@ possible definitions for each of those arguments, and verifies that all possible
 combinations of those arguments succeed or fail as expected. 
 """
 
-from supportModules import testActions, testDefs, make, pathConstants
+from supportModules import make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
@@ -254,7 +254,7 @@ buildConfigTests.addKeyLimit(KeyLimit(20, \
 """
 Runs all build variable combination tests.
 Keyword Arguments:
-testArgs -- A testActions.TestArgs argument object.
+testArgs -- A testArgs.Values argument object.
 """
 def runTests(testArgs):
     print('Running compilation argument tests:')
@@ -280,7 +280,7 @@ def runTests(testArgs):
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
-    args = testActions.readArgs()
+    args = testArgs.read()
     if (args.printHelp):
         testDefs.printHelp('buildArgTests.py', \
                            'Test combinations of valid and/or invalid ' \

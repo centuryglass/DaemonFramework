@@ -4,7 +4,7 @@ Provides constants and functions used when building KeyDaemon with the Unix
 """
 import os
 import subprocess
-from supportModules import testDefs, pathConstants
+from supportModules import pathConstants
 paths = pathConstants.paths
 
 """Defines all relevant makefile variable names."""
@@ -68,7 +68,7 @@ parentPath   -- The path where the KeyDaemon's parent application should have.
 pipePath     -- The path to the named pipe the KeyDaemon uses to send codes.
                 (default: paths.keyPipePath)
 keyLimit     -- The maximum number of tracked key codes allowed. (default: 1)
-testArgs     -- A testActions.TestArgs object. (default: None)
+testArgs     -- A testArgs.Values object. (default: None)
                 If not None, this object's properties override all parameters
                 listed below.
 debugBuild   -- Whether the KeyDaemon builds in debug mode instead of release.

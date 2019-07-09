@@ -6,14 +6,14 @@ codes, and gives the tester a short period to press keys and see that the
 KeyDaemon responds appropriately.
 """
 
-from supportModules import testDefs, testActions, make, keyCodes, pathConstants
+from supportModules import keyCodes, make, pathConstants, testActions, testArgs
 from supportModules.testActions import TestResult
 
 """ 
 Starts the key event reading test.
 If no timeout period is provided, ten seconds is used by default.
 Keyword Arguments:
-testArgs -- A testActions.TestArgs argument object.
+testArgs -- A testArgs.Values argument object.
 """
 def runTest(testArgs):
     print('Testing key event reading:')
@@ -54,7 +54,7 @@ def runTest(testArgs):
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
-    args = testActions.readArgs()
+    args = testArgs.read()
     if args.printHelp:
         testDefs.printHelp('keyReadingTest.py', \
                            'Test if KeyDaemon correctly detects key events.')

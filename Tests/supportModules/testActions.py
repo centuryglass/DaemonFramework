@@ -3,7 +3,7 @@ Handles basic tasks needed to test compiling, installing, and running KeyDaemon.
 """
 import os
 import subprocess
-from supportModules import pathConstants, testDefs, make
+from supportModules import make, pathConstants
 from enum import Enum
 
 paths = pathConstants.paths
@@ -14,51 +14,6 @@ class TestResult(Enum):
     installError = 1
     runtimeError = 2
     success = 3
-
-"""Holds the values of a test's command line arguments."""
-class TestArgs():
-    def __init__(self, verbose, debugBuild, printHelp, timeout = None):
-        self._verbose    = verbose
-        self._debugBuild = debugBuild
-        self._printHelp  = printHelp
-        self._timeout    = timeout
-    """Return whether the test should print verbose output messages."""
-    @property
-    def verbose(self):
-        return self._verbose
-    """Return whether the test should build in Debug mode."""
-    @property
-    def debugBuild(self):
-        return self._debugBuild
-    """Return whether the test should print help information and exit."""
-    @property
-    def printHelp(self):
-        return self._printHelp
-    """Return how long the KeyDaemon should run before closing automatically."""
-    @property
-    def timeout(self):
-        return self._timeout
-
-"""Read command line arguments and returns them as a TestArgs object."""
-def readArgs():
-    verbose   = False
-    debug     = True
-    printHelp = False
-    timeout   = None
-    import sys
-    for arg in sys.argv[1:]:
-        if arg == '-v':
-            verbose = True
-        elif arg == '-r':
-            debug = False  #Use release mode instead
-        elif arg == '-h' or arg == '--help':
-            printHelp = True
-        elif arg[:3] == '-t=':
-            timeout = int(arg[3:])
-        else:
-            print('Warning: argument "' + arg + '" not recognized.')
-    return TestArgs(verbose, debug, printHelp)
-
 
 """
 Builds and installs the TestParent application, setting the KeyDaemon file path.

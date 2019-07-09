@@ -1,14 +1,13 @@
 #!/usr/bin/python
 """Runs all KeyDaemon tests scripts."""
 
-from supportModules import testActions
-from supportModules import testDefs
+from supportModules import testActions, testArgs
 import buildTest
 import buildArgTests
 import trackedKeyTests
 import keyReadingTest
 
-args = testActions.readArgs()
+args = testArgs.read()
 if (args.printHelp):
     testDefs.printHelp('TestAll.py', 'Runs all KeyDaemon tests.')
 testActions.setup()
