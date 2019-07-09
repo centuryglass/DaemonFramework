@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <limits>
 #include <unistd.h>
-#include "../../Parent_Include/KeyDaemonControl.h"
+#include "../../Include/KeyDaemonControl.h"
 
 // Print the application name before all info/error output:
 static const constexpr char* messagePrefix = "TestParent: ";
