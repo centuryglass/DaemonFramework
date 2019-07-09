@@ -12,19 +12,24 @@ from supportModules.testDefs import TestPaths, KeyCodes
 
 """ 
 Starts the key event reading test.
+If no timeout period is provided, ten seconds is used by default.
 Keyword Arguments:
-timeout -- Number of seconds to listen for input events. (default: 10)
+testArgs -- A testActions.TestArgs argument object.
 """
-def runTest(timeout = 10):
+def runTest(testArgs):
     print('Testing key event reading:')
     paths       = TestPaths()
     codes       = KeyCodes()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
     codeRange   = codes.highestValidCode - codes.lowestValidCode
-    makeArgs    = testDefs.getValidTestMakeArgs(codeRange)
+    makeArgs    = testDefs.getMakeArgs(keyLimit = codeRange, \
+                                       debugBuild = testArgs.debugBuild, \
+                                       verbose = testArgs.verbose, 
+                                       timeout = 10)
     testActions.uninstall(makeArgs)
-    result = testActions.buildInstall(makeArgs, installPath, runtime = timeout)
+    result = testActions.buildInstall(makeArgs, installPath, \
+                                      debugBuild = testArgs.debugBuild)
     if (not testActions.checkResult(result, TestResult.success, \
                                     'keyReadingTest', \
                                     'Build/install KeyDaemon')):
@@ -33,7 +38,9 @@ def runTest(timeout = 10):
     keyArgs = str(codes.lowestValidCode)
     for i in range(codes.lowestValidCode + 1, codes.highestValidCode):
         keyArgs = keyArgs + ' ' + str(i)
-    print('Running key event reading test for ' + str(timeout) + ' seconds.')
+    print('Running key event reading test for ' \
+            + str(testArgs.timeout if testArgs.timeout is not None else 10) \
+            + ' seconds.')
     print('Please press any keyboard key, ' \
           + 'and verify that the code is registered.')
     result = testActions.runTest(installPath, parentPath, keyArgs, None)
@@ -45,9 +52,9 @@ def runTest(timeout = 10):
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
-    import sys
+    args = testActions.readArgs()
+    if (args.printHelp):
+        testDefs.printHelp('keyReadingTest.py', \
+                           'Test if KeyDaemon correctly detects key events.')
     testActions.setup()
-    if (len(sys.argv) > 1):
-        runTest(sys.argv[1])
-    else:
-        runTest()
+    runTest(args)

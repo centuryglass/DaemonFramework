@@ -9,19 +9,29 @@ from abc import ABC, abstractmethod
 paths = testDefs.TestPaths()
 makeVars = testDefs.MakeVars()
 
-"""Attempts to build, install and run KeyDaemon with basic build options."""
-def runTest():
+"""
+Attempts to build, install and run KeyDaemon with basic build options.
+Keyword Arguments:
+testArgs -- A testActions.TestArgs argument object.
+"""
+def runTest(testArgs):
     print('Running basic build/install/run test:')
     paths       = testDefs.TestPaths()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs    = testDefs.getValidTestMakeArgs()
+    makeArgs    = testDefs.getMakeArgs(testArgs = testArgs)
     result = testActions.fullTest(makeArgs, installPath, parentPath, \
-                                  outFile = None)
+                                  outFile = None, \
+                                  debugBuild = testArgs.debugBuild)
     testActions.checkResult(result, TestResult.success, '1/1', \
                             '', testFile = None)
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
+    args = testActions.readArgs()
+    if (args.printHelp):
+        testDefs.printHelp('buildTest.py', \
+                           'Test if KeyDaemon builds and runs with basic ' \
+                           + 'valid arguments.')
     testActions.setup()
-    runTest()
+    runTest(args)

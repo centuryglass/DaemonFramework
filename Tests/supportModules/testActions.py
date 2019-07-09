@@ -16,6 +16,51 @@ class TestResult(Enum):
     runtimeError = 2
     success = 3
 
+"""Holds the values of a test's command line arguments."""
+class TestArgs():
+    def __init__(self, verbose, debugBuild, printHelp, timeout = None):
+        self._verbose    = verbose
+        self._debugBuild = debugBuild
+        self._printHelp  = printHelp
+        self._timeout    = timeout
+    """Return whether the test should print verbose output messages."""
+    @property
+    def verbose(self):
+        return self._verbose
+    """Return whether the test should build in Debug mode."""
+    @property
+    def debugBuild(self):
+        return self._debugBuild
+    """Return whether the test should print help information and exit."""
+    @property
+    def printHelp(self):
+        return self._printHelp
+    """Return how long the KeyDaemon should run before closing automatically."""
+    @property
+    def timeout(self):
+        return self._timeout
+
+"""Read command line arguments and returns them as a TestArgs object."""
+def readArgs():
+    verbose   = False
+    debug     = True
+    printHelp = False
+    timeout   = None
+    import sys
+    for arg in sys.argv[1:]:
+        if (arg == '-v'):
+            verbose = True
+        elif (arg == '-r'):
+            debug = False  #Use release mode instead
+        elif (arg == '-h' or arg == '--help'):
+            printHelp = True
+        elif (arg[:3] == '-t='):
+            timeout = int(arg[3:])
+        else:
+            print('Warning: argument "' + arg + '" not recognized.')
+    return TestArgs(verbose, debug, printHelp)
+
+
 """
 Builds and installs the TestParent application, setting the KeyDaemon file path.
 Keyword Arguments:
@@ -49,7 +94,6 @@ def buildParent(daemonPath = paths.appSecureExePath):
                 buildTestParent = True
                 break
     if (buildTestParent):
-        print('(Re)building test parent app "' + paths.parentApp + '".')
         buildArgs = ['g++', '-I' + paths.includeDir, '-pthread', '-g', '-ggdb',\
                      '-D' + makeVars.installPath + '="' + daemonPath + '"', \
                      '-D' + makeVars.pipePath + '="' + paths.keyPipePath + '"']\
@@ -95,7 +139,8 @@ def uninstall(makeArgs, outFile = subprocess.DEVNULL):
     subprocess.call(['make', 'uninstall'] + makeArgs, \
                     stdout = outFile, \
                     stderr = outFile)
-    subprocess.call(['make', 'clean'], stdout = outFile, stderr = outFile)
+    subprocess.call(['make', 'clean'] + makeArgs, stdout = outFile, \
+                    stderr = outFile)
 
 """
 Builds and install KeyDaemon, returning an appropriate ResultCode.
@@ -110,22 +155,22 @@ installPath -- The full path where the KeyDaemon executable will be installed.
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 
-runtime     -- An optional duration in seconds before the KeyDaemon closes.
-               Default runtime is one second.
+debugBuild  -- Whether the Keydaemon builds in debug or release mode.
+               (default: True)
 
 Return TestResult.buildFailure if compilation fails, TestResult.installError
 if installation fails, or TestResult.success if no errors occur.
 """
 def buildInstall(makeArgs, installPath, outFile = subprocess.DEVNULL, \
-                 runtime = 1):
+                 debugBuild = True):
     os.chdir(paths.projectDir)
     # Make sure the TestParent sets the correct daemon path:
     buildParent(installPath)
     # Try to build:
-    subprocess.call(['make', 'TIMEOUT=' + str(runtime)] + makeArgs, \
-                    stdout = outFile, \
-                    stderr = outFile)
-    if (not os.path.isfile(paths.appBuildPath)):
+    subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
+    buildPath = paths.daemonDebugBuildPath if debugBuild \
+                else paths.daemonReleaseBuildPath
+    if (not os.path.isfile(buildPath)):
         return TestResult.buildFailure
     # Try to install:
     subprocess.call(['make', 'install'] + makeArgs, \
@@ -159,6 +204,8 @@ def runTest(installPath, parentPath, keyArgs = '1', \
     runTestArgs = []
     if (os.path.isfile(parentPath)):
         runTestArgs.append(parentPath)
+    else:
+        runTestArgs.append(installPath)
     runTestArgs.append(keyArgs)
     completedProcess = subprocess.run(runTestArgs, \
                                   stdout = outFile, \
@@ -171,23 +218,30 @@ def runTest(installPath, parentPath, keyArgs = '1', \
 Attempts to uninstall, clean, build, install, and run KeyDaemon.
 
 Keyword Arguments:
-parentPath -- The path to the executable that is allowed to launch KeyDaemon.
-              If this is not a valid file, KeyDaemon will be launched directly.
+makeArgs    -- The set of command line arguments to pass to the `make` process.
 
-keyArgs:   -- The list of tracked keycodes to pass to the KeyDaemon on launch.
-              The default value of 1 is just an arbitrary valid code.
+installPath -- The full path to the KeyDaemon executable file.
 
-outFile:  --  The file where test output from stdout and stderr will be sent.
-              The default subprocess.DEVNULL value discards all output.
+parentPath  -- The path to the executable that is allowed to launch KeyDaemon.
+               If this is not a valid file, KeyDaemon will be launched directly.
+
+keyArgs:    -- The list of tracked keycodes to pass to the KeyDaemon on launch.
+               The default value of 1 is just an arbitrary valid code.
+
+outFile:   --  The file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+
+debugBuild  -- Whether the Keydaemon builds in debug or release mode.
+               (default: True)
 
 Return a testDefs.TestResult result code describing whether or not the test
 failed, and if so, what step it failed on.
 """
 def fullTest(makeArgs, installPath, parentPath, keyArgs = '1', \
-             outFile = subprocess.DEVNULL):
+             outFile = subprocess.DEVNULL, debugBuild = True):
     os.chdir(paths.projectDir)
     uninstall(makeArgs, outFile)
-    makeResult = buildInstall(makeArgs, installPath, outFile)
+    makeResult = buildInstall(makeArgs, installPath, outFile, debugBuild)
     if (makeResult != TestResult.success):
         return makeResult
     return runTest(installPath, parentPath, keyArgs, outFile)

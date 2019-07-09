@@ -8,6 +8,9 @@ class MakeVars:
         self._parentPath  = 'PARENT_PATH'
         self._pipePath    = 'KEY_PIPE_PATH'
         self._keyLimit    = 'KEY_LIMIT'
+        self._timeout     = 'TIMEOUT'
+        self._configMode  = 'CONFIG'
+        self._verbose     = 'V'
     """Return the KeyDaemon install path variable name."""
     @property
     def installPath(self):
@@ -31,6 +34,19 @@ class MakeVars:
     @property
     def keyLimit(self):
         return self._keyLimit
+    """Return the KeyDaemon timeout period build variable name."""
+    @property
+    def timeout(self):
+        return self._timeout
+    """Return the Debug/Release mode build variable name."""
+    @property
+    def configMode(self):
+        return self._configMode
+    """Return the KeyDaemon verbose outbut build variable name."""
+    @property
+    def verbose(self):
+        return self._verbose
+makeVars = MakeVars()
 
 """Defines Linux key code values."""
 class KeyCodes:
@@ -63,7 +79,9 @@ class TestPaths:
         self._testExecDir    = os.path.join(self.testDir, 'testExecutables')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
         self._unsecureExeDir = os.path.join(self.testExecDir, 'unsecured')
-        self._buildDir = os.path.join(self._projectDir, 'build', 'Debug')
+        self._debugBuildDir = os.path.join(self._projectDir, 'build', 'Debug')
+        self._releaseBuildDir = os.path.join(self._projectDir, 'build', \
+                                                               'Release')
 
     # Directory paths:
     """Return the path to the main project directory. """
@@ -76,8 +94,12 @@ class TestPaths:
         return self._testDir
     """Return the path to the project's Debug build directory."""
     @property
-    def buildDir(self):
-        return self._buildDir
+    def debugBuildDir(self):
+        return self._debugBuildDir
+    """Return the path to the project's Release build directory."""
+    @property
+    def releaseBuildDir(self):
+        return self._releaseBuildDir
     """Return the path to the parent application #include directory."""
     @property
     def includeDir(self):
@@ -118,10 +140,16 @@ class TestPaths:
         return self._pipeFile
 
     # KeyDaemon executable paths:
-    """Return the path where the KeyDaemon is found after compilation."""
+    """Return the path where the KeyDaemon is found after Debug compilation."""
     @property
-    def appBuildPath(self):
-        return os.path.join(self.buildDir, self.testedApp)
+    def daemonDebugBuildPath(self):
+        return os.path.join(self.debugBuildDir, self.testedApp)
+    """
+    Return the path where the KeyDaemon is found after Release compilation.
+    """
+    @property
+    def daemonReleaseBuildPath(self):
+        return os.path.join(self.releaseBuildDir, self.testedApp)
     """Return the path to the KeyDaemon in the secured executable directory."""
     @property
     def appSecureExePath(self):
@@ -164,25 +192,74 @@ class TestPaths:
     @property
     def failureLogPath(self):
         return os.path.join(self.testDir, self._failureLog)
+paths = TestPaths()
 
 """
-Gets a basic set of build arguments that should always work correctly.
+Gets a complete list of build arguments to pass to the 'make' command.
 
-These options use the secure executable directory for installation. To execute
-the KeyDaemon without runtime errors, it needs to be launched through an
-instance of the TestParent executable located in the same directory.
+All parameters have default test values provided. If all defaults are used, the
+KeyDaemon should always build, install, and run correctly.
     
 Keyword Arguments:
-keyLimit -- Optionally sets a specific tracked key code limit. (default: 1)
+installPath  -- The path where the KeyDaemon will be installed.
+                (default: paths.appSecureExePath)
+parentPath   -- The path where the KeyDaemon's parent application should have.
+                (default: paths.parentSecureExePath)
+pipePath     -- The path to the named pipe the KeyDaemon uses to send codes.
+                (default: paths.keyPipePath)
+keyLimit     -- The maximum number of tracked key codes allowed. (default: 1)
+testArgs     -- A testActions.TestArgs object. (default: None)
+                If not None, this object's properties override all parameters
+                listed below.
+debugBuild   -- Whether the KeyDaemon builds in debug mode instead of release.
+                (default: True)
+verbose      -- Whether the KeyDaemon prints verbose build and runtime messages.
+                (default: False)
+timeout      -- Seconds before the KeyDaemon exits, or False to disable timeout.
+                (default: 1)
 """
-def getValidTestMakeArgs(keyLimit = 1):
-    paths       = TestPaths()
-    makeVarDefs = MakeVars()
-    installPath = paths.appSecureExePath
-    parentPath  = paths.parentSecureExePath
-    pipePath    = paths.keyPipePath
-    return [ makeVarDefs.installPath + '=' + installPath, \
-             makeVarDefs.parentPath  + '=' + parentPath, \
-             makeVarDefs.pipePath    + '=' + pipePath, \
-             makeVarDefs.keyLimit    + '=' + str(keyLimit), \
-             'CONFIG=Debug' ]
+def getMakeArgs(installPath = paths.appSecureExePath, \
+                         parentPath = paths.parentSecureExePath, \
+                         pipePath = paths.keyPipePath, \
+                         keyLimit = 1, \
+                         testArgs = None, \
+                         debugBuild = True, \
+                         verbose = False,
+                         timeout = 1):
+    if testArgs is not None:
+        debugBuild = testArgs.debugBuild
+        verbose = testArgs.verbose
+        if testArgs.timeout is not None:
+            timeout = testArgs.timeout
+    argList = [makeVars.installPath + '=' + installPath, \
+               makeVars.parentPath  + '=' + parentPath, \
+               makeVars.pipePath    + '=' + pipePath, \
+               makeVars.keyLimit    + '=' + str(keyLimit), \
+               makeVars.configMode  + '=' + 'Debug' if debugBuild \
+                                                       else 'Release']
+    if verbose:
+        argList.append(makeVars.verbose + '= 1')
+    if timeout:
+        argList.append(makeVars.timeout + '=' + str(timeout))
+    return argList
+
+"""
+Prints help text describing the purpose of a test and all available command
+line arguments, then stops the script.
+
+Keyword Arguments:
+testName        -- The title of the main test being run.
+testDescription -- A brief description of the main test being run.
+"""
+def printHelp(testName, testDescription):
+    if isinstance(testName, str) and len(testName) > 0:
+        print(testName + ':')
+    if isinstance(testDescription, str) and len(testDescription) > 0:
+        print(testDescription)
+    print('Command line options:')
+    print('\t-v:          Use verbose build/test logging.')
+    print('\t-r:          Build in Release mode instead of Debug.')
+    print('\t-t=[number]: Seconds to run the KeyDaemon before exiting.')
+    print('\t-h, --help:  Print this help text and exit.')
+    import sys
+    sys.exit('')

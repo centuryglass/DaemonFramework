@@ -98,15 +98,20 @@ keyArgTests = [ \
                        TestResult.runtimeError), \
         ]
 
-""" Run all key code argument tests. """
-def runTests():
+"""
+Run all tracked key code argument tests. 
+Keyword Arguments:
+testArgs -- A testActions.TestArgs argument object.
+"""
+def runTests(testArgs):
     print('Running tracked keycode argument tests:')
     testCount   = len(keyArgTests)
     testsPassed = 0
     paths       = TestPaths()
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
-    makeArgs = testDefs.getValidTestMakeArgs(maxKeyCodeLimit)
+    makeArgs = testDefs.getMakeArgs(keyLimit = maxKeyCodeLimit, \
+                                    testArgs = testArgs)
     testActions.uninstall(makeArgs)
     testActions.buildInstall(makeArgs, installPath)
     for index, argTest in enumerate(keyArgTests):
@@ -126,5 +131,10 @@ def runTests():
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
+    args = testActions.readArgs()
+    if (args.printHelp):
+        testDefs.printHelp('trackedKeyTests.py', \
+                           'Test different types of valid and invalid tracked '\
+                           + 'key code KeyDaemon argument lists.')
     testActions.setup()
-    runTests()
+    runTests(args)

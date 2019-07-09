@@ -12,8 +12,8 @@ from supportModules import testActions, testDefs
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
-paths = testDefs.TestPaths()
-makeVars = testDefs.MakeVars()
+paths = testDefs.paths
+makeVars = testDefs.makeVars
 
 """An abstract basis for classes that store information about a tested path."""
 class AbstractPath(ABC):
@@ -121,14 +121,17 @@ class BuildConfigTest:
         if(nextResult.value < worstResult.value):
             worstResult = nextResult
         self._expectedResult = worstResult
-    """Return the makefile argument list used when running the test."""
-    def getMakeArgs(self):
-        varNames = testDefs.MakeVars()
-        return [varNames.installPath + '=' + str(self._installPath.path), \
-                varNames.parentPath  + '=' + str(self._parentPath.path), \
-                varNames.keyLimit    + '=' + str(self._keyLimit.limit), \
-                varNames.pipePath    + '=' + paths.keyPipePath, \
-                'CONFIG=Debug' ]
+    """
+    Return the makefile argument list used when running the test.
+    Keyword Arguments:
+    testArgs -- A testActions.TestArgs argument object.
+    """
+    def getMakeArgs(self, testArgs):
+        return testDefs.getMakeArgs(installPath = self._installPath.path, \
+                                    parentPath  = self._parentPath.path, \
+                                    keyLimit    = self._keyLimit.limit, \
+                                    testArgs    = testArgs)
+
     """Return the full description of this test's build arguments."""
     def description(self):
         return self._installPath.description() + ' ' \
@@ -249,8 +252,12 @@ buildConfigTests.addKeyLimit(KeyLimit(20, \
                                       'valid', \
                                       TestResult.success))
 
-"""Runs all build variable tests."""
-def runTests():
+"""
+Runs all build variable combination tests.
+Keyword Arguments:
+testArgs -- A testActions.TestArgs argument object.
+"""
+def runTests(testArgs):
     print('Running compilation argument tests:')
     testCount = buildConfigTests.numBuildConfigTests()
     testsPassed = 0
@@ -258,12 +265,13 @@ def runTests():
         indexStr    = 'Test ' + str(index + 1) + '/' + str(testCount)
         logFile     = open(paths.tempLogPath, 'w')
         description = buildTest.description()
-        makeArgs    = buildTest.getMakeArgs()
+        makeArgs    = buildTest.getMakeArgs(testArgs)
         installPath = buildTest.installPath()
         parentPath  = buildTest.parentPath()
         expected    = buildTest.expectedResult
         result = testActions.fullTest(makeArgs, installPath, parentPath, \
-                                      outFile = logFile)
+                                      outFile = logFile, \
+                                      debugBuild = testArgs.debugBuild)
         resultMatched = testActions.checkResult(result, expected, indexStr, \
                                                 description, logFile)
         if (resultMatched):
@@ -273,5 +281,10 @@ def runTests():
 
 # Run this file's tests alone if executing this module as a script:
 if __name__ == '__main__':
+    args = testActions.readArgs()
+    if (args.printHelp):
+        testDefs.printHelp('buildArgTests.py', \
+                           'Test combinations of valid and/or invalid ' \
+                           + 'KeyDaemon build arguments.')
     testActions.setup()
-    runTests()
+    runTests(args)
