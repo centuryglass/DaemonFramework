@@ -11,7 +11,7 @@ static const constexpr char* messagePrefix = "KeyDaemon: InputReader::";
 
 // Milliseconds to wait on file input before pausing to see if the thread should
 // stop:
-static const constexpr int readTimeoutMS = 300;
+static const constexpr int readTimeoutMS = 100;
 
 
 // Saves the file path and prepares to read the input file.
