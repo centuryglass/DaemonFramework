@@ -3,11 +3,10 @@ Handles basic tasks needed to test compiling, installing, and running KeyDaemon.
 """
 import os
 import subprocess
-from supportModules import testDefs
-from supportModules import make
+from supportModules import pathConstants, testDefs, make
 from enum import Enum
 
-paths = testDefs.TestPaths()
+paths = pathConstants.paths
 
 """Defines possible test results, from least to most successful.""" 
 class TestResult(Enum):

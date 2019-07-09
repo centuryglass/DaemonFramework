@@ -4,8 +4,8 @@ Provides constants and functions used when building KeyDaemon with the Unix
 """
 import os
 import subprocess
-from supportModules import testDefs
-paths = testDefs.paths
+from supportModules import testDefs, pathConstants
+paths = pathConstants.paths
 
 """Defines all relevant makefile variable names."""
 class VarNames:

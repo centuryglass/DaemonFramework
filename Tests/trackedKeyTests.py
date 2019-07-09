@@ -2,9 +2,8 @@
 Tests how KeyDaemon handles different valid and invalid key code arguments.
 """
 
-from supportModules import testDefs, testActions, make, keyCodes
+from supportModules import testDefs, testActions, make, keyCodes, pathConstants
 from supportModules.testActions import TestResult
-from supportModules.testDefs import TestPaths
 
 """
 Holds a key code argument string and the expected result of testing that string.
@@ -107,7 +106,7 @@ def runTests(testArgs):
     print('Running tracked keycode argument tests:')
     testCount   = len(keyArgTests)
     testsPassed = 0
-    paths       = TestPaths()
+    paths       = pathConstants.paths
     installPath = paths.appSecureExePath
     parentPath  = paths.parentSecureExePath
     makeArgs    = make.getBuildArgs(keyLimit = maxKeyCodeLimit, \

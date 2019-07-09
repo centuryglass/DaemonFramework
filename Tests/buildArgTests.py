@@ -8,11 +8,11 @@ possible definitions for each of those arguments, and verifies that all possible
 combinations of those arguments succeed or fail as expected. 
 """
 
-from supportModules import testActions, testDefs, make
+from supportModules import testActions, testDefs, make, pathConstants
 from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
-paths = testDefs.paths
+paths = pathConstants.paths
 
 """An abstract basis for classes that store information about a tested path."""
 class AbstractPath(ABC):
