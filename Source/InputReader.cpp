@@ -6,7 +6,7 @@
 
 #ifdef DEBUG
 // Print the application and class name before all info/error messages:
-static const constexpr char* messagePrefix = "KeyDaemon: InputReader::";
+static const constexpr char* messagePrefix = "DaemonFramework: InputReader::";
 #endif
 
 // Milliseconds to wait on file input before pausing to see if the thread should
