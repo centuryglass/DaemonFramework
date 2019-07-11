@@ -39,41 +39,28 @@ flags = [
 'c++',
 './ClangCompleter',
 '-pthread',
-'-DLINUX=1',
-'-DDEBUG=1',
-'-D_DEBUG=1',
-'-DDONT_SET_USING_JUCE_NAMESPACE=1',
-'-DJUCER_LINUX_MAKE_6D53C8B4=1',
-'-DJUCE_APP_VERSION=0.0.8.10',
-'-DJUCE_APP_VERSION_HEX=0x80a',
-'-lcrypto',
-'-ldl',
-'-lpthread',
-'-lrt',
-'-I./JuceLibraryCode',
-'-I./deps/JUCE/modules',
+'-DDF_DEBUG=1',
+'-DDF_DAEMON_PATH="/fake/path/string"',
+'-DDF_VERBOSE=1',
+'-DDF_INPUT_PIPE_PATH="/fake/path/string"',
+'-DDF_OUTPUT_PIPE_PATH="/fake/path/string"',
+'-DDF_VERIFY_PATH=1',
+'-DDF_VERIFY_PATH_SECURITY=1',
+'-DDF_VERIFY_PARENT_PATH_SECURITY=1',
+'-DDF_REQUIRE_SINGULAR=1',
+'-DDF_REQUIRE_RUNNING_PARENT=1',
+'-DDF_REQUIRED_PARENT_PATH=1',
+'-DDF_TIMEOUT=1',
  ]
 
-pkgConfigFlags = [
-'NetworkManager',
-'libnm-glib',
-'alsa',
-'freetype2',
-'libssl',
-'gio-2.0',
-'x11',
-'xext',
-'xinerama'
-]
+pkgConfigFlags = []
 
 for pflag in pkgConfigFlags:
   flagList = pkgconfig.cflags(pflag).split(' ')
   for f in flagList:
     flags.append(f)
 
-for dirname, subdirList, fileList in os.walk('./Source'):
-  flags.append('-I'+dirname)
-for dirname, subdirList, fileList in os.walk('./Tests'):
+for dirname, subdirList, fileList in os.walk('./Include'):
   flags.append('-I'+dirname)
 
 def DirectoryOfThisScript():
