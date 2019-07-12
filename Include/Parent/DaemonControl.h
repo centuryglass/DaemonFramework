@@ -6,31 +6,51 @@
  */
 
 #pragma once
-#include "PipeReader.h"
+
+#ifdef DF_OUTPUT_PIPE_PATH
+#include "Pipe_Reader.h"
+#include "Pipe_Listener.h"
+#endif
+
+#ifdef DF_INPUT_PIPE_PATH
+#include "Pipe_Writer.h"
+#endif
+
 #include <pthread.h>
 #include <vector>
+#include <string>
 
-class DaemonControl
+namespace DaemonFramework { class DaemonControl; }
+
+class DaemonFramework::DaemonControl
 {
 public:
+
+#   ifdef DF_OUTPUT_PIPE_PATH
     /**
-     * @brief  Saves the paths used to initialize the key pipe and launch the
-     *         KeyDaemon.
+     * @brief  If relevant, prepares daemon IO pipe objects on construction.
      *
-     * @param Listener  The object that will handle incoming data.
+     * @param listener    The object that will handle incoming data if the
+     *                    daemon's output pipe is enabled.
+     *
+     * @param bufferSize  The amount of memory in bytes to reserve for the
+     *                    output pipe's message buffer.
      */
-    DaemonControl(PipeReader::Listener* keyListener); 
+    DaemonControl(Pipe::Listener* keyListener, const size_t bufferSize); 
+#   else
+    DaemonControl();
+#   endif
 
     virtual ~DaemonControl() { }
 
     /**
      * @brief  If the Daemon isn't already running, this launches the daemon
-     *         and starts listening for data.
+     *         and starts listening for data if relevant.
      *
-     * @param args  A null-terminated array of c-strings that should be passed
-     *              to the daemon as launch arguments.
+     * @param args  An array of strings that will be passed to the daemon as
+     *              launch arguments.
      */
-    void startDaemon(const char** args);
+    void startDaemon(std::vector<std::string> args);
 
     /**
      * @brief  If the Daemon is running, this stops the process and closes the
@@ -44,6 +64,23 @@ public:
      * @return  Whether the daemon thread is still active.
      */
     bool isDaemonRunning();
+
+#   ifdef DF_INPUT_PIPE_PATH
+    /**
+     * @brief  Sends arbitrary data to the daemon using the daemon's named
+     *         output pipe.
+     *
+     * @param messageData  A generic pointer to a block of memory that holds no
+     *                     less than messageSize bytes. The caller is
+     *                     responsible for ensuring that this data block is
+     *                     valid.
+     *
+     * @param messageSize  The number of bytes to send from the messageData
+     *                     pointer.
+     */
+    void messageParent(const unsigned char* messageData,
+            const size_t messageSize);
+#   endif
 
     /**
      * @brief  Gets the ID of the daemon process if running.
@@ -64,17 +101,26 @@ public:
      * @brief  Waits until the daemon process terminates and gets the process
      *         exit code.
      *
-     * @return  The exit code returned by KeyDaemon on termination.
+     * @return  The exit code returned by the daemon on termination.
      */
     int waitToExit();
 
 private:
     // ID of the daemon's process:
     pid_t daemonProcess = 0;
+
+#   ifdef DF_OUTPUT_PIPE_PATH
     // ID of the thread that opens the input pipe:
     pthread_t pipeInitThread = 0;
     // Reads data sent by the daemon:
-    PipeReader pipeReader;
+    Pipe::Reader pipeReader;
+#   endif
+
+#   ifdef DF_INPUT_PIPE_PATH
+    // Sends data to the daemon:
+    Pipe::Writer pipeWriter;
+#   endif
+
     // Exit code returned by the completed process:
-    int exitCode = 0;
+    int exitCode;
 };

@@ -5,26 +5,26 @@
  */
 
 #pragma once
-#ifdef DEBUG
+#ifdef DF_DEBUG
     #include <iostream>
     #include <cassert>
 
     // Prints a line of debug output:
-    #define DBG(toPrint) std::cout << toPrint << "\n";
+    #define DF_DBG(toPrint) std::cout << toPrint << "\n";
 
     // Prints a line of verbose debug output:
-    #ifdef DEBUG_VERBOSE
-        #define DBG_V(toPrint) std::cout << toPrint << "\n";
+    #ifdef DF_VERBOSE
+        #define DF_DBG_V(toPrint) std::cout << toPrint << "\n";
     #else
-        #define DBG_V(toPrint)
+        #define DF_DBG_V(toPrint)
     #endif
 
     // Terminates the program if a test condition is not met:
-    #define ASSERT(condition) assert(condition);
+    #define DF_ASSERT(condition) assert(condition);
 
 #else
     // Redefine debug macros as empty statements outside of debug builds:
-    #define DBG(toPrint)
-    #define DBG_V(toPrint)
-    #define ASSERT(condition)
+    #define DF_DBG(toPrint)
+    #define DF_DBG_V(toPrint)
+    #define DF_ASSERT(condition)
 #endif

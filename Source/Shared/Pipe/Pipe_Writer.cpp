@@ -10,26 +10,26 @@
 #include <stdlib.h>
 
 
-#ifdef DEBUG
+#ifdef DF_DEBUG
 // Print the application and class name before all info/error messages:
 static const constexpr char* messagePrefix = "DaemonFramework::Pipe::Writer::";
 #endif
 
-// Opens the pipe file on construction.
-DaemonFramework::Pipe::Writer::Writer(const char* path)
+// Saves the pipe's path on construction.
+DaemonFramework::Pipe::Writer::Writer(const char* path) : pipePath(path)
 {
     errno = 0;
     pipeFile = open(path, O_WRONLY); 
     if (errno != 0)
     {
-        DBG(messagePrefix << __func__ << ": Failed to open pipe \"" << path
+        DF_DBG(messagePrefix << __func__ << ": Failed to open pipe \"" << path
                 << "\"");
-        #ifdef DEBUG
-            perror(messagePrefix);
-        #endif
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
         pipeFile = 0;
     }
-    DBG_V(messagePrefix << __func__ << ": Opened pipe \"" << path << "\"");
+    DF_DBG_V(messagePrefix << __func__ << ": Opened pipe \"" << path << "\"");
 }
 
 
@@ -47,18 +47,31 @@ bool DaemonFramework::Pipe::Writer::sendData
     std::lock_guard<std::mutex> pipeLock(lock);
     if (pipeFile == 0)
     {
-        DBG(messagePrefix << __func__
-                << ": Failed to write data, pipe file isn't open.");
-        return false;
+        DF_DBG_V(messagePrefix << __func__ << ": Opening pipe \"" << pipePath 
+                << "\" for initial writing.");
+        errno = 0;
+        pipeFile = open(pipePath, O_WRONLY); 
+        if (errno != 0)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Failed to open pipe \""
+                    << pipePath << "\"");
+#           ifdef DF_DEBUG
+            perror(messagePrefix);
+#           endif
+            pipeFile = 0;
+            return false;
+        }
+        DF_DBG_V(messagePrefix << __func__ << ": Opened pipe \"" << pipePath
+                << "\"");
     }
     errno = 0;
     if (write(pipeFile, data, size) == -1)
     {
-        DBG(messagePrefix << __func__
+        DF_DBG(messagePrefix << __func__
             << ": Failed to write data to pipe file.");
-        #ifdef DEBUG
-            perror(messagePrefix);
-        #endif
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
         return false;
     }
     return true;
@@ -69,7 +82,7 @@ bool DaemonFramework::Pipe::Writer::sendData
 void DaemonFramework::Pipe::Writer::closePipe()
 {
     std::lock_guard<std::mutex> pipeLock(lock);
-    DBG_V(messagePrefix << __func__ << ": Closing pipe \"" << getPath()
+    DF_DBG_V(messagePrefix << __func__ << ": Closing pipe \"" << pipePath
             << "\"");
     if (pipeFile != 0)
     {

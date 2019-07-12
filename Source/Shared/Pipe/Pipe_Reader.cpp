@@ -9,7 +9,7 @@
 #include <cstdio>
 
 
-#ifdef DEBUG
+#ifdef DF_DEBUG
 // Print the application and class name before all info/error messages:
 static const constexpr char* messagePrefix 
         = "DaemonFramework::Pipe::Reader::";
@@ -43,17 +43,17 @@ int DaemonFramework::Pipe::Reader::openFile()
     int pipeFileDescriptor = open(getPath(), O_RDONLY);
     if (errno != 0)
     {
-        DBG(messagePrefix << __func__ 
+        DF_DBG(messagePrefix << __func__ 
                 << ": Failed to open pipe at path \""
                 << getPath() << "\"");
-        #ifdef DEBUG
-            perror(messagePrefix);
-        #endif
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
         return 0;
     }
     else
     {
-        DBG_V(messagePrefix << __func__ << ": Opened pipe at path \""
+        DF_DBG_V(messagePrefix << __func__ << ": Opened pipe at path \""
                 << getPath() << "\"");
     }
     return pipeFileDescriptor;
@@ -65,18 +65,18 @@ void DaemonFramework::Pipe::Reader::processInput(const int inputBytes)
 {
     if (listener == nullptr)
     {
-        DBG(messagePrefix << __func__ << ": No Listener, closing pipe.");
+        DF_DBG(messagePrefix << __func__ << ": No Listener, closing pipe.");
         stopReading();
         return;
     }
     int code = 0;
     if (inputBytes >= bufSize)
     {
-        DBG(messagePrefix << __func__ << ": Invalid read size "
+        DF_DBG(messagePrefix << __func__ << ": Invalid read size "
                 << inputBytes << ", expected <" << bufSize);
-        ASSERT(inputBytes < bufSize);
+        DF_ASSERT(inputBytes < bufSize);
     }
-    DBG_V(messagePrefix << __func__ << ": Sending " << inputBytes 
+    DF_DBG_V(messagePrefix << __func__ << ": Sending " << inputBytes 
             << " bytes of data " << " to Listener.");
     listener->processData(buffer, inputBytes);
 }

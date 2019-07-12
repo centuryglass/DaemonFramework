@@ -4,6 +4,7 @@
  * @brief  Handles data read from a pipe.
  */
 
+#pragma once
 #include <cstddef>
 
 namespace DaemonFramework { namespace Pipe { class Listener; }}

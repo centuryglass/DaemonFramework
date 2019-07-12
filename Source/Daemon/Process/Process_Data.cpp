@@ -22,23 +22,24 @@ static const std::string pathPost = "/stat";
 
 
 // Reads process data from the system.
-Process::Data::Data(const int processId) :
+DaemonFramework::Process::Data::Data(const int processId) :
 Data(pathPre + std::to_string(processId) + pathPost)
 {
     // The parsed ID should always match the constructor ID if valid:
-    ASSERT(!isValid() || this->processId == processId);
+    DF_ASSERT(!isValid() || this->processId == processId);
 }
 
 
 // Creates an empty, invalid data object.
-Process::Data::Data() : lastState(State::invalid) { }
+DaemonFramework::Process::Data::Data() : lastState(State::invalid) { }
 
 
 // Sorts processes by launch time, newest first.
 class
 {
 public:
-    bool operator() (Process::Data first, Process::Data second)
+    bool operator() (DaemonFramework::Process::Data first,
+            DaemonFramework::Process::Data second)
     {
         return second.getStartTime() < first.getStartTime();
     }
@@ -47,7 +48,8 @@ public:
 
 // Gets data for all direct child processes of the process this Data object
 // represents.
-std::vector<Process::Data> Process::Data::getChildProcesses()
+std::vector<DaemonFramework::Process::Data>
+DaemonFramework::Process::Data::getChildProcesses()
 {
     using std::vector;
     using std::string;
@@ -85,7 +87,7 @@ std::vector<Process::Data> Process::Data::getChildProcesses()
 
 // Updates this data with the current process state, invalidating it if a new
 // process is using its saved process ID.
-void Process::Data::update()
+void DaemonFramework::Process::Data::update()
 {
     Data updatedData(processId);
     if (updatedData.executablePath == executablePath)
@@ -100,49 +102,50 @@ void Process::Data::update()
 
 
 // Checks whether this object found process data on construction.
-bool Process::Data::isValid() const
+bool DaemonFramework::Process::Data::isValid() const
 {
     return lastState != State::invalid;
 }
 
 
 // Gets the ID of the process this Data object represents.
-int Process::Data::getProcessId() const
+int DaemonFramework::Process::Data::getProcessId() const
 {
     return processId;
 }
 
 
 // Gets the ID of the parent process of this Data process.
-int Process::Data::getParentId() const
+int DaemonFramework::Process::Data::getParentId() const
 {
     return parentId;
 }
 
 
 // Gets the name of the executable this Data process was created to run.
-std::string Process::Data::getExecutablePath() const
+std::string DaemonFramework::Process::Data::getExecutablePath() const
 {
     return executablePath;
 }
 
 
 // Gets the state of the Data process recorded when it was constructed.
-Process::State Process::Data::getLastState() const
+DaemonFramework::Process::State
+DaemonFramework::Process::Data::getLastState() const
 {
     return lastState;
 }
 
 
 // Gets the time this process was created.
-unsigned long Process::Data::getStartTime() const
+unsigned long DaemonFramework::Process::Data::getStartTime() const
 {
     return startTime;
 }
 
 
 // Create process data directly from the process stat file object.
-Process::Data::Data(const std::string statFile)
+DaemonFramework::Process::Data::Data(const std::string statFile)
 {
     std::ifstream fileStream;
     fileStream.open(statFile);

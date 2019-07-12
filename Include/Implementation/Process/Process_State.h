@@ -7,35 +7,39 @@
 #pragma once
 #include <string>
 
-namespace Process
+namespace DaemonFramework
 {
-    enum class State;
+    namespace Process
+    {
+        enum class State;
 
-    /**
-     * @brief  Returns the process state represented by the state field
-     *         character in the /proc/<pid>/stat file.
-     *
-     * @param stateCode  A character used to represent a process state.
-     *
-     * @return           The represented state, or State::unknown if given an
-     *                   unexpected character type.
-     */
-    State readStateChar(const char stateCode);
+        /**
+         * @brief  Returns the process state represented by the state field
+         *         character in the /proc/<pid>/stat file.
+         *
+         * @param stateCode  A character used to represent a process state.
+         *
+         * @return           The represented state, or State::unknown if given
+         *                   an unexpected character type.
+         */
+        State readStateChar(const char stateCode);
 
-    /**
-     * @brief  Gets a string representation of a process state for debugging.
-     *
-     * @param state  One of the possible Linux process states.
-     *
-     * @return       The process state's string representation.
-     */
-    std::string stateString(const State state);
+        /**
+         * @brief  Gets a string representation of a process state for
+         *         debugging.
+         *
+         * @param state  One of the possible Linux process states.
+         *
+         * @return       The process state's string representation.
+         */
+        std::string stateString(const State state);
+    }
 }
 
 /**
  * @brief  All possible Linux process states.
  */
-enum class Process::State
+enum class DaemonFramework::Process::State
 {
     running,     // R: actively executing instructions.
     sleeping,    // S: waiting for an event or available time slot.

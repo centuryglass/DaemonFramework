@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <sys/select.h>
 
-#ifdef DEBUG
+#ifdef DF_DEBUG
 // Print the application and class name before all info/error messages:
 static const constexpr char* messagePrefix = "DaemonFramework: InputReader::";
 #endif
@@ -15,24 +15,24 @@ static const constexpr int readTimeoutMS = 100;
 
 
 // Saves the file path and prepares to read the input file.
-InputReader::InputReader(const char* path) : path(path) { }
+DaemonFramework::InputReader::InputReader(const char* path) : path(path) { }
 
 
 // Stops reading and closes the input file.
-InputReader::~InputReader()
+DaemonFramework::InputReader::~InputReader()
 {
     stopReading();
 }
 
 
 // Opens the input file and starts the input read loop if not already reading.
-bool InputReader::startReading()
+bool DaemonFramework::InputReader::startReading()
 {
     {
         std::lock_guard<std::mutex> lock(readerMutex);
         if (currentState == State::closed || currentState == State::failed)
         {
-            DBG(messagePrefix << __func__
+            DF_DBG(messagePrefix << __func__
                     << ": InputReader already failed or was closed.");
             return false;
         }
@@ -49,13 +49,13 @@ bool InputReader::startReading()
         if (inputFile == 0)
         {
             currentState = State::failed;
-            DBG(messagePrefix << __func__ << ": Failed to open input file at \""
-                    << path << "\"");
+            DF_DBG(messagePrefix << __func__
+                    << ": Failed to open input file at \"" << path << "\"");
             return false;
         }
         else
         {
-            DBG_V(messagePrefix << __func__ << ": Opened input file at \""
+            DF_DBG_V(messagePrefix << __func__ << ": Opened input file at \""
                     << path << "\"");
         }
         currentState = State::opened;
@@ -66,7 +66,7 @@ bool InputReader::startReading()
     if (threadError != 0)
     {
         std::lock_guard<std::mutex> lock(readerMutex);
-        DBG(messagePrefix << __func__
+        DF_DBG(messagePrefix << __func__
                 << ": Couldn't create new reader thread.");
         threadID = 0;
         closeInputFile();
@@ -77,22 +77,22 @@ bool InputReader::startReading()
 
 
 // Ensures that the InputReader is not reading input.
-void InputReader::stopReading()
+void DaemonFramework::InputReader::stopReading()
 {
     // If on the reader thread, just make sure the event file is closed, and the
     // loop will terminate before it would try the next read call.
     if (pthread_equal(pthread_self(), threadID))
     {
-        ASSERT(currentState == State::reading 
+        DF_ASSERT(currentState == State::reading 
                 || currentState == State::processing);
-        DBG_V(messagePrefix << __func__ << ": closing reader for file \""
+        DF_DBG_V(messagePrefix << __func__ << ": closing reader for file \""
                 << getPath() << "\" from within its own reading thread.");
         closeInputFile();
         currentState = State::closed; // readerMutex should already be locked
         return;
     }
     std::lock_guard<std::mutex> lock(readerMutex);
-    DBG_V(messagePrefix << __func__ << ": closing reader for file \""
+    DF_DBG_V(messagePrefix << __func__ << ": closing reader for file \""
             << getPath() << "\".");
     if (currentState != State::closed && currentState != State::failed)
     {
@@ -103,21 +103,21 @@ void InputReader::stopReading()
 
 
 // Gets the path used to open the input file.
-const char* InputReader::getPath() const
+const char* DaemonFramework::InputReader::getPath() const
 {
     return path;
 }
 
 
 // Gets the current state of the input reader.
-InputReader::State InputReader::getState()
+DaemonFramework::InputReader::State DaemonFramework::InputReader::getState()
 {
     std::lock_guard<std::mutex> lock(readerMutex);
     return currentState;
 }
 
 // Continually waits for and processes input events.
-void InputReader::readLoop()
+void DaemonFramework::InputReader::readLoop()
 {
     while (inputFile != 0) 
     {
@@ -144,13 +144,14 @@ void InputReader::readLoop()
                         getBufferSize());
                 if (errno != 0 || readSize == 0)
                 {
-                    DBG(messagePrefix << __func__ << ": Input reading failed, "
-                            << readSize << " bytes apparently read.");
-                    #ifdef DEBUG
-                        perror(messagePrefix);
-                    #endif
+                    DF_DBG(messagePrefix << __func__ <<
+                            ": Input reading failed, " << readSize
+                            << " bytes apparently read.");
+#                   ifdef DF_DEBUG
+                    perror(messagePrefix);
+#                   endif
                     closeInputFile();
-                    DBG(messagePrefix << __func__  << ": Closed file \"" 
+                    DF_DBG(messagePrefix << __func__  << ": Closed file \"" 
                             << getPath() << "\".");
                     currentState = State::closed;
                 }
@@ -165,7 +166,7 @@ void InputReader::readLoop()
 
 
 // Closes the input file.
-void InputReader::closeInputFile()
+void DaemonFramework::InputReader::closeInputFile()
 {
     if (inputFile != 0)
     {
@@ -176,7 +177,7 @@ void InputReader::closeInputFile()
 
 
 // Used to start readLoop within a new thread.
-void* InputReader::threadAction(void* inputReader)
+void* DaemonFramework::InputReader::threadAction(void* inputReader)
 {
     InputReader* reader = static_cast<InputReader*>(inputReader);
     reader->readLoop();

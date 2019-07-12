@@ -10,7 +10,9 @@
 #include <vector>
 #include <mutex>
 
-class InputReader
+namespace DaemonFramework { class InputReader; }
+
+class DaemonFramework::InputReader
 {
 public:
     /**

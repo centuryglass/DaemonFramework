@@ -9,9 +9,12 @@
 #include "Process_Data.h"
 #include <string>
 
-namespace Process
+namespace DaemonFramework
 {
-    class Security;
+    namespace Process
+    {
+        class Security;
+    }
 }
 
 /**
@@ -20,6 +23,9 @@ namespace Process
  * 
  *  Process::Security only checks if the process follows security rules.
  * Actually handling rule violations must be done elsewhere.
+ *
+ *  Any of these rules may be disabled in build configuration. If disabled, the
+ * function that checks the rule will be removed.
  *
  *  Application process security:
  *
@@ -41,7 +47,7 @@ namespace Process
  *  exit.
  *
  */
-class Process::Security
+class DaemonFramework::Process::Security
 {
 public:
     /**
@@ -51,32 +57,39 @@ public:
 
     ~Security() { }
 
+#   ifdef DF_VERIFY_PATH
     /**
-     * @brief  Checks if the KeyDaemon executable is running from the expected
+     * @brief  Checks if the daemon executable is running from the expected
      *         path.
      *
-     * @return   Whether the KeyDaemon is running from the correct executable
-     *           path, as set at compile time.
+     * @return   Whether the daemon is running from the correct executable path,
+     *           as set at compile time.
      */
     bool validDaemonPath();
+#   endif
 
+#   ifdef DF_REQUIRED_PARENT_PATH
     /**
-     * @brief  Checks if the KeyDaemon was launched by an executable at the
+     * @brief  Checks if the daemon was launched by an executable at the
      *         expected path.
      *
-     * @return  Whether the KeyDaemon's parent process is running from the
-     *          correct executable path, as set at compile time.
+     * @return  Whether the daemon's parent process is running from the correct
+     *          executable path, as set at compile time.
      */
     bool validParentPath();
+#   endif
 
+#   ifdef DF_VERIFY_PATH_SECURITY
     /**
-     * @brief  Checks if the KeyDaemon's directory is secure.
+     * @brief  Checks if the daemon's directory is secure.
      *
-     * @return  Whether the KeyDaemon's executable is in a directory that can
-     *          only be modified by root.
+     * @return  Whether the daemon's executable is in a directory that can only
+     *          be modified by root.
      */
     bool daemonPathSecured();
+#   endif
 
+#   ifdef DF_VERIFY_PARENT_PATH_SECURITY
     /**
      * @brief  Checks if the parent application's directory is secure.
      *
@@ -84,13 +97,16 @@ public:
      *          by root.
      */
     bool parentPathSecured();
+#   endif
 
+#   ifdef DF_REQUIRE_RUNNING_PARENT
     /**
      * @brief  Checks if this application's parent process is still running.
      *
      * @return  Whether the parent process is running.
      */
     bool parentProcessRunning();
+#   endif
 
 private:
     /**
@@ -116,7 +132,7 @@ private:
      */
     bool directorySecured(const std::string& dirPath) const;
 
-    // The KeyDaemon's process data:
+    // The daemon's process data:
     Process::Data daemonProcess;
     // The parent process data:
     Process::Data parentProcess;

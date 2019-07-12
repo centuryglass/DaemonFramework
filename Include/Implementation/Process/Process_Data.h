@@ -9,16 +9,19 @@
 #include <vector>
 #include <string>
 
-namespace Process
+namespace DaemonFramework
 {
-    class Data;
-    enum class State;
+    namespace Process
+    {
+        class Data;
+        enum class State;
+    }
 }
 
 /**
  * @brief  Reads and stores basic information about a single process.
  */
-class  Process::Data
+class  DaemonFramework::Process::Data
 {
 public:
     /**

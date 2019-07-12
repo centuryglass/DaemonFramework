@@ -1,8 +1,8 @@
 define HELPTEXT
 ### DaemonFramework Makefile ###
-#  This makefile provides the daemon and daemon-parent targets. When building a
+#  This makefile provides the daemon and daemonParent targets. When building a
 # daemon or an application that creates/controls a daemon, include this file
-# within your project's makefile, and add the daemon or daemon-parent target to
+# within your project's makefile, and add the daemon or daemonParent target to
 # your main build target as a dependency, and set build parameters to configure
 # the project as needed.
 #
@@ -107,6 +107,7 @@ export HELPTEXT
 DF_CONFIG ?= Release
 DF_VERBOSE ?= 0
 DF_TARGET_ARCH ?= -march=native
+DF_ROOT_DIR ?= $(shell pwd)
 
 # Daemon:
 DF_VERIFY_PATH ?= 1
@@ -131,10 +132,10 @@ ifneq ($(DF_INPUT_PIPE_PATH),)
                    $(DF_CPPFLAGS)
 endif
 ifneq ($(DF_OUTPUT_PIPE_PATH),)
-    DF_CPPFLAGS := -DDF_INPUT_PIPE_PATH="\"$(DF_INPUT_PIPE_PATH)\"" \
+    DF_CPPFLAGS := -DDF_OUTPUT_PIPE_PATH="\"$(DF_OUTPUT_PIPE_PATH)\"" \
                    $(DF_CPPFLAGS)
 endif
-ifeq ($(DF_VERIFY_PATH,1)
+ifeq ($(DF_VERIFY_PATH),1)
     DF_DAEMON_FLAGS = -DDF_VERIFY_PATH=1
 endif
 ifeq ($(DF_VERIFY_PATH_SECURITY),1)
@@ -161,7 +162,7 @@ endif
 DF_CXXFLAGS := -std=gnu++14 $(CXXFLAGS)
 
 # Directories to recursively search for header files:
-DF_RECURSIVE_INCLUDE_DIRS := Include
+DF_RECURSIVE_INCLUDE_DIRS := $(DF_ROOT_DIR)/Include
 
 #### Setup: ####
 # enable or disable verbose output:
@@ -175,7 +176,7 @@ endif
 DF_DEPFLAGS := $(if $(word 2, $(TARGET_ARCH)), , -MMD)
 
 # Generate the list of directory include flags:
-DF_DIR_FLAGS := $(shell find $(RECURSIVE_INCLUDE_DIRS) -type d \
+DF_DIR_FLAGS := $(shell find $(DF_RECURSIVE_INCLUDE_DIRS) -type d \
                      -printf " -I'%p'")
 
 # Keep debug and release build files in separate directories:
@@ -233,48 +234,55 @@ DF_LDFLAGS := $(TARGET_ARCH) \
 	         $(LDFLAGS)
 
 
-.PHONY: help check-defs daemon daemon-parent
+.PHONY: help print-% check-defs daemon daemonParent
 
 help:
-	$(shell less "$$HELPTEXT")
+	$(shell echo "$$HELPTEXT")
+
+print-%:
+	@echo $* = $($*)
 
 check-defs:
 	@if [ -z "$(DF_OBJDIR)" ]; then \
         echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
-    elif [ -z "$(DDF_DAEMON_PATH)" ]; then \
-        echo >&2 "Build failed, DF_DAEMONT_PATH path not defined."; exit 1; \
+    elif [ -z "$(DF_DAEMON_PATH)" ]; then \
+        echo >&2 "Build failed, DF_DAEMON_PATH path not defined."; exit 1; \
     fi
 
 # Include makefiles defining the DF_OBJECTS_DAEMON, DF_OBJECTS_PARENT, and
 # DF_OBJECTS_SHARED target lists:
-include $(shell pwd)/Source/Daemon/Makefile
-include $(shell pwd)/Source/Parent/Makefile
-include $(shell pwd)/Source/Shared/Makefile
+include $(DF_ROOT_DIR)/Source/Daemon/daemon.mk
+include $(DF_ROOT_DIR)/Source/Parent/parent.mk
+include $(DF_ROOT_DIR)/Source/Shared/shared.mk
 
-build : $(OUTDIR)/$(TARGET_APP)
+#build : $(OUTDIR)/$(TARGET_APP)
+
+daemon : check-defs $(DF_OBJECTS_DAEMON) $(DF_OBJECTS_SHARED)
+	@echo Compiled daemon object files at "$(DF_OBJDIR)"
+
+daemonParent : check-defs $(DF_OBJECTS_PARENT) $(DF_OBJECTS_SHARED)
+	@echo Compiled daemon parent object files at "$(DF_OBJDIR)"
 
 $(DF_OBJECTS_DAEMON) :
 	-$(V_AT)mkdir -p $(DF_OBJDIR)
+	@echo "daemon objects='$(DF_OBJECTS_DAEMON)'"
 	@echo "      Compiling: $(<F)"
 	$(V_AT)$(CXX) $(DF_CXXFLAGS) $(DF_CPPFLAGS) $(DF_DAEMON_FLAGS) $(DF_CFLAGS)\
 		-o "$@" -c "$<"
 
 $(DF_OBJECTS_PARENT) :
 	-$(V_AT)mkdir -p $(DF_OBJDIR)
+	@echo "parent objects='$(DF_OBJECTS_PARENT)'"
 	@echo "      Compiling: $(<F)"
 	$(V_AT)$(CXX) $(DF_CXXFLAGS) $(DF_CPPFLAGS) $(DF_CFLAGS)\
 		-o "$@" -c "$<"
 
 $(DF_OBJECTS_SHARED) :
 	-$(V_AT)mkdir -p $(DF_OBJDIR)
+	@echo "shared objects='$(DF_OBJECTS_SHARED)'"
 	@echo "      Compiling: $(<F)"
 	$(V_AT)$(CXX) $(DF_CXXFLAGS) $(DF_CPPFLAGS) $(DF_CFLAGS)\
 		-o "$@" -c "$<"
 
-daemon : check-defs $(DF_OBJECTS_DAEMON) $(DF_OBJECTS_SHARED)
-	@echo Compiled daemon object files at "$(DF_OBJDIR)"
 
-daemon-parent : check-defs $(DF_OBJECTS_PARENT) $(DF_OBJECTS_SHARED)
-	@echo Compiled daemon parent object files at "$(DF_OBJDIR)"
-
-# -include $(OBJECTS_APP:%.o=%.d) ???
+#-include $(DF_OBJECTS_DAEMON:%DaemonFramework_Daemon_%.o=DaemonFramework_Daemon_%.d)

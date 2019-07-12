@@ -13,7 +13,7 @@ class DaemonFramework::Pipe::Writer
 {
 public:
     /**
-     * @brief  Opens the pipe file on construction.
+     * @brief  Saves the pipe's path on construction.
      *
      * @param path  The path to a named pipe.
      */
@@ -45,6 +45,8 @@ public:
 private:
     // Named pipe file descriptor:
     int pipeFile = 0;
+    // Pipe file path:
+    const char* pipePath = nullptr; 
     // Protects the pipe from concurrent access:
     std::mutex lock;
 };
