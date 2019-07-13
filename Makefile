@@ -99,6 +99,38 @@ define HELPTEXT
 #      If defined, the daemon will automatically exit after running for TIMEOUT
 #      seconds.
 #
+## Daemon Installation:
+#  The daemon framework provides the daemonSetup target to automatically handle
+# the process of granting special privileges to your daemon application. This
+# process is configured through an additional set of variables.
+#   DDF_DAEMON_PATH:
+#     The path to your installed daemon executable. Your project's makefile 
+#     should have already built and installed the daemon at this location.
+
+#   DF_CAPABILITY_LIST:
+#     A list of special capabilities required by the daemon, to be applied with
+#     the setcap command. See 'man capabilities' for the full list of valid
+#     options.
+#
+#     Whenever possible, grant all required privileges through these capabilites
+#     rather than using setuid/setgid.
+#
+#   DF_SETGID_GROUP:
+#     The group that should own your daemon's file. If provided, the daemon will
+#     be assigned to that group, and its setgid bit will be flipped. Whenever
+#     your daemon runs, it will be executed as part of this group.
+#
+#     It's generally better to add capabilities through DF_CAPABILITY_LIST than
+#     to use this option, but there are circumstances where setgid may be more
+#     secure. For example, assigning the daemon to a specialized group that has
+#     permission to read a single secure file is preferable to granting your
+#     daemon full read access to secured files with CAP_DAC_READ_SEARCH.
+#
+#   DF_SETUID_USER:
+#     The user that should own your daemon's file. If provided, the daemon will
+#     always run as this user when executed. Whenever possible, avoid this in
+#     favor of setting specific capabilities or using setgid to assign a group
+#     that has limited extra special privileges.
 endef
 export HELPTEXT
 
