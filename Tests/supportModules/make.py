@@ -1,6 +1,6 @@
 """
-Provides constants and functions used when building KeyDaemon with the Unix
-'make' command.
+Provides constants and functions used when building DaemonFramework applications
+with the 'make' command.
 """
 import os
 import subprocess
@@ -10,36 +10,58 @@ paths = pathConstants.paths
 """Defines all relevant makefile variable names."""
 class VarNames:
     def __init__(self):
-        self._installPath = 'INSTALL_PATH'
-        self._parentPath  = 'PARENT_PATH'
-        self._pipePath    = 'KEY_PIPE_PATH'
-        self._keyLimit    = 'KEY_LIMIT'
-        self._timeout     = 'TIMEOUT'
-        self._configMode  = 'CONFIG'
-        self._verbose     = 'V'
-    """Return the KeyDaemon install path variable name."""
+        self._daemonPath        = 'DF_DAEMON_PATH'
+        self._parentPath        = 'DF_REQUIRED_PARENT_PATH'
+        self._inPipePath        = 'DF_INPUT_PIPE_PATH'
+        self._outPipePath       = 'DF_OUTPUT_PIPE_PATH'
+        self._checkPath         = 'DF_VERIFY_PATH'
+        self._securePath        = 'DF_VERIFY_PATH_SECURITY'
+        self._secureParentPath  = 'DF_VERIFY_PARENT_PATH_SECURITY'
+        self._requireSingular   = 'DF_REQUIRE_SINGULAR'
+        self._parentRunning     = 'DF_REQUIRE_RUNNING_PARENT'
+        self._timeout           = 'DF_TIMEOUT'
+        self._configMode        = 'DF_CONFIG'
+        self._verbose           = 'DF_VERBOSE'
+    """Return the daemon install path variable name."""
     @property
-    def installPath(self):
-        return self._installPath
+    def daemonPath(self):
+        return self._daemonPath
     """
-    Return the KeyDaemon parent process path variable name.
-    KeyDaemon will only run if launched by an executable stored at this path.
+    Return the daemon parent process path variable name.
+    If defined, the daemon will only run if launched by an executable stored at
+    this path.
     """
     @property
     def parentPath(self):
         return self._parentPath
-    """Return the KeyDaemon pipe file path variable name."""
+    """Return the daemon input pipe file path variable name."""
     @property
-    def pipePath(self):
-        return self._pipePath
-    """
-    Return the maximum tracked key codes variable name.
-    KeyDaemon will only track a limited number of key codes, not exceeding this
-    value.
-    """
+    def inPipePath(self):
+        return self._inPipePath
+    """Return the daemon output pipe file path variable name."""
     @property
-    def keyLimit(self):
-        return self._keyLimit
+    def outPipePath(self):
+        return self._outPipePath
+    """Return the daemon path verification variable name."""
+    @property
+    def checkPath(self):
+        return self._checkPath
+    """Return the daemon path security verification variable name."""
+    @property
+    def securePath(self):
+        return self._securePath
+    """Return the daemon parent path security verification variable name."""
+    @property
+    def secureParentPath(self):
+        return self._secureParentPath
+    """Return the singular daemon process verification variable name."""
+    @property
+    def requireSingular(self):
+        return self._requireSingular
+    """Return the running daemon parent requirement variable name."""
+    @property
+    def parentRunning(self):
+        return self._parentRunning
     """Return the KeyDaemon timeout period build variable name."""
     @property
     def timeout(self):
@@ -58,30 +80,46 @@ varNames = VarNames()
 Gets a complete list of build arguments to pass to the 'make' command.
 
 All parameters have default test values provided. If all defaults are used, the
-KeyDaemon should always build, install, and run correctly.
+daemon should always build, install, and run correctly.
     
 Keyword Arguments:
-installPath  -- The path where the KeyDaemon will be installed.
-                (default: paths.appSecureExePath)
-parentPath   -- The path where the KeyDaemon's parent application should have.
-                (default: paths.parentSecureExePath)
-pipePath     -- The path to the named pipe the KeyDaemon uses to send codes.
-                (default: paths.keyPipePath)
-keyLimit     -- The maximum number of tracked key codes allowed. (default: 1)
-testArgs     -- A testArgs.Values object. (default: None)
-                If not None, this object's properties override all parameters
-                listed below.
-debugBuild   -- Whether the KeyDaemon builds in debug mode instead of release.
-                (default: True)
-verbose      -- Whether the KeyDaemon prints verbose build and runtime messages.
-                (default: False)
-timeout      -- Seconds before the KeyDaemon exits, or False to disable timeout.
-                (default: 1)
+installPath     -- The path where the daemon will be installed.
+                   (default: paths.appSecureExePath)
+parentPath      -- The required path to the daemon's parent application.
+                   (default: paths.parentSecureExePath)
+inPipePath      -- The daemon's input pipe path.
+                   (default: paths.inPipePath)
+outPipePath     -- The daemon's output pipe path.
+                   (default: paths.outPipePath)
+checkPath       -- Sets if the daemon must run from installPath.
+                   (default: True)
+securePath      -- Sets if the daemon must run from parentPath
+                   (default: True)
+secureParent    -- Whether the daemon should check if its parent is secured.
+                   (default: True)
+requireSingular -- Sets if only one daemon instance may run.
+                   (default: True)
+parentRunning   -- Sets if the daemon should exit when its parent exits.
+                   (default: true)
+testArgs        -- A testArgs.Values object. (default: None)
+                   If not None, this object's properties override all parameters
+                   listed below.
+debugBuild      -- Whether the daemon builds in debug mode instead of release.
+                   (default: True)
+verbose         -- Whether the daemon prints verbose messages.
+                   (default: False)
+timeout         -- Seconds before the daemon exits, or False to disable timeout.
+                   (default: 1)
 """
 def getBuildArgs(installPath = paths.appSecureExePath, \
                          parentPath = paths.parentSecureExePath, \
-                         pipePath = paths.keyPipePath, \
-                         keyLimit = 1, \
+                         inPipePath = paths.inPipePath, \
+                         outPipePath = paths.outPipePath, \
+                         checkPath = True, \
+                         securePath = True, \
+                         secureParent = True, \
+                         requireSingular = True \
+                         parentRunning = True \
                          testArgs = None, \
                          debugBuild = True, \
                          verbose = False,
@@ -91,55 +129,109 @@ def getBuildArgs(installPath = paths.appSecureExePath, \
         verbose = testArgs.verbose
         if testArgs.timeout is not None:
             timeout = testArgs.timeout
-    argList = [varNames.installPath + '=' + installPath, \
+    argList = [varNames.daemonPath + '=' + installPath, \
                varNames.parentPath  + '=' + parentPath, \
-               varNames.pipePath    + '=' + pipePath, \
+               varNames.inPipePath  + '=' + inPipePath, \
+               varNames.outPipePath + '=' + outPipePath, \
                varNames.keyLimit    + '=' + str(keyLimit), \
                varNames.configMode  + '=' + 'Debug' if debugBuild \
                                                        else 'Release']
-    if verbose:
-        argList.append(varNames.verbose + '= 1')
-    if timeout:
+    booleanArgs = [(checkPath, varNames.checkPath), \
+                   (securePath, varNames.securePath), \
+                   (secureParent, varNames.secureParent), \
+                   (requireSingular, varNames.requireSingular), \
+                   (parentRunning, varNames.parentRunning), \
+                   (verbose, varNames.verbose)]
+    for boolValue, varName in booleanArgs:
+        if boolValue:
+            argList.append(varName + '=1')
         argList.append(varNames.timeout + '=' + str(timeout))
     return argList
 
 """
-Uninstalls KeyDaemon and deletes all build files.
+Attempts to build and install a target.
 
 Keyword Arguments:
-makeArgs -- The set of command line arguments to pass to the `make` process.
-            These are required to ensure that KeyDaemon is removed from the
-            correct installation path.
+makeDir     -- The directory where the target's makefile is found
 
-outFile  -- A file where test output from stdout and stderr will be sent.
-            The default subprocess.DEVNULL value discards all output.
-"""
-def uninstall(makeArgs, outFile = subprocess.DEVNULL):
-    os.chdir(paths.projectDir)
-    subprocess.call(['make', 'uninstall'] + makeArgs, \
-                    stdout = outFile, \
-                    stderr = outFile)
-    subprocess.call(['make', 'clean'] + makeArgs, stdout = outFile, \
-                    stderr = outFile)
-
-"""
-Attempts to builds and install KeyDaemon.
-
-Keyword Arguments:
 makeArgs    -- The set of command line arguments to pass to the `make` process.
-               These are required to ensure that KeyDaemon is removed from the
-               correct installation path.
-
-installPath -- The full path where the KeyDaemon executable will be installed.
 
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
-
-debugBuild  -- Whether the Keydaemon builds in debug mode. (default: True)
 """
-def buildInstall(makeArgs, installPath, outFile = subprocess.DEVNULL, \
-                 debugBuild = True):
-    os.chdir(paths.projectDir)
+def buildInstallTarget(makeDir, makeArgs, outFile = subprocess.DEVNULL):
+    os.chdir(makeDir)
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
     subprocess.call(['make', 'install'] + makeArgs, stdout = outFile, \
                     stderr = outFile)
+
+"""
+Uninstalls a target and deletes its build files.
+Keyword Arguments:
+makeDir     -- The directory where the target's makefile is found.
+
+pathVarName  -- The makefile variable name that sets the target install path.
+
+execPath     -- The path to the target's installed executable.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def uninstallTarget(makeDir, pathVarName, execPath, \
+                    outFile = subprocess.DEVNULL):
+    os.chdir(makeDir)
+    subprocess.call(['make', 'clean', 'CONFIG=Debug'], \
+                    stdout = outFile, \
+                    stderr = outFile)
+    subprocess.call(['make', 'clean', 'CONFIG=Release'], \
+                    stdout = outFile, \
+                    stderr = outFile)
+    subprocess.call(['make', 'uninstall', pathVarName + '=' + execPath], \ 
+                    stdout = outFile, \
+                    stderr = outFile)
+
+"""
+Attempts to builds and install the daemon.
+
+Keyword Arguments:
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def buildInstallDaemon(makeArgs, outFile = subprocess.DEVNULL):
+    buildInstallTarget(paths.basicDaemonDir, makeArgs, outFile)
+
+"""
+Attempts to builds and install the parent.
+
+Keyword Arguments:
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def buildInstallParent(makeArgs, outFile = subprocess.DEVNULL):
+    buildInstallTarget(paths.basicParentDir, makeArgs, outFile)
+
+"""
+Uninstalls the daemon and deletes its build files.
+Keyword Arguments:
+daemonPath  -- The path to the installed daemon executable to remove.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def uninstallDaemon(daemonPath, outFile = subprocess.DEVNULL):
+    uninstallTarget(paths.basicDaemonDir, 'DAEMON_PATH', daemonPath, outFile)
+
+"""
+Uninstalls the parent and deletes its build files.
+Keyword Arguments:
+parentPath  -- The path to the installed parent executable to remove.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def uninstallParent(parentPath, outFile = subprocess.DEVNULL):
+    uninstallTarget(paths.basicParentDir, 'PARENT_PATH', parentPath, outFile)
