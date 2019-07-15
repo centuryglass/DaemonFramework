@@ -36,6 +36,7 @@ DF_DAEMON_PATH := \'\"$(DAEMON_PATH)\"\'
 DF_INPUT_PIPE_PATH := \'\"$(TEST_EXEC_DIR)/.inPipe\"\'
 DF_OUTPUT_PIPE_PATH := \'\"$(TEST_EXEC_DIR)/.outPipe\"\'
 DF_REQUIRED_PARENT_PATH := \'\"$(PARENT_PATH)\"\'
+DF_TIMEOUT ?= 1
 include $(PROJECT_DIR)/MakeDaemon.mk
 
 
@@ -107,15 +108,19 @@ LDFLAGS := -lpthread \
 
 
 ###################### Supporting Build Targets: ##############################
-.PHONY: install clean buildDaemon
+.PHONY: install uninstall clean buildDaemon
 
 install:
 	$(V_AT)sudo mkdir -p $(shell dirname $(DAEMON_PATH)); \
 	sudo cp $(APP_TARGET) $(DAEMON_PATH); \
-    sudo setcap -q cap_dac_read_search=ep $(DAEMON_PATH)
+    sudo setcap -q cap_dac_override=ep $(DAEMON_PATH)
+
+uninstall:
+	@echo Uninstalling "$(APP_TARGET)"
+	$(V_AT)rm $(DAEMON_PATH)
 
 clean:
-	@echo Cleaning "$(DAEMON_PATH)"
+	@echo Cleaning "$(APP_TARGET)"
 	$(V_AT)rm -rf $(OBJDIR)
 	$(V_AT)rm $(APP_TARGET)
 

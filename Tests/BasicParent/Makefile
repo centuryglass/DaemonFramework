@@ -106,14 +106,18 @@ LDFLAGS := -lpthread \
 
 
 ###################### Supporting Build Targets: ##############################
-.PHONY: install clean buildParent
+.PHONY: install uninstall clean buildParent
 
 install:
 	$(V_AT)sudo mkdir -p $(shell dirname $(PARENT_PATH)); \
 	sudo cp $(APP_TARGET) $(PARENT_PATH);
 
+uninstall:
+	@echo Uninstalling "$(APP_TARGET)"
+	$(V_AT)rm $(PARENT_PATH)
+
 clean:
-	@echo Cleaning "$(PARENT_PATH)"
+	@echo Cleaning "$(APP_TARGET)"
 	$(V_AT)rm -rf $(OBJDIR)
 	$(V_AT)rm $(APP_TARGET)
 
