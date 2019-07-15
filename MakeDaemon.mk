@@ -151,6 +151,7 @@ DF_DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
                    $(call addDef,DF_OUTPUT_PIPE_PATH) \
                    $(call addDef,DF_VERIFY_PATH) \
                    $(call addDef,DF_VERIFY_PATH_SECURITY) \
+                   $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
                    $(call addDef,DF_REQUIRE_SINGULAR) \
                    $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
                    $(call addDef,DF_REQUIRED_PARENT_PATH) \
