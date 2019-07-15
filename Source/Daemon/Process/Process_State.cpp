@@ -2,7 +2,8 @@
 
 // Returns the process state represented by the state field character in the
 // /proc/<pid>/stat file.
-Process::State Process::readStateChar(const char stateCode)
+DaemonFramework::Process::State
+DaemonFramework::Process::readStateChar(const char stateCode)
 {
     // TODO:  Why is state code 'C' included as a running process state? 'C'
     // does not appear to be a valid code according to the proc manpage.
@@ -39,7 +40,7 @@ Process::State Process::readStateChar(const char stateCode)
 
 
 // Gets a string representation of a process state for debugging.
-std::string Process::stateString(const Process::State state)
+std::string DaemonFramework::Process::stateString(const Process::State state)
 {
     switch(state)
     {
