@@ -2,10 +2,14 @@ build/
 Tests/__pycache__/
 Tests/supportModules/__pycache__/
 Tests/testModulesModules/__pycache__/
-Tests/testExecutables/secured/
 Tests/testExecutables/.keyPipe
+Tests/testExecutables/.inPipe
+Tests/testExecutables/.outPipe
+Tests/testExecutables/secured/
 Tests/testExecutables/unsecured/
 Tests/testExecutables/TestParent
+Tests/BasicDaemon/BasicDaemon
+Tests/BasicParent/BasicParent
 Tests/tempLog.txt
 Tests/failureLog.txt
 Tests/perl/

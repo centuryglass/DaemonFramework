@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <limits>
 #include <unistd.h>
-#include "../../Include/Parent/DaemonControl.h"
+#include "DaemonControl.h"
 
 // Print the application name before all info/error output:
 static const constexpr char* messagePrefix = "TestParent: ";
@@ -45,7 +45,7 @@ private:
 int main(int argc, char** argv)
 {
     using namespace DaemonFramework;
-    if (std::string(argv[1]) == PRINT_PATH_ARG)
+    if (argc > 1 && std::string(argv[1]) == PRINT_PATH_ARG)
     {
         std::cout << DF_DAEMON_PATH;
         return 0;
@@ -54,12 +54,17 @@ int main(int argc, char** argv)
     DaemonControl daemonController(&eventListener, pipeBufSize);
     std::cout << messagePrefix << "Starting Daemon:\n";
     std::vector<std::string> args;
-    args.push_back(std::string(argv[1]));
+    if (argc > 1)
+    {
+        args.push_back(std::string(argv[1]));
+    }
     daemonController.startDaemon(args);
     if (!daemonController.isDaemonRunning())
     {
         std::cerr << messagePrefix << "Failed to start KeyDaemon thread.\n";
         return 1;
     }
-    return daemonController.waitToExit();
+    const int retVal = daemonController.waitToExit();
+    std::cout << messagePrefix << "Daemon exited returning " << retVal << "\n";
+    return retVal;
 }
