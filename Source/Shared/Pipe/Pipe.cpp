@@ -31,6 +31,8 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
     }
     else // File exists, make sure the mode is correct.
     {
+        return true;
+    /*
         int pipeFD = 0;
         errno = 0;
         pipeFD = open(path, O_RDONLY);
@@ -75,6 +77,7 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
                     << (int) pipeInfo.st_mode);
             return false;
         }
+    */
     }
     // Attempt to create pipe:
     errno = 0;
