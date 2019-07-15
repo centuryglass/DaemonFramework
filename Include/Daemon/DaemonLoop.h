@@ -67,7 +67,6 @@ public:
      */
     virtual ~DaemonLoop();
 
-protected:
     /**
      * @brief  Starts the daemon's main action loop as long as the loop isn't
      *         already running.
@@ -83,6 +82,7 @@ protected:
      */
     int runLoop();
 
+protected:
     /**
      * @brief  Checks if runLoop() has been called already, and the loop is
      *         currently running.
