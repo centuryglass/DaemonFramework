@@ -12,8 +12,8 @@ APP_TARGET = BasicDaemon
 # Set Debug or Release mode:
 CONFIG ?= Debug
 # enable or disable verbose output:
-VERBOSE ?= 1
-V_AT = $(shell if [ $DF_VERBOSE == 1 ]; then echo '@'; fi)
+VERBOSE ?= 0
+V_AT := $(shell if [ $(VERBOSE) != 1 ]; then echo '@'; fi)
 
 # Select specific build architectures:
 TARGET_ARCH ?= -march=native
