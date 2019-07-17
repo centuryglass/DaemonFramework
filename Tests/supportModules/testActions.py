@@ -1,5 +1,5 @@
 """
-Handles basic tasks needed to test compiling, installing, and running KeyDaemon.
+Tests building, installing, and running the BasicDaemon and BasicParent.
 """
 import os
 import subprocess
@@ -88,11 +88,11 @@ def runTest(installPath, parentPath, expectedOutcome, argList = [], \
         runTestArgs.append(parentPath)
     else:
         runTestArgs.append(installPath)
-    runTestArgs.append(argList)
+    runTestArgs = runTestArgs + argList
     completedProcess = subprocess.run(runTestArgs, \
                                   stdout = outFile, \
                                   stderr = outFile)
-    return testResult.Test(testResult.ExitCode(completedProcess.returncode), \
+    return testResult.Result(testResult.ExitCode(completedProcess.returncode), \
                            expectedOutcome)
 
 """
@@ -119,7 +119,11 @@ outFile:       --  The file where test output from stdout and stderr will be
 Return a testResult.Result object describing the test's actual and expected
 results.
 """
-def fullTest(makeArgs, daemonPath, parentPath, expectedOutcome, argList = [] \
+def fullTest(makeArgs, \
+             daemonPath, \
+             parentPath, \
+             expectedOutcome = testResult.ExitCode.success, \
+             argList = [], \
              outFile = subprocess.DEVNULL):
     if parentPath is not None:
         buildResult = testParentBuildInstall(makeArgs, outFile)
@@ -131,7 +135,7 @@ def fullTest(makeArgs, daemonPath, parentPath, expectedOutcome, argList = [] \
     runResult = runTest(daemonPath, parentPath, expectedOutcome, argList, \
                         outFile)
     if runResult is not None:
-        return testResult.Result(runResult, expectedOutcome)
+        return runResult
     return testResult.Result(testResult.ExitCode.success, expectedOutcome)
 
 """
@@ -147,19 +151,15 @@ testFile    -- A file object storing test output from stdout and stderr.
 
 Returns true if the test result was as expected, false otherwise.
 """
-def checkResult(result, expected, index, description, testFile = None):
+def checkResult(result, index, description, testFile = None):
     if testFile is not None:
         testFile.close()
-    result.printResultText()
+    print(index + ': ' + result.getResultText())
     if result.testPassed():
         if (os.path.isfile(paths.tempLogPath)):
             os.remove(paths.tempLogPath)
         return True
     else:
-        print(index + ' failed!')
-        failureDescription = 'Expected result: ' + expected.name \
-                           + ', actual result: ' + result.name
-        print(failureDescription)
         print('Test description: ' + description)
         if testFile is not None:
             print('See ' + paths.failureLog + ' for more information.')

@@ -1,5 +1,5 @@
 """
-testArgs manages command line arguments entered when running KeyDaemon tests.
+testArgs manages command line arguments entered when running daemon tests.
 """
 import os
 
@@ -22,7 +22,7 @@ class Values():
     @property
     def printHelp(self):
         return self._printHelp
-    """Return how long the KeyDaemon should run before closing automatically."""
+    """Return how long the daemon should run before closing automatically."""
     @property
     def timeout(self):
         return self._timeout

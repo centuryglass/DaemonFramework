@@ -5,6 +5,7 @@ with the 'make' command.
 import os
 import subprocess
 import tempfile
+import time
 from supportModules import pathConstants
 paths = pathConstants.paths
 
@@ -181,10 +182,10 @@ def buildTarget(makeDir, makeArgs, outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
     targetName = readMakeVar(makeArgs, 'APP_TARGET')
     targetPath = os.path.join(makeDir, targetName)
-    if os.path.isFile(targetPath):
+    if os.path.isfile(targetPath):
         os.remove(targetPath)
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
-    return os.path.isFile(targetPath)
+    return os.path.isfile(targetPath)
 
 """
 Attempts to install a target, returning whether the installation succeeded.
@@ -206,7 +207,7 @@ def installTarget(makeDir, makeArgs, installVar, outFile = subprocess.DEVNULL):
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
     subprocess.call(['make', 'install'] + makeArgs, stdout = outFile, \
                     stderr = outFile)
-    return os.path.isFile(targetPath) \
+    return os.path.isfile(targetPath) \
            and preBuildTime < os.path.getmtime(targetPath)
 
 """
