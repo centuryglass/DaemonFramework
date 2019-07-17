@@ -52,7 +52,8 @@ int main(int argc, char** argv)
     }
     Listener eventListener;
     DaemonControl daemonController(&eventListener, pipeBufSize);
-    std::cout << messagePrefix << "Starting Daemon:\n";
+    std::cout << messagePrefix << "Starting Daemon at \"" << DF_DAEMON_PATH
+            << "\"\n";
     std::vector<std::string> args;
     if (argc > 1)
     {

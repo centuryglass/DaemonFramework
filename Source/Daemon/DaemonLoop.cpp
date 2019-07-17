@@ -93,6 +93,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         return (int) ExitCode::success;
     }
 
+    DF_DBG_V(messagePrefix << __func__ << ": Starting security checks.");
     // Initial security checks:
 #   ifdef DF_VERIFY_PATH
     if (! securityMonitor.validDaemonPath())
@@ -143,6 +144,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         return (int) ExitCode::success;
     }
 
+    DF_DBG_V(messagePrefix << __func__ << ": Calling initLoop():");
     int resultCode = initLoop();
 
 #   ifdef DF_TIMEOUT
@@ -150,6 +152,7 @@ int DaemonFramework::DaemonLoop::runLoop()
     const time_point<system_clock> loopStartTime = system_clock::now();
 #   endif
 
+    DF_DBG_V(messagePrefix << __func__ << ": Starting main loop:");
     while (resultCode == 0)
     {
         if (termSignalReceived)
