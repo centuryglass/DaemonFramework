@@ -79,19 +79,13 @@ define HELPTEXT
 endef
 export HELPTEXT
 
+
 ######################## Initialize build variables: ##########################
-# Set Debug or Release mode:
-DF_CONFIG ?= Release
-
-# enable or disable verbose output:
-DF_VERBOSE ?= 0
-V_AT = $(shell if [ $DF_VERBOSE == 1 ]; then echo '@'; fi)
-
 # Save makefile directory:
 DF_ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-# Select specific build architectures:
-DF_TARGET_ARCH ?= -march=native
+# Import targets and variables shared with the daemon parent makefile:
+include $(DF_ROOT_DIR)/Shared.mk
 
 # Daemon security options:
 DF_VERIFY_PATH ?= 1
@@ -102,53 +96,9 @@ DF_REQUIRE_RUNNING_PARENT ?= 1
 
 
 ############################### Set build flags: ##############################
-#### Config-specific flags: ####
-ifeq ($(DF_CONFIG),Debug)
-    DF_OPTIMIZATION ?= 0
-    DF_GDB_SUPPORT ?= 1
-    # Debug-specific preprocessor definitions:
-    DF_CONFIG_FLAGS = -DDF_DEBUG=1
-endif
-
-ifeq ($(DF_CONFIG),Release)
-    DF_OPTIMIZATION ?= 1
-    DF_GDB_SUPPORT ?= 0
-endif
-
-# Set optimization level flags:
-ifeq ($(DF_OPTIMIZATION), 1)
-    DF_CONFIG_CFLAGS := $(DF_CONFIG_CFLAGS) -O3 -flto
-    DF_CONFIG_LDFLAGS := $(DF_CONFIG_LDFLAGS) -flto
-else
-    DF_CONFIG_CFLAGS := $(DF_CONFIG_CFLAGS) -O0
-endif
-
-# Set debugging flags:
-ifeq ($(DF_GDB_SUPPORT), 1)
-    DF_CONFIG_CFLAGS := $(DF_CONFIG_CFLAGS) -g -ggdb
-else
-    DF_CONFIG_LDFLAGS := $(DF_CONFIG_LDFLAGS) -fvisibility=hidden
-endif
-
-#### C compilation flags: ####
-DF_CFLAGS := $(DF_TARGET_ARCH) \
-             $(DF_CONFIG_CFLAGS) \
-             $(DF_CFLAGS)
-
-#### C++ compilation flags: ####
-DF_CXXFLAGS := -std=gnu++14 $(DF_CXXFLAGS)
-
-#### C Preprocessor flags: ####
-
-# Given a nonempty, nonzero makefile variable, print a corresponding C
-# preprocessor definition.
-addDef = $(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; \
-        then echo -D$(1)=$($(1)); fi)
 
 # C preprocessor definitions:
-DF_DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
-                   $(call addDef,DF_INPUT_PIPE_PATH) \
-                   $(call addDef,DF_OUTPUT_PIPE_PATH) \
+DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) \
                    $(call addDef,DF_VERIFY_PATH) \
                    $(call addDef,DF_VERIFY_PATH_SECURITY) \
                    $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
@@ -158,37 +108,21 @@ DF_DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
                    $(call addDef,DF_TIMEOUT)
 
 # Include directories:
-DF_RECURSIVE_INCLUDE_DIRS := $(DF_ROOT_DIR)/Include/Daemon \
-                             $(DF_ROOT_DIR)/Include/Implementation
-DF_DIR_FLAGS := $(shell find $(DF_RECURSIVE_INCLUDE_DIRS) -type d \
-                     -printf " -I'%p'")
+DF_DIR_FLAGS := $(DF_DIR_FLAGS) \
+                $(call recursiveInclude,$(DF_ROOT_DIR)/Include/Daemon)
 
-# Disable dependency generation if multiple architectures are set
-DF_DEPFLAGS := $(if $(word 2, $(DF_TARGET_ARCH)), , -MMD)
-
-DF_CPPFLAGS := -pthread \
-            $(DF_DEPFLAGS) \
-            $(DF_CONFIG_FLAGS) \
+DF_CPPFLAGS := $(DF_CPPFLAGS) \
             $(DF_DEFINE_FLAGS) \
-            $(DF_DIR_FLAGS) \
-            $(DF_CPPFLAGS)
-
-#### Linker flags: ####
-DF_LDFLAGS := -lpthread \
-              $(DF_TARGET_ARCH) \
-              $(DF_CONFIG_LDFLAGS) \
-              $(DF_LDFLAGS)
-
+            $(DF_DIR_FLAGS) 
 
 ######################## Load module source lists: ############################
 include $(DF_ROOT_DIR)/Source/Daemon/daemon.mk
-include $(DF_ROOT_DIR)/Source/Shared/shared.mk
 DF_OBJECTS_DAEMON := $(DF_OBJECTS_SHARED) $(DF_OBJECTS_DAEMON)
 
 
 ############################# Build Targets: ##################################
 
-.PHONY: daemonFramework check-defs help print-%
+.PHONY: daemonFramework check-defs help
 
 ## Main build target: ##
 # Checks definitions, then compiles daemon support classes.
@@ -206,14 +140,6 @@ $(DF_OBJECTS_DAEMON) :
 	-$(V_AT)mkdir -p $(DF_OBJDIR)
 	@echo "      Compiling: $(<F)"
 	$(V_AT)$(CXX) $(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS) -o "$@" -c "$<"
-
-## Print the guide to this makefile: ##
-help:
-	$(shell echo "$$HELPTEXT")
-
-## Print the value of any build variable: ##
-print-%:
-	@echo $* = $($*)
 
 ## Enable dependency generation: ##
 -include $(DF_OBJECTS_DAEMON:%.o=%.d)

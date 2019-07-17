@@ -1,5 +1,5 @@
 """
-Tests that KeyDaemon can be successfully compiled, installed, and executed.
+Test that the daemon and parent can compile, install, and execute correctly.
 """
 
 import sys, os
@@ -10,7 +10,7 @@ from supportModules.testActions import TestResult
 from abc import ABC, abstractmethod
 
 """
-Attempts to build, install and run KeyDaemon with basic build options.
+Attempts to build, install and run the daemon and parent with basic options.
 Keyword Arguments:
 testArgs -- A testArgs.Values argument object.
 """

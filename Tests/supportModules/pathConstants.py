@@ -135,13 +135,13 @@ class TestPaths:
     """Return the path to the parent app in the secured executable directory."""
     @property
     def parentSecureExePath(self):
-        return os.path.join(self.secureExeDir, self.parentApp)
+        return os.path.join(self.secureExeDir, self.parent)
     """
     Return the path to the parent app in the unsecured executable directory.
     """
     @property
     def parentUnsecureExePath(self):
-        return os.path.join(self.unsecureExeDir, self.parentApp)
+        return os.path.join(self.unsecureExeDir, self.parent)
     """Return the path where the daemon's input pipe file will be created."""
     @property
     def inPipePath(self):

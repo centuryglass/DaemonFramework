@@ -4,6 +4,7 @@ with the 'make' command.
 """
 import os
 import subprocess
+import tempfile
 from supportModules import pathConstants
 paths = pathConstants.paths
 
@@ -84,7 +85,7 @@ daemon should always build, install, and run correctly.
     
 Keyword Arguments:
 installPath     -- The path where the daemon will be installed.
-                   (default: paths.appSecureExePath)
+                   (default: paths.daemonSecureExePath)
 parentPath      -- The required path to the daemon's parent application.
                    (default: paths.parentSecureExePath)
 inPipePath      -- The daemon's input pipe path.
@@ -111,15 +112,15 @@ verbose         -- Whether the daemon prints verbose messages.
 timeout         -- Seconds before the daemon exits, or False to disable timeout.
                    (default: 1)
 """
-def getBuildArgs(installPath = paths.appSecureExePath, \
+def getBuildArgs(installPath = paths.daemonSecureExePath, \
                          parentPath = paths.parentSecureExePath, \
                          inPipePath = paths.inPipePath, \
                          outPipePath = paths.outPipePath, \
                          checkPath = True, \
                          securePath = True, \
                          secureParent = True, \
-                         requireSingular = True \
-                         parentRunning = True \
+                         requireSingular = True, \
+                         parentRunning = True, \
                          testArgs = None, \
                          debugBuild = True, \
                          verbose = False,
@@ -133,12 +134,11 @@ def getBuildArgs(installPath = paths.appSecureExePath, \
                varNames.parentPath  + '=' + parentPath, \
                varNames.inPipePath  + '=' + inPipePath, \
                varNames.outPipePath + '=' + outPipePath, \
-               varNames.keyLimit    + '=' + str(keyLimit), \
                varNames.configMode  + '=' + 'Debug' if debugBuild \
                                                        else 'Release']
     booleanArgs = [(checkPath, varNames.checkPath), \
                    (securePath, varNames.securePath), \
-                   (secureParent, varNames.secureParent), \
+                   (secureParent, varNames.secureParentPath), \
                    (requireSingular, varNames.requireSingular), \
                    (parentRunning, varNames.parentRunning), \
                    (verbose, varNames.verbose)]
@@ -148,8 +148,26 @@ def getBuildArgs(installPath = paths.appSecureExePath, \
         argList.append(varNames.timeout + '=' + str(timeout))
     return argList
 
+
 """
-Attempts to build and install a target.
+Given a build argument set, return the value of a specific makefile variable.
+Keyword Arguments:
+makeArgs -- A set of makefile arguments that may affect the install path.
+
+varName  -- The name of the variable to check.
+
+makePath -- The path to the makefile where the variable should be checked.
+            (default: 'Makefile')
+"""
+def readMakeVar(makeArgs, varName, makePath = 'Makefile'):
+    with tempfile.TemporaryFile() as tempOutputFile:
+        subprocess.run(['make', '-f', makePath, 'print-' + varName] + makeArgs,\
+                         stdout = tempOutputFile)
+        tempOutputFile.seek(0)
+        return tempOutputFile.read().decode('utf-8').rstrip()
+
+"""
+Attempts to build a target, returning whether the build succeeded.
 
 Keyword Arguments:
 makeDir     -- The directory where the target's makefile is found
@@ -159,11 +177,37 @@ makeArgs    -- The set of command line arguments to pass to the `make` process.
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
-def buildInstallTarget(makeDir, makeArgs, outFile = subprocess.DEVNULL):
+def buildTarget(makeDir, makeArgs, outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
+    targetName = readMakeVar(makeArgs, 'APP_TARGET')
+    targetPath = os.path.join(makeDir, targetName)
+    if os.path.isFile(targetPath):
+        os.remove(targetPath)
+    subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
+    return os.path.isFile(targetPath)
+
+"""
+Attempts to install a target, returning whether the installation succeeded.
+
+Keyword Arguments:
+makeDir     -- The directory where the target's makefile is found
+
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+installVar  -- The makefile variable name that sets the installation path.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def installTarget(makeDir, makeArgs, installVar, outFile = subprocess.DEVNULL):
+    os.chdir(makeDir)
+    targetPath = readMakeVar(makeArgs, installVar)
+    preBuildTime = time.time()
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
     subprocess.call(['make', 'install'] + makeArgs, stdout = outFile, \
                     stderr = outFile)
+    return os.path.isFile(targetPath) \
+           and preBuildTime < os.path.getmtime(targetPath)
 
 """
 Uninstalls a target and deletes its build files.
@@ -186,12 +230,12 @@ def uninstallTarget(makeDir, pathVarName, execPath, \
     subprocess.call(['make', 'clean', 'CONFIG=Release'], \
                     stdout = outFile, \
                     stderr = outFile)
-    subprocess.call(['make', 'uninstall', pathVarName + '=' + execPath], \ 
+    subprocess.call(['make', 'uninstall', pathVarName + '=' + execPath], \
                     stdout = outFile, \
                     stderr = outFile)
 
 """
-Attempts to builds and install the daemon.
+Attempts to build the BasicDaemon, returning whether the build succeeded.
 
 Keyword Arguments:
 makeArgs    -- The set of command line arguments to pass to the `make` process.
@@ -199,11 +243,11 @@ makeArgs    -- The set of command line arguments to pass to the `make` process.
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
-def buildInstallDaemon(makeArgs, outFile = subprocess.DEVNULL):
-    buildInstallTarget(paths.basicDaemonDir, makeArgs, outFile)
+def buildBasicDaemon(makeArgs, outFile = subprocess.DEVNULL):
+    return buildTarget(paths.basicDaemonDir, makeArgs, outFile)
 
 """
-Attempts to builds and install the parent.
+Attempts to install the BasicDaemon, returning whether installation succeeded.
 
 Keyword Arguments:
 makeArgs    -- The set of command line arguments to pass to the `make` process.
@@ -211,8 +255,8 @@ makeArgs    -- The set of command line arguments to pass to the `make` process.
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
-def buildInstallParent(makeArgs, outFile = subprocess.DEVNULL):
-    buildInstallTarget(paths.basicParentDir, makeArgs, outFile)
+def installBasicDaemon(makeArgs, outFile = subprocess.DEVNULL):
+    return installTarget(paths.basicDaemonDir, makeArgs, 'DAEMON_PATH', outFile)
 
 """
 Uninstalls the daemon and deletes its build files.
@@ -224,6 +268,30 @@ outFile     -- A file where test output from stdout and stderr will be sent.
 """
 def uninstallDaemon(daemonPath, outFile = subprocess.DEVNULL):
     uninstallTarget(paths.basicDaemonDir, 'DAEMON_PATH', daemonPath, outFile)
+
+"""
+Attempts to build the BasicParent, returning whether the build succeeded.
+
+Keyword Arguments:
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def buildBasicParent(makeArgs, outFile = subprocess.DEVNULL):
+    return buildTarget(paths.basicParentDir, makeArgs, outFile)
+
+"""
+Attempts to install the BasicParent, returning whether installation succeeded.
+
+Keyword Arguments:
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def installBasicParent(makeArgs, outFile = subprocess.DEVNULL):
+    return installTarget(paths.basicParentDir, makeArgs, 'PARENT_PATH', outFile)
 
 """
 Uninstalls the parent and deletes its build files.
