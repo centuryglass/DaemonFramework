@@ -145,9 +145,8 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                    (parentRunning, varNames.parentRunning), \
                    (verbose, varNames.verbose)]
     for boolValue, varName in booleanArgs:
-        if boolValue:
-            argList.append(varName + '=1')
-        argList.append(varNames.timeout + '=' + str(timeout))
+        argList.append(varName + ('=1' if boolValue else '=0'))
+    argList.append(varNames.timeout + '=' + str(timeout))
     return argList
 
 
