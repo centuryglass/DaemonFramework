@@ -89,11 +89,7 @@ class Result:
         return self._resultCode == self._expectedCode
     """Gets a full description of the test's result."""
     def getResultText(self):
-        if self.testPassed():
-            return 'Passed: ' + resultCodeDescription(self._resultCode)
-        else:
-            return 'Failed: ' + resultCodeDescription(self._resultCode) + \
-                ' Expected result: ' + resultCodeDescription(self._expectedCode)
-    """Prints the full description of the test's results to stdout."""
-    def printResultText(self):
-        print(self.getResultText())
+        return resultCodeDescription(self._resultCode)
+    """Gets a full description of the test's expected result."""
+    def getExpectedResultText(self):
+        return resultCodeDescription(self._expectedCode)

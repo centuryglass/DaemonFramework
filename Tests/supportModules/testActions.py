@@ -153,14 +153,18 @@ Returns true if the test result was as expected, false otherwise.
 def checkResult(result, index, description, testFile = None):
     if testFile is not None:
         testFile.close()
-    print(index + ': ' + description)
-    print('    ' + result.getResultText())
+    testPrefix = '  ' + index + (': PASS: ' if result.testPassed() \
+                                            else ': FAIL: ')
+    lineMargin = ' ' * len(testPrefix)
+    print(testPrefix + description)
+    print(lineMargin + 'Result: ' + result.getResultText())
     if result.testPassed():
         if (os.path.isfile(paths.tempLogPath)):
             os.remove(paths.tempLogPath)
         return True
     else:
-        print('See ' + paths.failureLog + ' for more information.')
+        print(lineMargin + 'Expected: ' + result.getExpectedResultText())
+        print(lineMargin + 'See ' + paths.failureLog + ' for more information.')
         if (os.path.isfile(paths.tempLogPath)):
             with open(paths.tempLogPath, 'r') as tempLog:
                 with open(paths.failureLogPath, 'a') as failureLog:
