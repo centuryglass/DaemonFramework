@@ -7,7 +7,6 @@ moduleDir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(moduleDir, os.pardir))
 from supportModules import make, pathConstants, testActions, testArgs, \
                            testResult
-from abc import ABC, abstractmethod
 
 """
 Attempts to build, install and run the daemon and parent with basic options.
@@ -20,8 +19,9 @@ def runTest(testArgs):
     daemonPath  = paths.daemonSecureExePath
     parentPath  = paths.parentSecureExePath
     makeArgs    = make.getBuildArgs(testArgs = testArgs)
+    logFile     = open(paths.tempLogPath, 'w')
     result = testActions.fullTest(makeArgs, daemonPath, parentPath, \
-                                  outFile = None)
+                                  outFile = logFile)
     testActions.checkResult(result, '1/1', 'Basic build/install/run test', \
             testFile = None)
 

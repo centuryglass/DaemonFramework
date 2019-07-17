@@ -85,7 +85,7 @@ All parameters have default test values provided. If all defaults are used, the
 daemon should always build, install, and run correctly.
     
 Keyword Arguments:
-installPath     -- The path where the daemon will be installed.
+daemonPath      -- The path where the daemon will be installed.
                    (default: paths.daemonSecureExePath)
 parentPath      -- The required path to the daemon's parent application.
                    (default: paths.parentSecureExePath)
@@ -113,7 +113,7 @@ verbose         -- Whether the daemon prints verbose messages.
 timeout         -- Seconds before the daemon exits, or False to disable timeout.
                    (default: 1)
 """
-def getBuildArgs(installPath = paths.daemonSecureExePath, \
+def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                          parentPath = paths.parentSecureExePath, \
                          inPipePath = paths.inPipePath, \
                          outPipePath = paths.outPipePath, \
@@ -131,10 +131,11 @@ def getBuildArgs(installPath = paths.daemonSecureExePath, \
         verbose = testArgs.verbose
         if testArgs.timeout is not None:
             timeout = testArgs.timeout
-    argList = [varNames.daemonPath + '=' + installPath, \
-               varNames.parentPath  + '=' + parentPath, \
-               varNames.inPipePath  + '=' + inPipePath, \
-               varNames.outPipePath + '=' + outPipePath, \
+    quotedVar = lambda var : '"\\\'\\"' + var + '\\"\\\'"'
+    argList = [varNames.daemonPath + '=' + quotedVar(daemonPath),\
+               varNames.parentPath  + '=' + quotedVar(parentPath), \
+               varNames.inPipePath  + '=' + quotedVar(inPipePath), \
+               varNames.outPipePath + '=' + quotedVar(outPipePath), \
                varNames.configMode  + '=' + 'Debug' if debugBuild \
                                                        else 'Release']
     booleanArgs = [(checkPath, varNames.checkPath), \
@@ -210,8 +211,26 @@ def installTarget(makeDir, makeArgs, installVar, outFile = subprocess.DEVNULL):
     return os.path.isfile(targetPath) \
            and preBuildTime < os.path.getmtime(targetPath)
 
+
 """
-Uninstalls a target and deletes its build files.
+Deletes a target's build files.
+Keyword Arguments:
+makeDir     -- The directory where the target's makefile is found.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def cleanTarget(makeDir, pathVarName, outFile = subprocess.DEVNULL):
+    os.chdir(makeDir)
+    subprocess.call(['make', 'clean', 'CONFIG=Debug'], \
+                    stdout = outFile, \
+                    stderr = outFile)
+    subprocess.call(['make', 'clean', 'CONFIG=Release'], \
+                    stdout = outFile, \
+                    stderr = outFile)
+
+"""
+Uninstalls a target.
 Keyword Arguments:
 makeDir     -- The directory where the target's makefile is found.
 
@@ -225,12 +244,6 @@ outFile     -- A file where test output from stdout and stderr will be sent.
 def uninstallTarget(makeDir, pathVarName, execPath, \
                     outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
-    subprocess.call(['make', 'clean', 'CONFIG=Debug'], \
-                    stdout = outFile, \
-                    stderr = outFile)
-    subprocess.call(['make', 'clean', 'CONFIG=Release'], \
-                    stdout = outFile, \
-                    stderr = outFile)
     subprocess.call(['make', 'uninstall', pathVarName + '=' + execPath], \
                     stdout = outFile, \
                     stderr = outFile)
@@ -260,7 +273,17 @@ def installBasicDaemon(makeArgs, outFile = subprocess.DEVNULL):
     return installTarget(paths.basicDaemonDir, makeArgs, 'DAEMON_PATH', outFile)
 
 """
-Uninstalls the daemon and deletes its build files.
+Deletes the daemon's build files.
+Keyword Arguments:
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def cleanDaemon(outFile = subprocess.DEVNULL):
+    cleanTarget(paths.basicDaemonDir, outFile)
+
+"""
+Uninstalls the daemon.
 Keyword Arguments:
 daemonPath  -- The path to the installed daemon executable to remove.
 
@@ -295,7 +318,16 @@ def installBasicParent(makeArgs, outFile = subprocess.DEVNULL):
     return installTarget(paths.basicParentDir, makeArgs, 'PARENT_PATH', outFile)
 
 """
-Uninstalls the parent and deletes its build files.
+Deletes the parent's build files.
+Keyword Arguments:
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def cleanParent(outFile = subprocess.DEVNULL):
+    cleanTarget(paths.basicParentDir, outFile)
+
+"""
+Uninstalls the parent.
 Keyword Arguments:
 parentPath  -- The path to the installed parent executable to remove.
 

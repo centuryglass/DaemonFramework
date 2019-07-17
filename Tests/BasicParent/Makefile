@@ -29,12 +29,12 @@ PARENT_PATH ?= $(TEST_EXEC_DIR)/secured/$(APP_TARGET)
 
 
 ################ Configure and include framework makefile: ####################
-DF_CONFIG := $(CONFIG)
-DF_VERBOSE := $(VERBOSE)
-DF_OBJDIR := $(OBJDIR)
-DF_DAEMON_PATH := \'\"$(DAEMON_PATH)\"\'
-DF_INPUT_PIPE_PATH := \'\"$(TEST_EXEC_DIR)/.inPipe\"\'
-DF_OUTPUT_PIPE_PATH := \'\"$(TEST_EXEC_DIR)/.outPipe\"\'
+DF_CONFIG ?= $(CONFIG)
+DF_VERBOSE ?= $(VERBOSE)
+DF_OBJDIR ?= $(OBJDIR)
+DF_DAEMON_PATH ?= \'\"$(DAEMON_PATH)\"\'
+DF_INPUT_PIPE_PATH ?= \'\"$(TEST_EXEC_DIR)/.inPipe\"\'
+DF_OUTPUT_PIPE_PATH ?= \'\"$(TEST_EXEC_DIR)/.outPipe\"\'
 include $(PROJECT_DIR)/MakeDaemonParent.mk
 
 

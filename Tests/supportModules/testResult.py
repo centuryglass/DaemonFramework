@@ -2,6 +2,18 @@
 from enum import Enum
 
 """
+Represents a result encountered before the daemon could run.
+"""
+class InitCode(Enum):
+    daemonBuildFailure = 50
+    daemonInstallFailure = 51
+    daemonInitSuccess = 52,
+    parentBuildFailure = 53
+    parentInstallFailure = 54,
+    parentInitSuccess = 55,
+    parentRunFailure = 56
+
+"""
 Represents an exit code returned by a daemon.
 
 These codes are also defined in 'Include/Implementation/ExitCode.h'.
@@ -18,19 +30,9 @@ class ExitCode(Enum):
     daemonExecFailed = 8
 
 """
-Represents an error encountered before the daemon could run.
-"""
-class FailureCode(Enum):
-    daemonBuildFailure = 50
-    daemonInstallFailure = 51
-    parentBuildFailure = 52
-    parentInstallFailure = 53
-    parentRunFailure = 54
-
-"""
-Return a string describing an ExitCode or FailureCode.
+Return a string describing an ExitCode or InitCode.
 Keyword Arguments:
-resultCode -- An ExitCode or FailureCode value.
+resultCode -- An ExitCode or InitCode value.
 """
 def resultCodeDescription(resultCode):
     titleDict = { \
@@ -52,15 +54,19 @@ def resultCodeDescription(resultCode):
                     'Failed to clear open file table before launching daemon.',
             ExitCode.daemonExecFailed: \
                     'Failed to run BasicDaemon executable.',
-            FailureCode.daemonBuildFailure: \
+            InitCode.daemonBuildFailure: \
                     'Failed to build BasicDaemon program.',
-            FailureCode.daemonInstallFailure: \
+            InitCode.daemonInstallFailure: \
                     'Failed to install BasicDaemon program.',
-            FailureCode.parentBuildFailure: \
+            InitCode.daemonInitSuccess: \
+                    'Built and installed BasicDaemon program.',
+            InitCode.parentBuildFailure: \
                     'Failed to build BasicParent program.',
-            FailureCode.parentInstallFailure: \
+            InitCode.parentInstallFailure: \
                     'Failed to install BasicParent program.',
-            FailureCode.parentRunFailure: \
+            InitCode.parentInitSuccess: \
+                    'Built and installed BasicParent program.',
+            InitCode.parentRunFailure: \
                     'Failed to run BasicParent.'
     }
     if resultCode in titleDict:
@@ -84,9 +90,9 @@ class Result:
     """Gets a full description of the test's result."""
     def getResultText(self):
         if self.testPassed():
-            return 'Test Passed: ' + resultCodeDescription(self._resultCode)
+            return 'Passed: ' + resultCodeDescription(self._resultCode)
         else:
-            return 'Test Failed: ' + resultCodeDescription(self._resultCode) + \
+            return 'Failed: ' + resultCodeDescription(self._resultCode) + \
                 ' Expected result: ' + resultCodeDescription(self._expectedCode)
     """Prints the full description of the test's results to stdout."""
     def printResultText(self):

@@ -53,7 +53,7 @@ DF_CXXFLAGS := -std=gnu++14 $(DF_CXXFLAGS)
 # Given a nonempty, nonzero makefile variable, print a corresponding C
 # preprocessor definition.
 addDef = $(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; \
-        then echo -D$(1)=$($(1)); fi)
+        then echo "-D$(1)=$($(1))"; fi)
 
 # Given a list of root directories, recursively print all corresponding #Include
 # paths.
