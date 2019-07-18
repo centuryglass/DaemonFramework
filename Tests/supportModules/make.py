@@ -131,13 +131,19 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
         verbose = testArgs.useVerbose
         if testArgs.timeout is not None:
             timeout = testArgs.timeout
-    quotedVar = lambda var : '"\\\'\\"' + var + '\\"\\\'"'
-    argList = [varNames.daemonPath + '=' + quotedVar(daemonPath),\
-               varNames.parentPath  + '=' + quotedVar(parentPath), \
-               varNames.inPipePath  + '=' + quotedVar(inPipePath), \
-               varNames.outPipePath + '=' + quotedVar(outPipePath), \
-               varNames.configMode  + '=' + 'Debug' if debugBuild \
-                                                       else 'Release']
+    argList = []
+    configString = 'Debug' if debugBuild else 'Release'
+    stringArgs = [(daemonPath, varNames.daemonPath), \
+                  (parentPath, varNames.parentPath), \
+                  (inPipePath, varNames.inPipePath), \
+                  (outPipePath, varNames.outPipePath), \
+                  (configString, varNames.configMode)]
+    for stringValue, varName in stringArgs:
+        value = 0
+        if stringValue is not None:
+            value = '"\\\'\\"' + stringValue + '\\"\\\'"'
+        argList.append(varName + '=' + value)
+
     booleanArgs = [(checkPath, varNames.checkPath), \
                    (securePath, varNames.securePath), \
                    (secureParent, varNames.secureParentPath), \
