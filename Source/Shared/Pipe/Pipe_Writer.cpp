@@ -16,23 +16,7 @@ static const constexpr char* messagePrefix = "DaemonFramework::Pipe::Writer::";
 #endif
 
 // Saves the pipe's path on construction.
-DaemonFramework::Pipe::Writer::Writer(const char* path) : pipePath(path)
-{
-    /*
-    errno = 0;
-    pipeFile = open(path, O_WRONLY); 
-    if (errno != 0)
-    {
-        DF_DBG(messagePrefix << __func__ << ": Failed to open pipe \"" << path
-                << "\"");
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
-        pipeFile = 0;
-    }
-    DF_DBG_V(messagePrefix << __func__ << ": Opened pipe \"" << path << "\"");
-    */
-}
+DaemonFramework::Pipe::Writer::Writer(const char* path) : pipePath(path) { }
 
 
 // Closes the pipe on destruction.

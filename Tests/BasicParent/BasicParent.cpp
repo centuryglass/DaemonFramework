@@ -21,7 +21,10 @@
 static const constexpr char* messagePrefix = "TestParent: ";
 
 // Optional argument to print the daemon path and exit:
-#define PRINT_PATH_ARG "-PrintDaemonPath"
+static const constexpr char* printPathArg = "-PrintDaemonPath";
+
+// Optional argument to make the daemon exit after a timeout period finishes:
+static const constexpr char* timeoutArg = "--timeout";
 
 #ifndef DF_DAEMON_PATH
     #error "Daemon install path DF_DAEMON_PATH not defined!"
@@ -29,6 +32,9 @@ static const constexpr char* messagePrefix = "TestParent: ";
 
 // Daemon message buffer size:
 static const constexpr int pipeBufSize = 128;
+
+// Optional timeout period:
+int timeout = -1;
 
 // Prints key codes read from the PipeReader:
 class Listener : public DaemonFramework::Pipe::Listener
@@ -45,10 +51,21 @@ private:
 int main(int argc, char** argv)
 {
     using namespace DaemonFramework;
-    if (argc > 1 && std::string(argv[1]) == PRINT_PATH_ARG)
+    if (argc > 1)
     {
-        std::cout << DF_DAEMON_PATH;
-        return 0;
+        const std::string firstArg(argv[1]);
+        if (firstArg == printPathArg)
+        {
+            std::cout << DF_DAEMON_PATH;
+            return 0;
+        }
+        if (firstArg == timeoutArg && argc > 2)
+        {
+            const std::string timeArg(argv[2]);
+            std::cout << messagePrefix << "Timeout seconds: " << timeArg
+                    << "\n";
+            timeout = std::stoi(timeArg);
+        }
     }
     Listener eventListener;
     DaemonControl daemonController(&eventListener, pipeBufSize);
@@ -64,6 +81,16 @@ int main(int argc, char** argv)
     {
         std::cerr << messagePrefix << "Failed to start daemon thread.\n";
         return 1;
+    }
+    if (timeout > 0)
+    {
+        sleep(timeout);
+        static const char* exitMessage = "exit";
+        static const size_t messageLength = 5;
+        std::cout << messagePrefix 
+                << "Timeout complete, sending exit message.\n";
+        daemonController.messageParent((const unsigned char*) exitMessage,
+                messageLength);
     }
     const int retVal = daemonController.waitToExit();
     std::cout << messagePrefix << "Daemon exited returning " << retVal << "\n";

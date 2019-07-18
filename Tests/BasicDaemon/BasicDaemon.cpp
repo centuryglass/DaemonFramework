@@ -1,4 +1,5 @@
 #include "DaemonLoop.h"
+#include <atomic>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -15,10 +16,13 @@ static const constexpr size_t bufSize = 128;
 // Daemon loop duration in nanoseconds:
 static const constexpr size_t loopNS = 10000;
 
+// Message indicating that the daemon should exit:
+static const constexpr char* exitMessage = "exit";
+
 class BasicDaemon : public DaemonFramework::DaemonLoop
 {
 public:
-    BasicDaemon() : DaemonFramework::DaemonLoop(bufSize)
+    BasicDaemon() : DaemonFramework::DaemonLoop(bufSize), shouldExit(false)
     {
         std::cout << messagePrefix << "BasicDaemon object created.\n";
     }
@@ -42,6 +46,10 @@ private:
         {
             std::cout << messagePrefix << "Running loop action.\n";
             firstRun = false;
+        }
+        if (shouldExit)
+        {
+            return 1;
         }
         typedef std::chrono::nanoseconds Nanoseconds;
         typedef std::chrono::time_point<std::chrono::high_resolution_clock,
@@ -76,6 +84,12 @@ private:
             std::string messageString((const char*) messageData);
             std::cout << messagePrefix << "Received message string "
                     << messageString << ", length " << messageSize << "\n";
+            if (messageString == exitMessage)
+            {
+                std::cout << messagePrefix
+                        << "Got exit message, requesting exit.\n";
+                shouldExit = true;
+            }
             return;
         }
         std::cout << messagePrefix << "Received non-string message of length "
@@ -93,6 +107,7 @@ private:
     }
 private:
     unsigned char buffer [bufSize] = {0};
+    std::atomic_bool shouldExit;
 };
 
 int main(int argc, char** argv)

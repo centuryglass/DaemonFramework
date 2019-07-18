@@ -279,6 +279,14 @@ bool DaemonFramework::DaemonControl::isDaemonRunning()
     return false;
 }
 
+#ifdef DF_INPUT_PIPE_PATH
+// Sends arbitrary data to the daemon using the daemon's named input pipe.
+void DaemonFramework::DaemonControl::messageParent
+(const unsigned char* messageData, const size_t messageSize)
+{
+    pipeWriter.sendData(messageData, messageSize);
+}
+#endif
 
 // Gets the ID of the daemon process if running.
 pid_t DaemonFramework::DaemonControl::getDaemonProcessID()

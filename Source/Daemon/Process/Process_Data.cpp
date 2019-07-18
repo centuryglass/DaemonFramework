@@ -70,7 +70,15 @@ DaemonFramework::Process::Data::getChildProcesses()
     vector<Data> childProcs;
     for (const string& dir : childDirs)
     {
-        int childID = std::stoi(dir.substr(processPath.size() + 1));
+        int childID;
+        try
+        {
+            childID = std::stoi(dir.substr(processPath.size() + 1));
+        }
+        catch (const std::invalid_argument e)
+        {
+            childID = 0;
+        }
         if (childID > 0)
         {
             Data processData(childID);
@@ -160,9 +168,16 @@ DaemonFramework::Process::Data::Data(const std::string statFile)
         }
         fileStream.close();
 
-        processId = std::stoi(statItems[idIndex]);
-        parentId = std::stoi(statItems[parentIdIndex]);
-        startTime = std::stoul(statItems[startTimeIndex]);
+        try
+        {
+            processId = std::stoi(statItems[idIndex]);
+            parentId = std::stoi(statItems[parentIdIndex]);
+            startTime = std::stoul(statItems[startTimeIndex]);
+        }
+        catch (const std::invalid_argument& e)
+        {
+            DF_DBG("Process parsing error: " << e.what());
+        }
         lastState = readStateChar(statItems[stateIndex][0]);
 
         // Read executable path from the link within the process directory:

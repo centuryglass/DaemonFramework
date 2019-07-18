@@ -1,6 +1,7 @@
 #include "Process_Security.h"
 #include "Process_State.h"
 #include "../Debug.h"
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
@@ -10,6 +11,53 @@
 static const constexpr char* messagePrefix 
         = "DaemonFramework::Process::Security::";
 #endif
+
+/**
+ * @brief  Gets the list of all process IDs.
+ *
+ * @return  A vector containing every process ID listed in the /proc directory.
+ */
+static std::vector<int> getAllPIDs()
+{
+    std::vector<int> pIDs;
+    DIR* procDir = nullptr;
+    struct dirent* dirEntry = nullptr;
+    errno = 0;
+    if ((procDir = opendir("/proc")) != nullptr)
+    {
+        while ((dirEntry = readdir(procDir)) != nullptr)
+        {
+            if (dirEntry->d_type != DT_DIR)
+            {
+                continue;
+            }
+            std::string dirName(dirEntry->d_name);
+            if (dirName.find_first_not_of("0123456789") == std::string::npos
+                    && dirName.size() > 0)
+            {
+                pIDs.push_back(std::stoi(dirName));
+            }
+        }
+#       ifdef DF_DEBUG
+        if (errno != 0)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Error scanning /proc:");
+            perror(messagePrefix);
+        }
+#       endif
+        closedir(procDir);
+    }
+    else
+    {
+        DF_DBG(messagePrefix << __func__ << ": Failed to scan /proc.");
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
+    }
+    DF_DBG_V(messagePrefix << __func__ << ": Found " << pIDs.size()
+            << "process IDs.");
+    return pIDs;
+}
 
 /**
  * @brief  Given a file path, return the path to that file's directory.
@@ -30,6 +78,8 @@ static std::string getDirectoryPath(const std::string& filePath)
     }
     return filePath.substr(0, lastDirChar);
 }
+
+
 
 
 // Loads process data on construction.
@@ -97,6 +147,43 @@ bool DaemonFramework::Process::Security::parentProcessRunning()
             && processState != State::invalid;
 }
 #endif
+
+
+#ifdef DF_REQUIRE_SINGULAR
+// Checks that only one daemon process is running.
+bool DaemonFramework::Process::Security::daemonProcessIsSingular()
+{
+    daemonProcess.update();
+    const std::string daemonPath = daemonProcess.getExecutablePath();
+    const std::vector<int> processList = getAllPIDs();
+    for (const int& pid : processList)
+    {
+        if (pid == daemonProcess.getProcessId())
+        {
+            continue;
+        }
+        Data processInfo(pid);
+        if (! processInfo.isValid())
+        {
+            continue;
+        }
+        const State processState = processInfo.getLastState();
+        if (processState == State::stopped || processState != State::zombie
+                || processState != State::dead
+                || processState != State::invalid)
+        {
+            continue;
+        }
+        if (processInfo.getExecutablePath()
+                == daemonProcess.getExecutablePath())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+#endif
+
 
 // Checks if a specific process is running from a specific expected path within
 // a secure directory.

@@ -68,7 +68,7 @@ public:
 #   ifdef DF_INPUT_PIPE_PATH
     /**
      * @brief  Sends arbitrary data to the daemon using the daemon's named
-     *         output pipe.
+     *         input pipe.
      *
      * @param messageData  A generic pointer to a block of memory that holds no
      *                     less than messageSize bytes. The caller is

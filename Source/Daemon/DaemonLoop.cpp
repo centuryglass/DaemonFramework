@@ -133,7 +133,13 @@ int DaemonFramework::DaemonLoop::runLoop()
 #   endif
 
 #   ifdef DF_REQUIRE_SINGULAR
-    DF_DBG("TODO: Implement singular process check.");
+    if (! securityMonitor.daemonProcessIsSingular())
+    {
+        DF_DBG(messagePrefix << __func__ << ": Exiting, another daemon instance"
+                << " is already running.");
+        loopRunning = false;
+        return (int) ExitCode::daemonAlreadyRunning;
+    }
 #   endif
 
     // Check for SIGTERM again before running initLoop():
@@ -176,7 +182,8 @@ int DaemonFramework::DaemonLoop::runLoop()
                 >= DF_TIMEOUT)
         {
             DF_DBG(messagePrefix << __func__ 
-                    << ": Exiting, reached end of timeout period.");
+                    << ": Exiting, reached end of " << DF_TIMEOUT
+                    << " second timeout period.");
             return (int) ExitCode::success;
         }
 #       endif
