@@ -128,7 +128,7 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                          timeout = 1):
     if testArgs is not None:
         debugBuild = testArgs.debugBuild
-        verbose = testArgs.verbose
+        verbose = testArgs.useVerbose
         if testArgs.timeout is not None:
             timeout = testArgs.timeout
     quotedVar = lambda var : '"\\\'\\"' + var + '\\"\\\'"'
