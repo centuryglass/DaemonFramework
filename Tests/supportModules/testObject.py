@@ -207,7 +207,8 @@ class Test:
             if (os.path.isfile(paths.tempLogPath)):
                 with open(paths.tempLogPath, 'r') as tempLog:
                     with open(paths.failureLogPath, 'a') as failureLog:
-                        failureLog.write('\n' + index + ' ' + description + '\n')
+                        failureLog.write('\n' + str(self._testIndex) + ' ' \
+                                         + description + '\n')
                         failureLog.write('    ' + result.getResultText() + '\n')
                         failureLog.write('Test output:\n')
                         errorLines = tempLog.readlines()
@@ -215,5 +216,5 @@ class Test:
                         failureLog.writelines(errorLines)
                 os.remove(paths.tempLogPath)
             if self._args.exitOnFailure:
-                self.exit(result.getResultCode().value)   
+                sys.exit(result.getResultCode().value)   
             return False

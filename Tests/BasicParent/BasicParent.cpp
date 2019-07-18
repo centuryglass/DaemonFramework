@@ -7,7 +7,7 @@
  *  A daemon installation is intended to support only one executable, and will
  * refuse to work unless the process that starts it is running that specific
  * parent executable. TestParent is a minimal application meant to serve as that
- * parent application when testing KeyDaemon.
+ * parent application when testing the DaemonFramework.
  */
 
 #include <string>
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     }
     Listener eventListener;
     DaemonControl daemonController(&eventListener, pipeBufSize);
-    std::cout << messagePrefix << "Starting Daemon at \"" << DF_DAEMON_PATH
+    std::cout << messagePrefix << "Starting daemon at \"" << DF_DAEMON_PATH
             << "\"\n";
     std::vector<std::string> args;
     if (argc > 1)
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     daemonController.startDaemon(args);
     if (!daemonController.isDaemonRunning())
     {
-        std::cerr << messagePrefix << "Failed to start KeyDaemon thread.\n";
+        std::cerr << messagePrefix << "Failed to start daemon thread.\n";
         return 1;
     }
     const int retVal = daemonController.waitToExit();

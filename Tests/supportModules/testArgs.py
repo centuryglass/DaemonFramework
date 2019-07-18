@@ -76,7 +76,7 @@ def printHelp(testName, testDescription):
     print('\t-r, --release:          ' \
           + 'Build in Release mode instead of Debug.')
     print('\t-t, --timeout=[number]: ' \
-          + 'Seconds to run the KeyDaemon before exiting.')
+          + 'Seconds to run the daemon before exiting.')
     print('\t-u, --until-failure:    ' \
           + 'Stop after the first failed test.')
     print('\t-h, --help:  Print this help text and exit.')

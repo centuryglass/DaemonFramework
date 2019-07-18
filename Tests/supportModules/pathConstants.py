@@ -1,4 +1,4 @@
-"""pathConstants defines paths to KeyDaemon files and directories."""
+"""pathConstants defines paths to DaemonFramework files and directories."""
 import os
 
 """Defines path and filename constants used in testing."""

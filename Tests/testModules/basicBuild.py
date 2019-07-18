@@ -28,7 +28,7 @@ def getTests(testArgs):
 if __name__ == '__main__':
     args = testArgs.read()
     if args.printHelp:
-        testDefs.printHelp('buildTest.py', \
+        testDefs.printHelp('basicBuild.py', \
                            "Test if DaemonFramework's test parent and daemon " \
                            + 'build and run with basic valid arguments.')
     basicTests = getTests(args).runAll()

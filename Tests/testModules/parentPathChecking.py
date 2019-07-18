@@ -1,5 +1,5 @@
 """
-Tests that the daemon correctly handles daemon executable path verification.
+Tests that the daemon correctly handles parent executable path verification.
 """
 
 import sys, os
@@ -12,44 +12,44 @@ from supportModules.pathConstants import paths
 from supportModules.testObject import Test
 
 """
-Tests that the daemon path verification security option functions appropriately.
+Tests that the parent path verification security option functions appropriately.
 Keyword Arguments:
 testArgs -- A testArgs.Values argument object.
 """
 def getTests(testArgs):
-    title = 'Daemon path validation tests:'
+    title = 'Parent path validation tests:'
     testCount = 8
     def testFunction(tests):
-        daemonPath = paths.daemonSecureExePath
-        altDaemonPath = os.path.join(paths.basicDaemonDir, paths.daemon)
+        parentPath = paths.parentSecureExePath
+        altParentPath = os.path.join(paths.basicParentDir, paths.parent)
+        buildArgs = make.getBuildArgs(testArgs = testArgs)
+        result = tests.parentBuildInstall(buildArgs)
+        builtParentCorrectly = result == InitCode.parentInitSuccess
         testIndex = 0
         while testIndex < testCount:
             runExpected = (testIndex % 2) == 0
             requireExpected = (testIndex // 2 % 2) == 0
             requireSecure = (testIndex // 4 % 2 ) == 0
             testIndex += 1
+            execPath = parentPath if runExpected else altParentPath
             description = ('Correct' if runExpected else 'Incorrect') \
-                           + ' path, path checking ' \
-                           + ('enabled,' if requireExpected else 'disabled,') \
-                           + ' path security checks ' \
-                           + ('enabled.' if requireSecure else 'disabled.')
-            targetPath = daemonPath if runExpected else altDaemonPath
-            parentArgs = make.getBuildArgs(testArgs = testArgs, \
-                                           securePath = requireSecure, \
-                                           daemonPath = targetPath)
-            result = tests.parentBuildInstall(parentArgs)
+                          + ' path, path checks ' \
+                          + ('enabled,' if requireExpected else 'disabled,') \
+                          + ' path security checks ' \
+                          + ('enabled.' if requireSecure else 'disabled.')
             expectedResult = ExitCode.success
             if requireExpected and not runExpected:
-                expectedResult = ExitCode.badDaemonPath
+                expectedResult = ExitCode.badParentPath
             elif requireSecure and not runExpected:
-                expectedResult = ExitCode.insecureDaemonDir
-            if result == InitCode.parentInitSuccess:
-                daemonArgs = make.getBuildArgs(checkPath = requireExpected, \
-                                               securePath = requireSecure, \
+                expectedResult = ExitCode.insecureParentDir
+            if builtParentCorrectly:
+                pathTarget = parentPath if requireExpected else None
+                daemonArgs = make.getBuildArgs(parentPath = pathTarget, \
+                                               secureParent = requireSecure, \
                                                testArgs = testArgs)
                 result = tests.daemonBuildInstall(daemonArgs)
                 if result == InitCode.daemonInitSuccess:
-                        result = tests.execTest(paths.parentSecureExePath)
+                   result = tests.execTest(execPath)
             tests.checkResult(Result(result, expectedResult), description)
     return Test(title, testFunction, testCount, testArgs)
 
@@ -57,6 +57,6 @@ def getTests(testArgs):
 if __name__ == '__main__':
     args = testArgs.read()
     if args.printHelp:
-        testDefs.printHelp('daemonPathChecking.py', \
-                           "Test DaemonFramework's daemon path validation.")
+        testDefs.printHelp('parentPathChecking.py', \
+                           "Test DaemonFramework's parent path validation.")
     getTests(args).runAll()

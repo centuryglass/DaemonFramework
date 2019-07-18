@@ -67,7 +67,7 @@ bool DaemonFramework::Process::Security::validParentPath()
 // Checks if the daemon's directory is secure.
 bool DaemonFramework::Process::Security::daemonPathSecured()
 {
-    const std::string installPath(DF_DAEMON_PATH);
+    const std::string installPath(daemonProcess.getExecutablePath());
     const std::string installDir(getDirectoryPath(installPath));
     return directorySecured(installDir);
 }
@@ -78,7 +78,7 @@ bool DaemonFramework::Process::Security::daemonPathSecured()
 // Checks if the parent application's directory is secure.
 bool DaemonFramework::Process::Security::parentPathSecured()
 {
-    const std::string parentPath(DF_REQUIRED_PARENT_PATH);
+    const std::string parentPath(parentProcess.getExecutablePath());
     const std::string parentDir(getDirectoryPath(parentPath));
     return directorySecured(parentDir);
 }

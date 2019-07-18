@@ -20,8 +20,7 @@ class BasicDaemon : public DaemonFramework::DaemonLoop
 public:
     BasicDaemon() : DaemonFramework::DaemonLoop(bufSize)
     {
-        std::cout << messagePrefix << "BasicDaemon object created, buffer size ="
-            << bufSize << "\n";
+        std::cout << messagePrefix << "BasicDaemon object created.\n";
     }
 
     virtual ~BasicDaemon()

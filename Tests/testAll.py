@@ -1,13 +1,13 @@
 #!/usr/bin/python
-"""Runs all KeyDaemon tests scripts."""
+"""Runs all DaemonFramework tests."""
 
-from testModules import basicBuild, daemonPathChecking
+from testModules import basicBuild, daemonPathChecking, parentPathChecking
 from supportModules import testArgs
 
 args = testArgs.read()
 if (args.printHelp):
-    testDefs.printHelp('TestAll.py', 'Runs all KeyDaemon tests.')
-testModules = [basicBuild, daemonPathChecking]
+    testDefs.printHelp('TestAll.py', 'Runs all DaemonFramework tests.')
+testModules = [basicBuild, daemonPathChecking, parentPathChecking]
 testObjects = []
 testCount = 0
 testsPassed = 0

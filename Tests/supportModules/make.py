@@ -64,7 +64,7 @@ class VarNames:
     @property
     def parentRunning(self):
         return self._parentRunning
-    """Return the KeyDaemon timeout period build variable name."""
+    """Return the daemon timeout period build variable name."""
     @property
     def timeout(self):
         return self._timeout
@@ -72,7 +72,7 @@ class VarNames:
     @property
     def configMode(self):
         return self._configMode
-    """Return the KeyDaemon verbose outbut build variable name."""
+    """Return the daemon verbose outbut build variable name."""
     @property
     def verbose(self):
         return self._verbose
@@ -139,7 +139,7 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                   (outPipePath, varNames.outPipePath), \
                   (configString, varNames.configMode)]
     for stringValue, varName in stringArgs:
-        value = 0
+        value = '0'
         if stringValue is not None:
             value = '"\\\'\\"' + stringValue + '\\"\\\'"'
         argList.append(varName + '=' + value)
