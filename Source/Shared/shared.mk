@@ -16,10 +16,13 @@ DF_OBJECTS_SHARED_PIPE := \
 
 DF_OBJECTS_SHARED := \
   $(DF_SHARED_OBJ)InputReader.o \
+  $(DF_SHARED_OBJ)ThreadInit.o \
   $(DF_OBJECTS_SHARED_PIPE)
 
 $(DF_SHARED_OBJ)InputReader.o: \
 	$(DF_SHARED_DIR)/InputReader.cpp
+$(DF_SHARED_OBJ)ThreadInit.o: \
+	$(DF_SHARED_DIR)/ThreadInit.cpp
 $(DF_SHARED_PIPE_OBJ)Pipe.o: \
 	$(DF_SHARED_PIPE_DIR)/Pipe.cpp
 $(DF_SHARED_PIPE_OBJ)Reader.o: \
