@@ -162,9 +162,28 @@ DaemonFramework::Process::Data::Data(const std::string statFile)
         // Parse process info from stat file strings:
         std::vector<std::string> statItems;
         std::string statItem;
+        // Use to combine multiple words surrounded with parentheses:
+        std::string wordBuffer;
         while (fileStream >> statItem)
         {
-            statItems.push_back(statItem);
+            if (! wordBuffer.empty())
+            {
+                wordBuffer += " ";
+                wordBuffer += statItem;
+                if (wordBuffer.back() == ')')
+                {
+                    statItems.push_back(wordBuffer);
+                    wordBuffer.clear();
+                }
+            }
+            else if (statItem.front() == '(' && statItem.back() != ')')
+            {
+                wordBuffer = statItem;
+            }
+            else
+            {
+                statItems.push_back(statItem);
+            }
         }
         fileStream.close();
 
@@ -177,6 +196,9 @@ DaemonFramework::Process::Data::Data(const std::string statFile)
         catch (const std::invalid_argument& e)
         {
             DF_DBG("Process parsing error: " << e.what());
+            DF_DBG("ProcessId: " << statItems[idIndex]);
+            DF_DBG("ParentId: " << statItems[parentIdIndex]);
+            DF_DBG("startTime: " << statItems[startTimeIndex]);
         }
         lastState = readStateChar(statItems[stateIndex][0]);
 

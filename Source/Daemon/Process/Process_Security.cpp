@@ -55,7 +55,7 @@ static std::vector<int> getAllPIDs()
 #       endif
     }
     DF_DBG_V(messagePrefix << __func__ << ": Found " << pIDs.size()
-            << "process IDs.");
+            << " process IDs.");
     return pIDs;
 }
 
