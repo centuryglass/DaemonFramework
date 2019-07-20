@@ -32,10 +32,10 @@ PARENT_PATH ?= $(TEST_EXEC_DIR)/secured/BasicParent
 DF_CONFIG ?= $(CONFIG)
 DF_VERBOSE ?= $(VERBOSE)
 DF_OBJDIR ?= $(OBJDIR)
-DF_DAEMON_PATH ?= \\\"$(DAEMON_PATH)\\\"
-DF_INPUT_PIPE_PATH ?= \\\"$(TEST_EXEC_DIR)/.inPipe\\\"
-DF_OUTPUT_PIPE_PATH ?= \\\"$(TEST_EXEC_DIR)/.outPipe\\\"
-DF_REQUIRED_PARENT_PATH ?= \\\"$(PARENT_PATH)\\\"
+DF_DAEMON_PATH ?= \"\\\"$(DAEMON_PATH)\\\"\"
+DF_INPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.inPipe\\\"\"
+DF_OUTPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.outPipe\\\"\"
+DF_REQUIRED_PARENT_PATH ?= \"\\\"$(PARENT_PATH)\\\"\"
 DF_TIMEOUT ?= 1
 include $(PROJECT_DIR)/MakeDaemon.mk
 
