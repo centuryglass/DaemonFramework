@@ -105,7 +105,8 @@ DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) \
                    $(call addDef,DF_REQUIRE_SINGULAR) \
                    $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
                    $(call addDef,DF_REQUIRED_PARENT_PATH) \
-                   $(call addDef,DF_TIMEOUT)
+                   $(call addDef,DF_TIMEOUT) \
+                   -DDF_IS_DAEMON=1
 
 # Include directories:
 DF_DIR_FLAGS := $(DF_DIR_FLAGS) \

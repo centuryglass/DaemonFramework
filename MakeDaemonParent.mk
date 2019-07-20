@@ -63,6 +63,8 @@ include $(DF_ROOT_DIR)/Shared.mk
 DF_DIR_FLAGS := $(DF_DIR_FLAGS) \
                 $(call recursiveInclude,$(DF_ROOT_DIR)/Include/Parent)
 
+DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) -DDF_IS_PARENT=1
+
 DF_CPPFLAGS := $(DF_CPPFLAGS) \
             $(DF_DEFINE_FLAGS) \
             $(DF_DIR_FLAGS) 
