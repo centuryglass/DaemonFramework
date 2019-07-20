@@ -6,6 +6,7 @@
 #include <chrono>
 #include <ctime>
 #include <cassert>
+#include <unistd.h>
     
 // Print the application name before all info/error output:
 static const constexpr char* messagePrefix = "BasicDaemon: ";
@@ -49,7 +50,7 @@ private:
         }
         if (shouldExit)
         {
-            return 1;
+            return 9;
         }
         typedef std::chrono::nanoseconds Nanoseconds;
         typedef std::chrono::time_point<std::chrono::high_resolution_clock,
@@ -113,5 +114,8 @@ private:
 int main(int argc, char** argv)
 {
     BasicDaemon daemon;
-    return daemon.runLoop();
+    const int result = daemon.runLoop();
+    std::cout << "Daemon process " << (int) getpid() << " exiting with code "
+            << result << "\n";
+    return result;
 }

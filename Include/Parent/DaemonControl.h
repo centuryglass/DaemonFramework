@@ -45,7 +45,7 @@ public:
 
     /**
      * @brief  If the Daemon isn't already running, this launches the daemon
-     *         and starts listening for data if relevant.
+     *         and opens daemon communication pipes if needed.
      *
      * @param args  An array of strings that will be passed to the daemon as
      *              launch arguments.
@@ -110,8 +110,6 @@ private:
     pid_t daemonProcess = 0;
 
 #   ifdef DF_OUTPUT_PIPE_PATH
-    // ID of the thread that opens the input pipe:
-    pthread_t pipeInitThread = 0;
     // Reads data sent by the daemon:
     Pipe::Reader pipeReader;
 #   endif

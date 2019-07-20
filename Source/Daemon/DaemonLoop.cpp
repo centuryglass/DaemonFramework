@@ -33,13 +33,21 @@ void DaemonFramework::DaemonLoop::flagTermSignal(int signum)
 // Initializes the DaemonLoop.
 DaemonFramework::DaemonLoop::DaemonLoop(const int inputBufferSize) :
 #ifdef DF_INPUT_PIPE_PATH
-inputPipe(DF_INPUT_PIPE_PATH, this, inputBufferSize),
+inputPipe(DF_INPUT_PIPE_PATH, this, inputBufferSize, true),
 #endif
 #ifdef DF_OUTPUT_PIPE_PATH
-outputPipe(DF_OUTPUT_PIPE_PATH),
+outputPipe(DF_OUTPUT_PIPE_PATH, true),
 #endif
 loopRunning(false)
 {
+#   ifdef DF_INPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Daemon input reader: opened "
+            << DF_INPUT_PIPE_PATH);
+#   endif
+#   ifdef DF_OUTPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Daemon output writer: using "
+            << DF_OUTPUT_PIPE_PATH);
+#   endif
     // Verify that only one DaemonLoop is created:
     static std::atomic_bool constructFlag(false);
     if (constructFlag.exchange(true))
@@ -69,7 +77,7 @@ loopRunning(false)
 DaemonFramework::DaemonLoop::~DaemonLoop()
 {
 #   ifdef DF_INPUT_PIPE_PATH
-    inputPipe.stopReading();
+    inputPipe.closePipe();
 #   endif
 #   ifdef DF_OUTPUT_PIPE_PATH
     outputPipe.closePipe();

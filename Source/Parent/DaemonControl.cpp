@@ -8,7 +8,6 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <dirent.h>
 #include <string>
 #include <sstream>
@@ -22,22 +21,6 @@ static const constexpr char* messagePrefix
 // Seconds to wait before assuming the daemon process is not going to handle
 // a SIGTERM signal and needs to be killed:
 static const constexpr int daemonTermTimeout = 2;
-
-
-#ifdef DF_OUTPUT_PIPE_PATH
-namespace DaemonFramework
-{
-    // Starts the key pipe reader within a new thread.
-    void* pipeThreadAction(void* codePipe)
-    {
-        DF_DBG_V(messagePrefix << __func__ << ": Opening PipeReader:");
-        Pipe::Reader* pipe = static_cast<Pipe::Reader*>(codePipe);
-        pipe->startReading();
-        DF_DBG_V(messagePrefix << __func__ << ": PipeReader opened.");
-        return nullptr;
-    }
-}
-#endif
 
 
 // If relevant, prepares daemon IO pipe objects on construction.
@@ -56,10 +39,14 @@ DaemonFramework::DaemonControl::DaemonControl
 #   ifdef DF_OUTPUT_PIPE_PATH
     // Ensure the daemon output pipe exists:
     Pipe::createPipe(DF_OUTPUT_PIPE_PATH, S_IRUSR);
+    DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: opened "
+            << DF_OUTPUT_PIPE_PATH);
 #   endif
 #   ifdef DF_INPUT_PIPE_PATH
     // Ensure the daemon input pipe exists:
     Pipe::createPipe(DF_INPUT_PIPE_PATH, S_IWUSR);
+    DF_DBG_V(messagePrefix << __func__ << ": Parent output writer: opened "
+            << DF_INPUT_PIPE_PATH);
 #   endif
 }
 
@@ -137,8 +124,9 @@ static void cleanupFileTable()
             << " unnecessary open file descriptors.");
 }
 
-// If the daemon isn't already running, this launches the daemon and starts
-// listening for data if relevant.
+
+// If the daemon isn't already running, this launches the daemon and opens
+// daemon communication pipes if needed.
 void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
 {
     if (daemonProcess != 0)
@@ -147,25 +135,12 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
                 << ": Aborting, daemon process is already running.");
         return;
     }
-#   ifdef DF_OUTPUT_PIPE_PATH
-    if (pipeReader.getState() == InputReader::State::initializing)
-    {
-        int threadError = pthread_create(&pipeInitThread, nullptr,
-                pipeThreadAction, &pipeReader);
-        if (threadError != 0)
-        {
-            DF_DBG(messagePrefix << __func__
-                    << ": Failed to start pipeReader thread.");
-            return;
-        }
-    }
+#   ifdef DF_INPUT_PIPE_PATH
+    pipeWriter.openPipe();
 #   endif
-    else
-    {
-        DF_DBG(messagePrefix << __func__ << ": PipeReader was not in "
-                << "expected state State::initializing.");
-        DF_ASSERT(false);
-    }
+#   ifdef DF_OUTPUT_PIPE_PATH
+    pipeReader.openPipe();
+#   endif
 
     daemonProcess = fork();
     if (daemonProcess == 0) // If runnning the new process:
@@ -188,6 +163,12 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
 #           ifdef DF_DEBUG
             perror(messagePrefix);
 #           endif
+        }
+        else
+        {
+            DF_DBG(messagePrefix << __func__ << ": Daemon exited with code "
+                    << result << ", ending daemon process.");
+            exit(result);
         }
     }
 }
@@ -215,30 +196,14 @@ void DaemonFramework::DaemonControl::stopDaemon()
             DF_DBG(messagePrefix << __func__
                     << ": Daemon process exited with code " << exitCode);
         }
-        // If the pipeReader is still opening, it's stuck and the pipeInitThread
-        // will need to be forcibly killed.
-        if (pipeReader.getState() == InputReader::State::opening)
-        {
-            DF_DBG_V(messagePrefix << __func__
-                    << ": PipeReader stuck opening the key event pipe, "
-                    << "cancelling the reader thread.");
-            int cancelResult = pthread_cancel(pipeInitThread);
-            if (cancelResult == 0)
-            {
-                pthread_join(pipeInitThread, nullptr);
-            }
-            else
-            {
-                DF_DBG(messagePrefix << __func__ 
-                        << ": pthread_cancel returned error code "
-                        << cancelResult);
-            }
-        }
-        else
-        {
-            DF_DBG_V(messagePrefix << __func__ << ": Closing PipeReader:");
-            pipeReader.stopReading();
-        }
+#       ifdef DF_OUTPUT_PIPE_PATH
+        DF_DBG_V(messagePrefix << __func__ << ": Closing PipeReader:");
+        pipeReader.closePipe();
+#       endif
+#       ifdef DF_INPUT_PIPE_PATH
+        DF_DBG_V(messagePrefix << __func__ << ": Closing PipeWriter:");
+        pipeWriter.closePipe();
+#       endif
     }
 }
 
@@ -264,6 +229,8 @@ bool DaemonFramework::DaemonControl::isDaemonRunning()
     }
     if (waitResult == 0) // Daemon is still running 
     {
+        DF_DBG_V(messagePrefix << __func__ << ": Daemon " << daemonProcess
+                << " is still running, errno=" << errno);
         return true;
     }
     if (waitResult == daemonProcess) // Process finished
@@ -315,12 +282,35 @@ int DaemonFramework::DaemonControl::getExitCode()
 // Waits until the daemon process terminates and gets the process exit code.
 int DaemonFramework::DaemonControl::waitToExit()
 {
-    DF_DBG_V(messagePrefix << __func__ << ": Waiting for daemon to exit...");
-    if (isDaemonRunning())
+    DF_DBG_V(messagePrefix << __func__ << ": Checking if daemon process "
+            << (int) daemonProcess << " has already exited:");
+    while (isDaemonRunning())
     {
         int daemonStatus;
-        waitpid(daemonProcess, &daemonStatus, 0);
-        return WEXITSTATUS(daemonStatus);
+        errno = 0;
+        if(waitpid(daemonProcess, &daemonStatus, 0) == -1)
+        {
+            DF_DBG(messagePrefix << __func__ << ": waitpid error:");
+#           ifdef DF_DEBUG
+            perror(messagePrefix);
+#           endif
+        }
+        if (WIFEXITED(daemonStatus))
+        {
+            daemonProcess = 0;
+            exitCode = WEXITSTATUS(daemonStatus);
+            break;
+        }
+        else if (WIFSIGNALED(daemonStatus))
+        {
+            DF_DBG(messagePrefix << __func__ << ": killed by signal "
+                    << WTERMSIG(daemonStatus));
+        }
+        else if (WIFSTOPPED(daemonStatus))
+        {
+            DF_DBG(messagePrefix << __func__ << ": stopped by signal "
+                    << WSTOPSIG(daemonStatus));
+        }
     }
     DF_DBG_V(messagePrefix << __func__ << ": Daemon exited with code "
             << exitCode);
