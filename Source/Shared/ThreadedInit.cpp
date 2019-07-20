@@ -86,19 +86,19 @@ void DaemonFramework::ThreadedInit::startInitThread()
 void DaemonFramework::ThreadedInit::cancelInit()
 {
     std::lock_guard<std::mutex> lock(initMutex);
-    if (initStarted && ! finishedInit() && initThreadID != 0)
+    if (initStarted && ! initFinished && initThreadID != 0)
     {
         DF_DBG_V(messagePrefix << __func__ << ": Force-closing init thread.");
-    }
-    int cancelResult = pthread_cancel(initThreadID);
-    if (cancelResult == 0)
-    {
-        pthread_join(initThreadID, nullptr);
-    }
-    else
-    {
-        DF_DBG(messagePrefix << __func__ 
-                << ": pthread_cancel returned error code " << cancelResult);
+        int cancelResult = pthread_cancel(initThreadID);
+        if (cancelResult == 0)
+        {
+            pthread_join(initThreadID, nullptr);
+        }
+        else
+        {
+            DF_DBG(messagePrefix << __func__ 
+                    << ": pthread_cancel returned error code " << cancelResult);
+        }
     }
 }
 
@@ -108,7 +108,7 @@ void* DaemonFramework::ThreadedInit::threadAction(void* threadInit)
 {
     DF_DBG_V(messagePrefix << __func__ << ": Init thread running.");
     ThreadedInit* threadInitObject = static_cast<ThreadedInit*>(threadInit);
-    const bool initResult = threadInitObject->threadedInit();
+    const bool initResult = threadInitObject->threadedInitAction();
     {
         std::lock_guard<std::mutex> lock(threadInitObject->initMutex);
         threadInitObject->initFinished = true;

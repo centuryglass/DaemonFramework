@@ -6,6 +6,7 @@
 
 #pragma once
 #include "InputReader.h"
+#include "ThreadedInit.h"
 #include <cstddef>
 
 namespace DaemonFramework
@@ -17,11 +18,12 @@ namespace DaemonFramework
     }
 }
 
-class DaemonFramework::Pipe::Reader : public InputReader
+class DaemonFramework::Pipe::Reader : public ThreadedInit, private InputReader
 {
 public:
     /**
-     * @brief  Configures how pipe data will be found and processed.
+     * @brief  Configures how pipe data will be found and processed, and
+     *         optionally asynchronously opens the pipe file.
      *
      * @param path        The path to a named pipe.
      *
@@ -29,14 +31,33 @@ public:
      *
      * @param bufferSize  The number of bytes to allocate for the data buffer.
      */
-    Reader(const char* path, Listener* listener, const size_t bufferSize);
+    Reader(const char* path, Listener* listener, const size_t bufferSize,
+            const bool openNow = false);
 
     /**
      * @brief  Frees the buffer data on destruction.
      */
     virtual ~Reader();
 
+    /**
+     * @brief  Asynchronously opens the pipe for reading.
+     */
+    void openPipe();
+
+    /**
+     * @brief  Stops the pipe reading thread and closes the pipe.
+     */
+    void closePipe();
+
 private:
+    /**
+     * @brief  Called by the asynchronous init thread to open the pipe file for
+     *         reading.
+     *
+     * @return  Whether the file opened successfully.
+     */
+    virtual bool threadedInitAction() override;
+
     /**
      * @brief  Opens the pipe file, handling errors and using appropriate file
      *         access modes.

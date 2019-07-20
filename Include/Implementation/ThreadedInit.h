@@ -5,6 +5,7 @@
  *         a new thread.
  */
 
+#pragma once
 #include <pthread.h>
 #include <mutex>
 #include <condition_variable>
@@ -17,10 +18,7 @@ namespace DaemonFramework
 class DaemonFramework::ThreadedInit
 {
 public:
-    /**
-     * @brief  Initializes thread control structures.
-     */
-    ThreadedInit();
+    ThreadedInit() { }
 
     /**
      * @brief  Stops the init thread if it is still running on destruction.
@@ -81,7 +79,7 @@ private:
      *
      * @return  Whether the initialization succeeded.
      */
-    virtual bool threadedInit() = 0;
+    virtual bool threadedInitAction() = 0;
 
     /**
      * @brief  The main callback function that will run on the new thread.

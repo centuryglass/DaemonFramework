@@ -16,23 +16,51 @@ static const constexpr char* messagePrefix
 #endif
 
 
-// Configures how pipe data will be found and processed.
-DaemonFramework::Pipe::Reader::Reader
-(const char* path, Listener* listener, const size_t bufferSize) :
-    InputReader(path), listener(listener), bufSize(bufferSize)
+// Configures how pipe data will be found and processed, and optionally
+// asynchronously opens the pipe file.
+DaemonFramework::Pipe::Reader::Reader(const char* path, Listener* listener,
+        const size_t bufferSize, const bool openNow) :
+        InputReader(path), listener(listener), bufSize(bufferSize)
 {
     buffer = new unsigned char[bufferSize];
+    if (openNow)
+    {
+        startInitThread();
+    }
 }
 
 
 // Frees the buffer data on destruction.
 DaemonFramework::Pipe::Reader::~Reader()
 {
+    closePipe();
     if (buffer != nullptr)
     {
         delete[] buffer;
         buffer = nullptr;
     }
+}
+
+
+// Asynchronously opens the pipe for reading.
+void DaemonFramework::Pipe::Reader::openPipe()
+{
+    startInitThread();
+}
+
+
+// Stops the pipe reading thread and closes the pipe.
+void DaemonFramework::Pipe::Reader::closePipe()
+{
+    cancelInit();
+    stopReading();
+}
+
+
+// Called by the asynchronous init thread to open the pipe file for reading.
+bool DaemonFramework::Pipe::Reader::threadedInitAction()
+{
+    return startReading();
 }
 
 
@@ -73,11 +101,11 @@ void DaemonFramework::Pipe::Reader::processInput(const int inputBytes)
     if (inputBytes >= bufSize)
     {
         DF_DBG(messagePrefix << __func__ << ": Invalid read size "
-                << inputBytes << ", expected <" << bufSize);
+                << inputBytes << ", expected < " << bufSize);
         DF_ASSERT(inputBytes < bufSize);
     }
     DF_DBG_V(messagePrefix << __func__ << ": Sending " << inputBytes 
-            << " bytes of data " << " to Listener.");
+            << " bytes of data to Listener.");
     listener->processData(buffer, inputBytes);
 }
 

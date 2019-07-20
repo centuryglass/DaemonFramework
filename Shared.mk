@@ -61,7 +61,8 @@ recursiveInclude = $(shell find $(1) -type d -printf " -I'%p'")
 
 DF_DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
                    $(call addDef,DF_INPUT_PIPE_PATH) \
-                   $(call addDef,DF_OUTPUT_PIPE_PATH)
+                   $(call addDef,DF_OUTPUT_PIPE_PATH) \
+                   $(call addDef,DF_VERBOSE) \
 
 DF_DIR_FLAGS := $(call recursiveInclude,$(DF_ROOT_DIR)/Include/Implementation)
 
