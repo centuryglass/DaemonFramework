@@ -85,20 +85,24 @@ void DaemonFramework::ThreadedInit::startInitThread()
 // If still initializing, force the initialization thread to stop.
 void DaemonFramework::ThreadedInit::cancelInit()
 {
-    std::lock_guard<std::mutex> lock(initMutex);
-    if (initStarted && ! initFinished && initThreadID != 0)
+    int cancelResult;
     {
+        std::lock_guard<std::mutex> lock(initMutex);
+        if (! initStarted || initFinished || initThreadID == 0)
+        {
+            return;
+        }
         DF_DBG_V(messagePrefix << __func__ << ": Force-closing init thread.");
-        int cancelResult = pthread_cancel(initThreadID);
-        if (cancelResult == 0)
-        {
-            pthread_join(initThreadID, nullptr);
-        }
-        else
-        {
-            DF_DBG(messagePrefix << __func__ 
-                    << ": pthread_cancel returned error code " << cancelResult);
-        }
+        cancelResult = pthread_cancel(initThreadID);
+    }
+    if (cancelResult == 0)
+    {
+        pthread_join(initThreadID, nullptr);
+    }
+    else
+    {
+        DF_DBG(messagePrefix << __func__ 
+                << ": pthread_cancel returned error code " << cancelResult);
     }
 }
 
