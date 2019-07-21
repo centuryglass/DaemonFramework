@@ -39,6 +39,8 @@ DaemonFramework::Pipe::Writer::~Writer()
 bool DaemonFramework::Pipe::Writer::sendData
 (const unsigned char* data, const size_t size)
 {
+    DF_DBG_V(messagePrefix << __func__ << ": Sending " << size
+            << " bytes of data.");
     if (! finishedInit())
     {
         const bool success = waitForInit(writeInitTimeout);
