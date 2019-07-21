@@ -149,7 +149,10 @@ class Test:
                                     + ':')
                 completedProcess = subprocess.run(execArgs, stdout = outFile, \
                                                   stderr = outFile)
-                exitCode = ExitCode(completedProcess.returncode)
+                try:
+                    exitCode = ExitCode(completedProcess.returncode)
+                except ValueError as e:
+                    exitCode = completedProcess.returncode
             except OSError as e:
                 exitCode = InitCode.parentRunFailure
             return exitCode

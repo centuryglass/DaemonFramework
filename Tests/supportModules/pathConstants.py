@@ -10,6 +10,7 @@ class TestPaths:
         self._failureLog  = 'failureLog.txt'
         self._inPipeFile  = '.inPipe'
         self._outPipeFile = '.outPipe'
+        self._lockFile    = '.lock'
         self._moduleDir   = os.path.dirname(os.path.realpath(__file__))
         self._testDir     = os.path.normpath(os.path.join(self._moduleDir, \
                                                           os.pardir))
@@ -92,6 +93,10 @@ class TestPaths:
     @property
     def outPipeFile(self):
         return self._outPipeFile
+    """Return the name of the daemon's lock file."""
+    @property
+    def lockFile(self):
+        return self._lockFile
 
     # Daemon paths:
     """Return the path to the daemon's source directory."""
@@ -150,6 +155,10 @@ class TestPaths:
     @property
     def outPipePath(self):
         return os.path.join(self.testExecDir, self.outPipeFile)
+    """Return the path where the daemon's instance lock file will be created."""
+    @property
+    def lockPath(self):
+        return os.path.join(self.testExecDir, self.lockFile)
     """Return the path where temporary log files will be stored."""
     @property
     def tempLogPath(self):

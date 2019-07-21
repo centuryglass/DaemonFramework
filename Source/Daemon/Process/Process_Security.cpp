@@ -149,42 +149,6 @@ bool DaemonFramework::Process::Security::parentProcessRunning()
 #endif
 
 
-#ifdef DF_REQUIRE_SINGULAR
-// Checks that only one daemon process is running.
-bool DaemonFramework::Process::Security::daemonProcessIsSingular()
-{
-    daemonProcess.update();
-    const std::string daemonPath = daemonProcess.getExecutablePath();
-    const std::vector<int> processList = getAllPIDs();
-    for (const int& pid : processList)
-    {
-        if (pid == daemonProcess.getProcessId())
-        {
-            continue;
-        }
-        Data processInfo(pid);
-        if (! processInfo.isValid())
-        {
-            continue;
-        }
-        const State processState = processInfo.getLastState();
-        if (processState == State::stopped || processState != State::zombie
-                || processState != State::dead
-                || processState != State::invalid)
-        {
-            continue;
-        }
-        if (processInfo.getExecutablePath()
-                == daemonProcess.getExecutablePath())
-        {
-            return false;
-        }
-    }
-    return true;
-}
-#endif
-
-
 // Checks if a specific process is running from a specific expected path within
 // a secure directory.
 bool DaemonFramework::Process::Security::processSecured

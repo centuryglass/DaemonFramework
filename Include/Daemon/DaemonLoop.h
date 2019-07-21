@@ -192,4 +192,9 @@ private:
     // Manages the named pipe used to send data to the parent application:
     Pipe::Writer outputPipe;
 #   endif
+
+#   ifdef DF_LOCK_FILE_PATH
+    // File descriptor for the lock file used to ensure only one instance runs:
+    int lockFD = 0;
+#   endif
 };

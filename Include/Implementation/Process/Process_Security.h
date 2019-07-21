@@ -108,15 +108,6 @@ public:
     bool parentProcessRunning();
 #   endif
 
-#   ifdef DF_REQUIRE_SINGULAR
-    /**
-     * @brief  Checks that only one daemon process is running.
-     *
-     * @return  Whether only one process is running the daemon's executable.
-     */
-    bool daemonProcessIsSingular();
-#   endif
-
 private:
     /**
      * @brief  Checks if a specific process is running from a specific expected

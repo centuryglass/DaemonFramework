@@ -16,10 +16,10 @@ class VarNames:
         self._parentPath        = 'DF_REQUIRED_PARENT_PATH'
         self._inPipePath        = 'DF_INPUT_PIPE_PATH'
         self._outPipePath       = 'DF_OUTPUT_PIPE_PATH'
+        self._lockPath          = 'DF_LOCK_FILE_PATH'
         self._checkPath         = 'DF_VERIFY_PATH'
         self._securePath        = 'DF_VERIFY_PATH_SECURITY'
         self._secureParentPath  = 'DF_VERIFY_PARENT_PATH_SECURITY'
-        self._requireSingular   = 'DF_REQUIRE_SINGULAR'
         self._parentRunning     = 'DF_REQUIRE_RUNNING_PARENT'
         self._timeout           = 'DF_TIMEOUT'
         self._configMode        = 'DF_CONFIG'
@@ -44,6 +44,10 @@ class VarNames:
     @property
     def outPipePath(self):
         return self._outPipePath
+    """Return the daemon instance lock file path variable name."""
+    @property
+    def lockPath(self):
+        return self._lockPath
     """Return the daemon path verification variable name."""
     @property
     def checkPath(self):
@@ -56,10 +60,6 @@ class VarNames:
     @property
     def secureParentPath(self):
         return self._secureParentPath
-    """Return the singular daemon process verification variable name."""
-    @property
-    def requireSingular(self):
-        return self._requireSingular
     """Return the running daemon parent requirement variable name."""
     @property
     def parentRunning(self):
@@ -93,6 +93,8 @@ inPipePath      -- The daemon's input pipe path.
                    (default: paths.inPipePath)
 outPipePath     -- The daemon's output pipe path.
                    (default: paths.outPipePath)
+lockPath        -- The daemon's instance lock path.
+                   (default: paths.lockPath)
 checkPath       -- Sets if the daemon must run from installPath.
                    (default: True)
 securePath      -- Sets if the daemon must run from parentPath
@@ -117,10 +119,10 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                          parentPath = paths.parentSecureExePath, \
                          inPipePath = paths.inPipePath, \
                          outPipePath = paths.outPipePath, \
+                         lockPath = paths.lockPath, \
                          checkPath = True, \
                          securePath = True, \
                          secureParent = True, \
-                         requireSingular = True, \
                          parentRunning = True, \
                          testArgs = None, \
                          debugBuild = True, \
@@ -131,13 +133,13 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
         verbose = testArgs.useVerbose
         if testArgs.timeout is not None:
             timeout = testArgs.timeout
-    argList = []
-    configString = 'Debug' if debugBuild else 'Release'
+    argList = [varNames.configMode + '=' + ('Debug' if debugBuild \
+                                            else 'Release')]
     stringArgs = [(daemonPath, varNames.daemonPath), \
                   (parentPath, varNames.parentPath), \
                   (inPipePath, varNames.inPipePath), \
                   (outPipePath, varNames.outPipePath), \
-                  (configString, varNames.configMode)]
+                  (outPipePath, varNames.lockPath)]
     for stringValue, varName in stringArgs:
         value = '0'
         if stringValue is not None:
@@ -147,7 +149,6 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
     booleanArgs = [(checkPath, varNames.checkPath), \
                    (securePath, varNames.securePath), \
                    (secureParent, varNames.secureParentPath), \
-                   (requireSingular, varNames.requireSingular), \
                    (parentRunning, varNames.parentRunning), \
                    (verbose, varNames.verbose)]
     for boolValue, varName in booleanArgs:

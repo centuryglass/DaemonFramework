@@ -3,6 +3,7 @@
 #include "Debug.h"
 #include <unistd.h>
 #include <signal.h>
+#include <sys/file.h>
 
 #ifdef DF_TIMEOUT
 #include <chrono>
@@ -82,6 +83,31 @@ DaemonFramework::DaemonLoop::~DaemonLoop()
 #   ifdef DF_OUTPUT_PIPE_PATH
     outputPipe.closePipe();
 #   endif
+#   ifdef DF_LOCK_FILE_PATH
+    if (lockFD != 0)
+    {
+        errno = 0;
+        if (flock(lockFD, LOCK_UN | LOCK_NB) == -1)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Error unlocking lock file:");
+#           ifdef DF_DEBUG
+            perror(messagePrefix);
+#           endif
+        }
+        while (close(lockFD) == -1)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
+#           ifdef DF_DEBUG
+            perror(messagePrefix);
+#           endif
+            if (errno != EINTR)
+            {
+                break;
+            }
+        }
+        lockFD = 0;
+    }
+#   endif
 }
 
 // Starts the daemon's main action loop as long as the loop isn't already
@@ -103,6 +129,45 @@ int DaemonFramework::DaemonLoop::runLoop()
 
     DF_DBG_V(messagePrefix << __func__ << ": Starting security checks.");
     // Initial security checks:
+#   ifdef DF_LOCK_FILE_PATH
+    DF_ASSERT(lockFD == 0);
+    errno = 0;
+    lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK);
+    if (lockFD == -1)
+    {
+        DF_DBG(messagePrefix << __func__
+                << ": Exiting, unable to open lock file:")
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
+        lockFD = 0;
+        return (int) ExitCode::daemonAlreadyRunning;
+    }
+    const int lockResult = flock(lockFD, LOCK_EX|LOCK_NB);
+    if (lockResult == -1)
+    {
+        DF_DBG(messagePrefix << __func__
+                << ": Exiting, lock file is already locked:")
+#       ifdef DF_DEBUG
+        perror(messagePrefix);
+#       endif
+        while(close(lockFD) == -1)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
+#       ifdef DF_DEBUG
+            perror(messagePrefix);
+#       endif
+            if (errno != EINTR)
+            {
+                break;
+            }
+        }
+        lockFD = 0;
+        return (int) ExitCode::daemonAlreadyRunning;
+    }
+
+
+#   endif
 #   ifdef DF_VERIFY_PATH
     if (! securityMonitor.validDaemonPath())
     {
@@ -140,15 +205,6 @@ int DaemonFramework::DaemonLoop::runLoop()
     }
 #   endif
 
-#   ifdef DF_REQUIRE_SINGULAR
-    if (! securityMonitor.daemonProcessIsSingular())
-    {
-        DF_DBG(messagePrefix << __func__ << ": Exiting, another daemon instance"
-                << " is already running.");
-        loopRunning = false;
-        return (int) ExitCode::daemonAlreadyRunning;
-    }
-#   endif
 
     // Check for SIGTERM again before running initLoop():
     if (termSignalReceived)

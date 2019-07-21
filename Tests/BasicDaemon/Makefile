@@ -26,6 +26,7 @@ TEST_EXEC_DIR := $(TEST_DIR)/testExecutables
 OBJDIR := $(TEST_EXEC_DIR)/build/$(CONFIG)/$(APP_TARGET)
 DAEMON_PATH ?= $(TEST_EXEC_DIR)/secured/$(APP_TARGET)
 PARENT_PATH ?= $(TEST_EXEC_DIR)/secured/BasicParent
+LOCK_FILE ?= $(TEST_EXEC_DIR)/.lock
 
 
 ################ Configure and include framework makefile: ####################
@@ -36,6 +37,7 @@ DF_DAEMON_PATH ?= \"\\\"$(DAEMON_PATH)\\\"\"
 DF_INPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.inPipe\\\"\"
 DF_OUTPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.outPipe\\\"\"
 DF_REQUIRED_PARENT_PATH ?= \"\\\"$(PARENT_PATH)\\\"\"
+DF_LOCK_FILE_PATH ?= \"\\\"$(LOCK_FILE)\\\"\"
 DF_TIMEOUT ?= 1
 include $(PROJECT_DIR)/MakeDaemon.mk
 

@@ -55,6 +55,10 @@ define HELPTEXT
 #      if the parent is running from any executable path other than
 #      DF_REQUIRED_PARENT_PATH.
 #
+#    DF_LOCK_FILE_PATH:
+#      If defined, the daemon will create and use a lock file at this path to
+#      ensure that only one daemon instance may run at one time.
+#
 #    DF_VERIFY_PATH_SECURITY: (default: 1)
 #      If set to 1, the daemon will check if it is running from a secured
 #      directory that only the root user/group may modify, and exit if the
@@ -64,10 +68,6 @@ define HELPTEXT
 #      If set to 1, the daemon will check if its parent process is running from
 #      a secured directory that only the root user/group may modify, and exit if
 #      the directory is insecure.
-#
-#    DF_REQUIRE_SINGULAR: (default: 1)
-#      If set to 1, only one instance of the daemon will be allowed to run at
-#      one time.
 #
 #    DF_REQUIRE_RUNNING_PARENT: (default: 1)
 #      If set to 1, the daemon will periodically check if its parent process is
@@ -91,7 +91,6 @@ include $(DF_ROOT_DIR)/Shared.mk
 DF_VERIFY_PATH ?= 1
 DF_VERIFY_PATH_SECURITY ?= 1
 DF_VERIFY_PARENT_PATH_SECURITY ?= 1
-DF_REQUIRE_SINGULAR ?= 1
 DF_REQUIRE_RUNNING_PARENT ?= 1
 
 
@@ -99,10 +98,10 @@ DF_REQUIRE_RUNNING_PARENT ?= 1
 
 # C preprocessor definitions:
 DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) \
+                   $(call addDef,DF_LOCK_FILE_PATH) \
                    $(call addDef,DF_VERIFY_PATH) \
                    $(call addDef,DF_VERIFY_PATH_SECURITY) \
                    $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
-                   $(call addDef,DF_REQUIRE_SINGULAR) \
                    $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
                    $(call addDef,DF_REQUIRED_PARENT_PATH) \
                    $(call addDef,DF_TIMEOUT) \

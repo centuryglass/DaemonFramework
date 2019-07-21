@@ -2,7 +2,7 @@
 from enum import Enum
 
 """
-Represents a result encountered before the daemon could run.
+Represents a result encountered before the daemon could exit.
 """
 class InitCode(Enum):
     daemonBuildFailure = 50
@@ -11,7 +11,9 @@ class InitCode(Enum):
     parentBuildFailure = 53
     parentInstallFailure = 54,
     parentInitSuccess = 55,
-    parentRunFailure = 56
+    parentRunFailure = 56,
+    parentRunSuccess = 57,
+    daemonRunSuccess = 58
 
 """
 Represents an exit code returned by a daemon.
@@ -67,7 +69,11 @@ def resultCodeDescription(resultCode):
             InitCode.parentInitSuccess: \
                     'Built and installed BasicParent program.',
             InitCode.parentRunFailure: \
-                    'Failed to run BasicParent.'
+                    'Failed to run BasicParent.',
+            InitCode.parentRunSuccess: \
+                    'Successfully started BasicParent.',
+            InitCode.daemonRunSuccess: \
+                    'Successfully started BasicDaemon.'
     }
     if resultCode in titleDict:
         return titleDict[resultCode]
