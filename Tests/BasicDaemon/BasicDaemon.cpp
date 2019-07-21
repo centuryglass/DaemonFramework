@@ -20,6 +20,9 @@ static const constexpr size_t loopNS = 10000;
 // Message indicating that the daemon should exit:
 static const constexpr char* exitMessage = "exit";
 
+// Code indicating a normal exit due to an exit message:
+static const constexpr int exitMessageCode = 9;
+
 class BasicDaemon : public DaemonFramework::DaemonLoop
 {
 public:
@@ -50,7 +53,7 @@ private:
         }
         if (shouldExit)
         {
-            return 9;
+            return exitMessageCode;
         }
         typedef std::chrono::nanoseconds Nanoseconds;
         typedef std::chrono::time_point<std::chrono::high_resolution_clock,
@@ -114,7 +117,11 @@ private:
 int main(int argc, char** argv)
 {
     BasicDaemon daemon;
-    const int result = daemon.runLoop();
+    int result = daemon.runLoop();
+    if (result == exitMessageCode)
+    {
+        result = 0;
+    }
     std::cout << "Daemon process " << (int) getpid() << " exiting with code "
             << result << "\n";
     return result;
