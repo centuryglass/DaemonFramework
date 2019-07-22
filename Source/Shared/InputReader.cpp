@@ -147,9 +147,7 @@ void DaemonFramework::InputReader::readLoop()
                     DF_DBG(messagePrefix << __func__ <<
                             ": Input reading failed, " << readSize
                             << " bytes apparently read.");
-#                   ifdef DF_DEBUG
-                    perror(messagePrefix);
-#                   endif
+                    DF_PERROR(messagePrefix);
                     closeInputFile();
                     DF_DBG(messagePrefix << __func__  << ": Closed file \"" 
                             << getPath() << "\".");

@@ -74,9 +74,7 @@ static void cleanupFileTable()
     {
         DF_DBG(messagePrefix << __func__
                 << ": Failed to open process file descriptor directory.");
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
+        DF_PERROR(messagePrefix);
         exit((int) ExitCode::fdCleanupFailed);
     }
     DIR* fdDir = fdopendir(fdDirFD);
@@ -85,7 +83,7 @@ static void cleanupFileTable()
         DF_DBG(messagePrefix << __func__ << ": Failed to open process file"
                 << " descriptor directory stream.");
 #       ifdef DF_DEBUG
-        perror(messagePrefix);
+        DF_PERROR(messagePrefix);
 #       endif
         exit((int) ExitCode::fdCleanupFailed);
     }
@@ -110,7 +108,7 @@ static void cleanupFileTable()
                 DF_DBG(messagePrefix << __func__ 
                         << ": Failed to close open file descriptor " << fd);
 #               ifdef DF_DEBUG
-                perror(messagePrefix);
+                DF_PERROR(messagePrefix);
 #               endif
                 exit((int) ExitCode::fdCleanupFailed);
             }
@@ -160,9 +158,7 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
         if (result == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Failed to launch daemon.");
-#           ifdef DF_DEBUG
-            perror(messagePrefix);
-#           endif
+            DF_PERROR(messagePrefix);
         }
         else
         {
@@ -221,9 +217,7 @@ bool DaemonFramework::DaemonControl::isDaemonRunning()
     if (waitResult == -1)
     {
         DF_DBG(messagePrefix << __func__ << ": Error checking status:\n");
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
+        DF_PERROR(messagePrefix);
         daemonProcess = 0;
         return false;
     }
@@ -291,9 +285,7 @@ int DaemonFramework::DaemonControl::waitToExit()
         if(waitpid(daemonProcess, &daemonStatus, 0) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": waitpid error:");
-#           ifdef DF_DEBUG
-            perror(messagePrefix);
-#           endif
+            DF_PERROR(messagePrefix);
         }
         if (WIFEXITED(daemonStatus))
         {

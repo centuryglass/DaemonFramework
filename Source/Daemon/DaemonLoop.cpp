@@ -90,16 +90,12 @@ DaemonFramework::DaemonLoop::~DaemonLoop()
         if (flock(lockFD, LOCK_UN | LOCK_NB) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error unlocking lock file:");
-#           ifdef DF_DEBUG
-            perror(messagePrefix);
-#           endif
+            DF_PERROR(messagePrefix);
         }
         while (close(lockFD) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
-#           ifdef DF_DEBUG
-            perror(messagePrefix);
-#           endif
+            DF_PERROR(messagePrefix);
             if (errno != EINTR)
             {
                 break;
@@ -137,9 +133,7 @@ int DaemonFramework::DaemonLoop::runLoop()
     {
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, unable to open lock file:")
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
+        DF_PERROR(messagePrefix);
         lockFD = 0;
         return (int) ExitCode::daemonAlreadyRunning;
     }
@@ -147,15 +141,16 @@ int DaemonFramework::DaemonLoop::runLoop()
     if (lockResult == -1)
     {
         DF_DBG(messagePrefix << __func__
-                << ": Exiting, lock file is already locked:")
+                << ": Exiting, lock file \"" << DF_LOCK_FILE_PATH
+                << "\" is already locked:")
 #       ifdef DF_DEBUG
-        perror(messagePrefix);
+        DF_PERROR(messagePrefix);
 #       endif
         while(close(lockFD) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
 #       ifdef DF_DEBUG
-            perror(messagePrefix);
+            DF_PERROR(messagePrefix);
 #       endif
             if (errno != EINTR)
             {

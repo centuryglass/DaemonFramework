@@ -24,7 +24,7 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
 #           ifdef DF_DEBUG
             std::string error(messagePrefix);
             error = error +  __func__ + ": Error when checking pipe path";
-            perror(error.c_str());
+            DF_PERROR(error.c_str());
 #           endif
             return false;
         }
@@ -38,24 +38,19 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
         pipeFD = open(path, O_RDONLY);
         if (pipeFD == -1)
         {
-#           ifdef DF_DEBUG
-            std::string error(messagePrefix);
             error = error +  __func__ 
                     + ": Failed to open existing pipe file";
-            perror(error.c_str());
-#           endif
+            DF_PERROR(error.c_str());
             return false;
         }
         struct stat pipeInfo = {0};
         errno = 0;
         if (fstat(pipeFD, &pipeInfo) != 0)
         {
-#           ifdef DF_DEBUG
             std::string error(messagePrefix);
             error = error +  __func__ 
                     + ": Error when checking existing pipe mode";
-            perror(error.c_str());
-#           endif
+            DF_PERROR(error.c_str());
             close(pipeFD);
             return false;
         }
@@ -86,9 +81,7 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
         DF_DBG(messagePrefix << __func__ 
                 << ": Failed to create pipe for Daemon at path \""
                 << path << "\"");
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
+        DF_PERROR(messagePrefix);
         return false;
     }
     DF_DBG_V(messagePrefix << __func__ 

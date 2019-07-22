@@ -38,21 +38,17 @@ static std::vector<int> getAllPIDs()
                 pIDs.push_back(std::stoi(dirName));
             }
         }
-#       ifdef DF_DEBUG
         if (errno != 0)
         {
             DF_DBG(messagePrefix << __func__ << ": Error scanning /proc:");
-            perror(messagePrefix);
+            DF_PERROR(messagePrefix);
         }
-#       endif
         closedir(procDir);
     }
     else
     {
         DF_DBG(messagePrefix << __func__ << ": Failed to scan /proc.");
-#       ifdef DF_DEBUG
-        perror(messagePrefix);
-#       endif
+        DF_PERROR(messagePrefix);
     }
     DF_DBG_V(messagePrefix << __func__ << ": Found " << pIDs.size()
             << " process IDs.");
@@ -78,8 +74,6 @@ static std::string getDirectoryPath(const std::string& filePath)
     }
     return filePath.substr(0, lastDirChar);
 }
-
-
 
 
 // Loads process data on construction.

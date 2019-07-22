@@ -11,6 +11,7 @@
 #ifdef DF_DEBUG
 #   include <iostream>
 #   include <cassert>
+#   include <cstdio>
 #   ifdef PROC_COLOR_CODED
 #       if DF_IS_DAEMON
 #           define PROC_COLOR "\033[31mD: " <<
@@ -36,6 +37,9 @@
 #       define DF_DBG_V(toPrint)
 #   endif
 
+// Prints a C-style error message:
+#   define DF_PERROR(toPrint) perror(toPrint);
+
 // Terminates the program if a test condition is not met:
 #   define DF_ASSERT(condition) assert(condition);
 
@@ -43,5 +47,6 @@
 #else
 #   define DF_DBG(toPrint)
 #   define DF_DBG_V(toPrint)
+#   define DF_PERROR(toPrint)
 #   define DF_ASSERT(condition)
 #endif
