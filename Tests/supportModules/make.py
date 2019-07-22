@@ -139,12 +139,11 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                   (parentPath, varNames.parentPath), \
                   (inPipePath, varNames.inPipePath), \
                   (outPipePath, varNames.outPipePath), \
-                  (outPipePath, varNames.lockPath)]
+                  (lockPath, varNames.lockPath)]
     for stringValue, varName in stringArgs:
-        value = '0'
         if stringValue is not None:
-            value = '"\\\'\\"' + stringValue + '\\"\\\'"'
-        argList.append(varName + '=' + value)
+            value = '"' + stringValue + '"'
+            argList.append(varName + '=' + value)
 
     booleanArgs = [(checkPath, varNames.checkPath), \
                    (securePath, varNames.securePath), \
@@ -155,6 +154,20 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
         argList.append(varName + ('=1' if boolValue else '=0'))
     argList.append(varNames.timeout + '=' + str(timeout))
     return argList
+
+"""
+Writes a set of build arguments to a log file.
+Keyword Arguments:
+makeArgs -- A list of build arguments.
+logFile  -- The file where the build arguments will be logged.
+title    -- A title to print before the argument list.
+indent   -- The number of spaces to indent each logged line. (default: 2)
+"""
+def logBuildArgs(makeArgs, logFile, title, indent = 2):
+    if title is not None:
+        logFile.write((' ' * indent) + title)
+    for arg in makeArgs:
+        logFile.write((' ' * indent) + arg)
 
 
 """
@@ -214,8 +227,15 @@ def installTarget(makeDir, makeArgs, installVar, outFile = subprocess.DEVNULL):
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
     subprocess.call(['make', 'install'] + makeArgs, stdout = outFile, \
                     stderr = outFile)
-    return os.path.isfile(targetPath) \
-           and preBuildTime < os.path.getmtime(targetPath)
+    if not os.path.isfile(targetPath):
+        outFile.write('make.installTarget: No file installed to path "' \
+                      + targetPath + '"')
+        return False
+    if preBuildTime >= os.path.getmtime(targetPath):
+        outFile.write('make.installTarget: File installed to path "' \
+                      + targetPath + '" was not updated.')
+        return False
+    return True
 
 
 """
@@ -276,7 +296,8 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def installBasicDaemon(makeArgs, outFile = subprocess.DEVNULL):
-    return installTarget(paths.basicDaemonDir, makeArgs, 'DAEMON_PATH', outFile)
+    return installTarget(paths.basicDaemonDir, makeArgs, varNames.daemonPath, \
+                         outFile)
 
 """
 Deletes the daemon's build files.
@@ -297,7 +318,8 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def uninstallDaemon(daemonPath, outFile = subprocess.DEVNULL):
-    uninstallTarget(paths.basicDaemonDir, 'DAEMON_PATH', daemonPath, outFile)
+    uninstallTarget(paths.basicDaemonDir, varNames.daemonPath, daemonPath, \
+                    outFile)
 
 """
 Attempts to build the BasicParent, returning whether the build succeeded.
@@ -321,7 +343,8 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def installBasicParent(makeArgs, outFile = subprocess.DEVNULL):
-    return installTarget(paths.basicParentDir, makeArgs, 'PARENT_PATH', outFile)
+    return installTarget(paths.basicParentDir, makeArgs, varNames.parentPath, \
+                         outFile)
 
 """
 Deletes the parent's build files.
@@ -341,4 +364,5 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def uninstallParent(parentPath, outFile = subprocess.DEVNULL):
-    uninstallTarget(paths.basicParentDir, 'PARENT_PATH', parentPath, outFile)
+    uninstallTarget(paths.basicParentDir, varNames.parentPath, parentPath, \
+                    outFile)

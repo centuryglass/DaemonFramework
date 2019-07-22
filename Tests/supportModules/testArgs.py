@@ -5,12 +5,14 @@ import os
 
 """Holds the values of a test's command line arguments."""
 class Values():
-    def __init__(self, verbose, debugBuild, printHelp, timeout, untilFailure):
+    def __init__(self, verbose, debugBuild, printHelp, timeout, untilFailure, \
+                 logBuildArgs):
         self._verbose      = verbose
         self._debugBuild   = debugBuild
         self._printHelp    = printHelp
         self._timeout      = timeout
         self._untilFailure = untilFailure
+        self._logBuildArgs = logBuildArgs
     """Return whether the test should print verbose output messages."""
     @property
     def useVerbose(self):
@@ -31,6 +33,10 @@ class Values():
     @property
     def exitOnFailure(self):
         return self._untilFailure
+    """Return whether test logs should include makefile build arguments."""
+    @property
+    def logBuildArgs(self):
+        return self._logBuildArgs
 
 """Read command line arguments and returns them as a TestArgs object."""
 def read():
@@ -39,23 +45,31 @@ def read():
     printHelp    = False
     timeout      = None
     untilFailure = False
+    logBuildArgs = None
     import sys
     for arg in sys.argv[1:]:
         if arg == '-v' or arg == '--verbose':
             verbose = True
+            if logBuildArgs is None:
+                logBuildArgs = True
         elif arg == '-r' or arg == '--release':
             debug = False  #Use release mode instead
         elif arg == '-h' or arg == '--help':
             printHelp = True
         elif arg == '-u' or arg == '--until-failure':
             untilFailure = True
+        elif arg == '-l' or arg == '--log-build-args':
+            logBuildArgs = True
         elif arg[:3] == '-t=':
             timeout = int(arg[3:])
         elif arg[:11] == '--timeout=':
             timeout = int(arg[11:])
         else:
             print('Warning: argument "' + arg + '" not recognized.')
-    return Values(verbose, debug, printHelp, timeout, untilFailure)
+    if logBuildArgs is None:
+        logBuildArgs = False
+    return Values(verbose, debug, printHelp, timeout, untilFailure, \
+                  logBuildArgs)
 
 """
 Prints help text describing the purpose of a test and all available command
@@ -79,6 +93,8 @@ def printHelp(testName, testDescription):
           + 'Seconds to run the daemon before exiting.')
     print('\t-u, --until-failure:    ' \
           + 'Stop after the first failed test.')
+    print('\t-l, --log-build-args: ' \
+          + 'Include makefile build arguments in failure logs.')
     print('\t-h, --help:  Print this help text and exit.')
     import sys
     sys.exit('')

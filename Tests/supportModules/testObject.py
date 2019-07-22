@@ -92,6 +92,7 @@ class Test:
             eraseLine = '\x1b[2K'
             print(cursorUp + eraseLine + cursorUp)
             self._tempLinePrinted = False
+
             
     """
     Build and install the daemon, returning an appropriate InitCode.
@@ -102,6 +103,9 @@ class Test:
     """
     def daemonBuildInstall(self, makeArgs, logOutput = True):
         with self._openOutFile(logOutput) as outFile:
+            if logOutput and self._args.logBuildArgs:
+                make.logBuildArgs(makeArgs, outFile, \
+                                  'Daemon build/install arguments:')
             self._printTempLine('Cleaning daemon:')
             make.cleanDaemon(outFile)
             self._printTempLine('Building daemon:')
@@ -120,6 +124,9 @@ class Test:
     """
     def parentBuildInstall(self, makeArgs, logOutput = True):
         with self._openOutFile(logOutput) as outFile:
+            if logOutput and self._args.logBuildArgs:
+                make.logBuildArgs(makeArgs, outFile, \
+                                  'Parent build/install arguments:')
             self._printTempLine('Cleaning parent:')
             make.cleanParent(outFile)
             self._printTempLine('Building parent:')
