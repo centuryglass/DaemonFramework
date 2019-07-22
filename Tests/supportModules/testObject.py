@@ -1,14 +1,11 @@
 """
 Tests building, installing, and running the BasicDaemon and BasicParent.
 """
-import os
-import subprocess
-import tempfile
-import time
-import sys
+import os, subprocess, tempfile, time, sys, colorama
 from supportModules import make, pathConstants, testResult, testArgs
 from supportModules.testResult import InitCode, ExitCode, Result
 from supportModules.pathConstants import paths
+from colorama import Fore, Style
 
 """Runs and logs a set of related DaemonFramework tests."""
 class Test:
@@ -192,8 +189,20 @@ class Test:
     """
     def checkResult(self, result, description):
         self._testIndex += 1
+
+        """
+        Surround a string with colorama color tags.
+        Keyword Arguments:
+        string -- The string to modify.
+        color  -- A Fore.<COLOR> value used to set the string foreground color.
+        """
+        def colorStr(string, color):
+            return color + string + Style.RESET_ALL
+
+        resultType = colorStr('PASS', Fore.GREEN) if result.testPassed() else \
+                     colorStr('FAIL', Fore.RED)
         testPrefix = '  ' + str(self._testIndex) + '/' + str(self._testCount) \
-                     + (': PASS: ' if result.testPassed() else ': FAIL: ')
+                     + ': ' + resultType + ': '
         lineMargin = ' ' * len(testPrefix)
         self._eraseTempLine()
         print(testPrefix + description)
