@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <atomic>
 
+#include "Process_Security.h"
+
 #ifdef DF_OUTPUT_PIPE_PATH
 #include "Pipe_Writer.h"
 #endif
@@ -15,7 +17,6 @@
 #ifdef DF_INPUT_PIPE_PATH
 #include "Pipe_Reader.h"
 #include "Pipe_Listener.h"
-#include "Process_Security.h"
 #endif
 
 namespace DaemonFramework { class DaemonLoop; }
