@@ -133,7 +133,7 @@ int DaemonFramework::DaemonLoop::runLoop()
     {
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, unable to open lock file:")
-        DF_PERROR(messagePrefix);
+        DF_PERROR("DaemonLoop: Lock opening error");
         lockFD = 0;
         return (int) ExitCode::daemonAlreadyRunning;
     }
@@ -143,15 +143,11 @@ int DaemonFramework::DaemonLoop::runLoop()
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, lock file \"" << DF_LOCK_FILE_PATH
                 << "\" is already locked:")
-#       ifdef DF_DEBUG
-        DF_PERROR(messagePrefix);
-#       endif
+        DF_PERROR("DaemonLoop: Locking error");
         while(close(lockFD) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
-#       ifdef DF_DEBUG
-            DF_PERROR(messagePrefix);
-#       endif
+            DF_PERROR("DaemonLoop: Lock closing error");
             if (errno != EINTR)
             {
                 break;
@@ -163,7 +159,7 @@ int DaemonFramework::DaemonLoop::runLoop()
 
 
 #   endif
-#   ifdef DF_VERIFY_PATH
+#   if defined DF_VERIFY_PATH && DF_VERIFY_PATH
     if (! securityMonitor.validDaemonPath())
     {
         DF_DBG(messagePrefix << __func__
@@ -181,7 +177,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         return (int) ExitCode::badParentPath;
     }
 #   endif
-#   ifdef DF_VERIFY_PATH_SECURITY
+#   if defined DF_VERIFY_PATH_SECURITY && DF_VERIFY_PATH_SECURITY
     if (! securityMonitor.daemonPathSecured())
     {
         DF_DBG(messagePrefix << __func__ << ": Exiting, daemon executable is in"
@@ -190,7 +186,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         return (int) ExitCode::insecureDaemonDir;
     }
 #   endif
-#   ifdef DF_VERIFY_PARENT_PATH_SECURITY
+#   if defined DF_VERIFY_PARENT_PATH_SECURITY && DF_VERIFY_PARENT_PATH_SECURITY
     if (! securityMonitor.parentPathSecured())
     {
         DF_DBG(messagePrefix << __func__ << ": Exiting, parent executable is in"
@@ -212,7 +208,7 @@ int DaemonFramework::DaemonLoop::runLoop()
     DF_DBG_V(messagePrefix << __func__ << ": Calling initLoop():");
     int resultCode = initLoop();
 
-#   ifdef DF_TIMEOUT
+#   if defined DF_TIMEOUT && DF_TIMEOUT > 0
     using namespace std::chrono;
     const time_point<system_clock> loopStartTime = system_clock::now();
 #   endif
@@ -226,7 +222,7 @@ int DaemonFramework::DaemonLoop::runLoop()
             loopRunning = false;
             return (int) ExitCode::success;
         }
-#       ifdef DF_REQUIRE_RUNNING_PARENT
+#       if defined DF_REQUIRE_RUNNING_PARENT && DF_REQUIRE_RUNNING_PARENT
         if(! securityMonitor.parentProcessRunning())
         {
             DF_DBG(messagePrefix << __func__ << ": Exiting, parent stopped.");
@@ -234,7 +230,7 @@ int DaemonFramework::DaemonLoop::runLoop()
             return (int) ExitCode::daemonParentEnded;
         }
 #       endif
-#       ifdef DF_TIMEOUT
+#       if defined DF_TIMEOUT && DF_TIMEOUT > 0
         const system_clock::duration runtime = system_clock::now()
                 - loopStartTime;
         if (duration_cast<seconds>(system_clock::now() - loopStartTime).count()
