@@ -57,7 +57,9 @@ define HELPTEXT
 #
 #    DF_LOCK_FILE_PATH:
 #      If defined, the daemon will create and use a lock file at this path to
-#      ensure that only one daemon instance may run at one time.
+#      ensure that only one daemon instance may run at one time. Providing a
+#      valid path is strongly recommended if IO pipes are enabled, as pipes will
+#      behave unpredictably when shared by multiple daemon/parent instances.
 #
 #    DF_VERIFY_PATH_SECURITY: (default: 1)
 #      If set to 1, the daemon will check if it is running from a secured
@@ -98,12 +100,12 @@ DF_REQUIRE_RUNNING_PARENT ?= 1
 
 # C preprocessor definitions:
 DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) \
-                   $(call addDef,DF_LOCK_FILE_PATH) \
+                   $(call addStringDef,DF_LOCK_FILE_PATH) \
+                   $(call addStringDef,DF_REQUIRED_PARENT_PATH) \
                    $(call addDef,DF_VERIFY_PATH) \
                    $(call addDef,DF_VERIFY_PATH_SECURITY) \
                    $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
                    $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
-                   $(call addDef,DF_REQUIRED_PARENT_PATH) \
                    $(call addDef,DF_TIMEOUT) \
                    -DDF_IS_DAEMON=1
 
@@ -133,6 +135,12 @@ daemonFramework : check-defs $(DF_OBJECTS_DAEMON)
 check-defs:
 	@if [ -z "$(DF_OBJDIR)" ]; then \
         echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
+    fi
+	@if [ -z "$(DF_LOCK_FILE_PATH)" ]; then \
+        if [ -n "$(DF_INPUT_PIPE_PATH)" ] || [ -n "$(DF_OUTPUT_PIPE_PATH)" ]; then \
+            echo >&2 "Build failed, IO pipes used but no lock file path defined."; \
+            exit 1; \
+        fi \
     fi
 
 ## Compile all files needed to build Daemon applications: ##
