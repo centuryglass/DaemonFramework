@@ -142,8 +142,7 @@ def getBuildArgs(daemonPath = paths.daemonSecureExePath, \
                   (lockPath, varNames.lockPath)]
     for stringValue, varName in stringArgs:
         if stringValue is not None:
-            value = '"' + stringValue + '"'
-            argList.append(varName + '=' + value)
+            argList.append(varName + '=' + stringValue)
 
     booleanArgs = [(checkPath, varNames.checkPath), \
                    (securePath, varNames.securePath), \
@@ -165,9 +164,9 @@ indent   -- The number of spaces to indent each logged line. (default: 2)
 """
 def logBuildArgs(makeArgs, logFile, title, indent = 2):
     if title is not None:
-        logFile.write((' ' * indent) + title)
+        logFile.write((' ' * indent) + title + '\n')
     for arg in makeArgs:
-        logFile.write((' ' * indent) + arg)
+        logFile.write((' ' * indent) + '-' + arg + '\n')
 
 
 """
