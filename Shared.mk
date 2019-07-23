@@ -52,16 +52,21 @@ DF_CXXFLAGS := -std=gnu++14 $(DF_CXXFLAGS)
 
 # Given a nonempty, nonzero makefile variable, print a corresponding C
 # preprocessor definition.
-addDef = $(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; \
-        then echo "-D$(1)=$($(1))"; fi)
+addDef = $(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; then \
+                     echo "-D$(1)=$($(1))"; fi)
 
-# Given a list of root directories, recursively print all corresponding #Include
-# paths.
-recursiveInclude = $(shell find $(1) -type d -printf " -I'%p'")
+# Given a nonempty, nonzero makefile variable, print a corresponding C
+# preprocessor definition, quoted to ensure it is defined as a string literal.
+addStringDef = $(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; then \
+                     echo '-D$(1)=\"$($(1))\"'; fi)
 
-DF_DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
-                   $(call addDef,DF_INPUT_PIPE_PATH) \
-                   $(call addDef,DF_OUTPUT_PIPE_PATH) \
+# Given a list of root directories, recursively print flags to include those 
+# directories and their subdirectories.
+recursiveInclude = $(shell find $(1) -type d -printf ' "-I%p"')
+
+DF_DEFINE_FLAGS := $(call addStringDef,DF_DAEMON_PATH) \
+                   $(call addStringDef,DF_INPUT_PIPE_PATH) \
+                   $(call addStringDef,DF_OUTPUT_PIPE_PATH) \
                    $(call addDef,DF_VERBOSE) \
 
 DF_DIR_FLAGS := $(call recursiveInclude,$(DF_ROOT_DIR)/Include/Implementation)
