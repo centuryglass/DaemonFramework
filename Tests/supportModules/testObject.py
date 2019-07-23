@@ -56,6 +56,8 @@ class Test:
         if os.path.isfile(paths.failureLogPath):
             os.remove(paths.failureLogPath)
         # Ensure secured test directory is initialized:
+        if not os.path.isdir(paths.testExecDir):
+            os.mkdir(paths.testExecDir)
         if not os.path.isdir(paths.secureExeDir):
             os.mkdir(paths.secureExeDir)
             subprocess.call('sudo chown root.root ' + paths.secureExeDir, \
