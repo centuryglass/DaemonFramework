@@ -1,13 +1,15 @@
 #!/usr/bin/python
 """Runs all DaemonFramework tests."""
 
-from testModules import basicBuild, daemonPathChecking, parentPathChecking
+from testModules import basicBuild, daemonPathChecking, parentPathChecking, \
+                        singleRunningDaemon
 from supportModules import testArgs
 
 args = testArgs.read()
 if (args.printHelp):
     testDefs.printHelp('TestAll.py', 'Runs all DaemonFramework tests.')
-testModules = [basicBuild, daemonPathChecking, parentPathChecking]
+testModules = [basicBuild, daemonPathChecking, parentPathChecking, \
+               singleRunningDaemon]
 testObjects = []
 testCount = 0
 testsPassed = 0
