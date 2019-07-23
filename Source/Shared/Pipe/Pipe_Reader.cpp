@@ -74,7 +74,7 @@ int DaemonFramework::Pipe::Reader::openFile()
         DF_DBG(messagePrefix << __func__ 
                 << ": Failed to open pipe at path \""
                 << getPath() << "\"");
-        DF_PERROR(messagePrefix);
+        DF_PERROR("Pipe opening error");
         return 0;
     }
     else

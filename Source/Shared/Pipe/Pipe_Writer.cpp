@@ -64,7 +64,7 @@ bool DaemonFramework::Pipe::Writer::sendData
     {
         DF_DBG(messagePrefix << __func__
             << ": Failed to write data to pipe file.");
-        DF_PERROR(messagePrefix);
+        DF_PERROR("Write error type");
         return false;
     }
     return true;
@@ -107,7 +107,7 @@ bool DaemonFramework::Pipe::Writer::threadedInitAction()
         {
             DF_DBG(messagePrefix << __func__ << ": Failed to open pipe \""
                     << pipePath << "\"");
-            DF_PERROR(messagePrefix);
+            DF_PERROR("Pipe opening error");
             pipeFile = 0;
             return false;
         }
