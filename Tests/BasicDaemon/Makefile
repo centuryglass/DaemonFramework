@@ -24,23 +24,13 @@ TEST_DIR := $(shell dirname $(realpath $(BASIC_DAEMON_DIR)))
 PROJECT_DIR := $(shell dirname $(realpath $(TEST_DIR)))
 TEST_EXEC_DIR := $(TEST_DIR)/testExecutables
 OBJDIR := $(TEST_EXEC_DIR)/build/$(CONFIG)/$(APP_TARGET)
-DAEMON_PATH ?= $(TEST_EXEC_DIR)/secured/$(APP_TARGET)
-PARENT_PATH ?= $(TEST_EXEC_DIR)/secured/BasicParent
-LOCK_FILE ?= $(TEST_EXEC_DIR)/.lock
-
 
 ################ Configure and include framework makefile: ####################
 DF_CONFIG ?= $(CONFIG)
 DF_VERBOSE ?= $(VERBOSE)
 DF_OBJDIR ?= $(OBJDIR)
-DF_DAEMON_PATH ?= \"\\\"$(DAEMON_PATH)\\\"\"
-DF_INPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.inPipe\\\"\"
-DF_OUTPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.outPipe\\\"\"
-DF_REQUIRED_PARENT_PATH ?= \"\\\"$(PARENT_PATH)\\\"\"
-DF_LOCK_FILE_PATH ?= \"\\\"$(LOCK_FILE)\\\"\"
-DF_TIMEOUT ?= 1
-include $(PROJECT_DIR)/MakeDaemon.mk
 
+include $(PROJECT_DIR)/MakeDaemon.mk
 
 ############################### Set build flags: ##############################
 #### Config-specific flags: ####
@@ -81,25 +71,21 @@ CXXFLAGS := -std=gnu++14 $(CXXFLAGS)
 
 #### C Preprocessor flags: ####
 
-# C preprocessor definitions:
-DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
-                $(call addDef,DF_INPUT_PIPE_PATH) \
-                $(call addDef,DF_OUTPUT_PIPE_PATH) \
 
 # Include directories:
 RECURSIVE_INCLUDE_DIRS := $(PROJECT_DIR)/Include/Daemon \
                           $(PROJECT_DIR)/Include/Implementation
-DIR_FLAGS := $(shell find $(RECURSIVE_INCLUDE_DIRS) -type d \
-                     -printf " -I'%p'")
+DF_DIR_FLAGS := $(DF_DIR_FLAGS) \
+                $(call recursiveInclude,$(RECURSIVE_INCLUDE_DIRS))
 
 # Disable dependency generation if multiple architectures are set
-DEPFLAGS := $(if $(word 2, $(TARGET_ARCH)), , -MMD)
+DF_DEPFLAGS := $(if $(word 2, $(TARGET_ARCH)), , -MMD)
 
 CPPFLAGS := -pthread \
-            $(DEPFLAGS) \
-            $(CONFIG_FLAGS) \
-            $(DEFINE_FLAGS) \
-            $(DIR_FLAGS) \
+            $(DF_DEPFLAGS) \
+            $(DF_CONFIG_FLAGS) \
+            $(DF_DEFINE_FLAGS) \
+            $(DF_DIR_FLAGS) \
             $(CPPFLAGS)
 
 #### Linker flags: ####
@@ -113,13 +99,14 @@ LDFLAGS := -lpthread \
 .PHONY: install uninstall clean buildDaemon
 
 install:
-	$(V_AT)sudo mkdir -p $(shell dirname $(DAEMON_PATH)); \
-	sudo cp $(APP_TARGET) $(DAEMON_PATH); \
-    sudo setcap -q cap_dac_override=ep $(DAEMON_PATH)
+	$(V_AT)sudo mkdir -p $(shell dirname $(DF_DAEMON_PATH)); \
+	sudo cp $(APP_TARGET) $(DF_DAEMON_PATH); \
+    sudo setcap -q cap_dac_override=ep $(APP_TARGET); \
+    sudo setcap -q cap_dac_override=ep $(DF_DAEMON_PATH);
 
 uninstall:
 	@echo Uninstalling "$(APP_TARGET)"
-	$(V_AT)rm $(DAEMON_PATH)
+	$(V_AT)rm $(DF_DAEMON_PATH)
 
 clean:
 	@echo Cleaning "$(APP_TARGET)"

@@ -24,17 +24,12 @@ TEST_DIR := $(shell dirname $(realpath $(BASIC_PARENT_DIR)))
 PROJECT_DIR := $(shell dirname $(realpath $(TEST_DIR)))
 TEST_EXEC_DIR := $(TEST_DIR)/testExecutables
 OBJDIR := $(TEST_EXEC_DIR)/build/$(CONFIG)/$(APP_TARGET)
-DAEMON_PATH ?= $(TEST_EXEC_DIR)/secured/BasicDaemon
-PARENT_PATH ?= $(TEST_EXEC_DIR)/secured/$(APP_TARGET)
 
 
 ################ Configure and include framework makefile: ####################
 DF_CONFIG ?= $(CONFIG)
 DF_VERBOSE ?= $(VERBOSE)
 DF_OBJDIR ?= $(OBJDIR)
-DF_DAEMON_PATH ?= \"\\\"$(DAEMON_PATH)\\\"\"
-DF_INPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.inPipe\\\"\"
-DF_OUTPUT_PIPE_PATH ?= \"\\\"$(TEST_EXEC_DIR)/.outPipe\\\"\"
 include $(PROJECT_DIR)/MakeDaemonParent.mk
 
 
@@ -78,15 +73,14 @@ CXXFLAGS := -std=gnu++14 $(CXXFLAGS)
 #### C Preprocessor flags: ####
 
 # C preprocessor definitions:
-DEFINE_FLAGS := $(call addDef,DF_DAEMON_PATH) \
-                $(call addDef,DF_INPUT_PIPE_PATH) \
-                $(call addDef,DF_OUTPUT_PIPE_PATH) \
+DEFINE_FLAGS := $(call addStringDef,DF_DAEMON_PATH) \
+                $(call addStringDef,DF_INPUT_PIPE_PATH) \
+                $(call addStringDef,DF_OUTPUT_PIPE_PATH) \
 
 # Include directories:
 RECURSIVE_INCLUDE_DIRS := $(PROJECT_DIR)/Include/Parent \
                           $(PROJECT_DIR)/Include/Implementation
-DIR_FLAGS := $(shell find $(RECURSIVE_INCLUDE_DIRS) -type d \
-                     -printf " -I'%p'")
+DIR_FLAGS := $(call recursiveInclude,$(RECURSIVE_INCLUDE_DIRS))
 
 # Disable dependency generation if multiple architectures are set
 DEPFLAGS := $(if $(word 2, $(TARGET_ARCH)), , -MMD)
@@ -109,12 +103,12 @@ LDFLAGS := -lpthread \
 .PHONY: install uninstall clean buildParent
 
 install:
-	$(V_AT)sudo mkdir -p $(shell dirname $(PARENT_PATH)); \
-	sudo cp $(APP_TARGET) $(PARENT_PATH);
+	$(V_AT)sudo mkdir -p $(shell dirname $(DF_REQUIRED_PARENT_PATH)); \
+	sudo cp $(APP_TARGET) $(DF_REQUIRED_PARENT_PATH);
 
 uninstall:
 	@echo Uninstalling "$(APP_TARGET)"
-	$(V_AT)rm $(PARENT_PATH)
+	$(V_AT)rm $(DF_REQUIRED_PARENT_PATH)
 
 clean:
 	@echo Cleaning "$(APP_TARGET)"
