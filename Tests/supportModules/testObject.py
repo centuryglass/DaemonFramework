@@ -55,10 +55,6 @@ class Test:
         # Remove old failure log instances:
         if os.path.isfile(paths.failureLogPath):
             os.remove(paths.failureLogPath)
-        # Ensure unsecured test directory is initialized:
-        if not os.path.isdir(paths.unsecureExeDir):
-            os.mkdir(paths.unsecureExeDir)
-            subprocess.call('chmod "o=w" ' + paths.unsecureExeDir, shell = True)
         # Ensure secured test directory is initialized:
         if not os.path.isdir(paths.secureExeDir):
             os.mkdir(paths.secureExeDir)

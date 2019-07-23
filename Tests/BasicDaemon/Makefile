@@ -22,7 +22,7 @@ TARGET_ARCH ?= -march=native
 BASIC_DAEMON_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 TEST_DIR := $(shell dirname $(realpath $(BASIC_DAEMON_DIR)))
 PROJECT_DIR := $(shell dirname $(realpath $(TEST_DIR)))
-TEST_EXEC_DIR := $(TEST_DIR)/testExecutables
+TEST_EXEC_DIR := $(TEST_DIR)/exec
 OBJDIR := $(TEST_EXEC_DIR)/build/$(CONFIG)/$(APP_TARGET)
 
 ################ Configure and include framework makefile: ####################

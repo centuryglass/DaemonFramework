@@ -17,9 +17,8 @@ class TestPaths:
         self._projectDir = os.path.normpath(os.path.join(self._testDir, \
                                                          os.pardir))
         self._includeDir     = os.path.join(self.projectDir, 'Include')
-        self._testExecDir    = os.path.join(self.testDir, 'testExecutables')
+        self._testExecDir    = os.path.join(self.testDir, 'exec')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
-        self._unsecureExeDir = os.path.join(self.testExecDir, 'unsecured')
         self._debugBuildDir  = os.path.join(self._testExecDir, 'build', 'Debug')
         self._releaseBuildDir = os.path.join(self._testExecDir, 'build', \
                                                                'Release')
@@ -55,10 +54,6 @@ class TestPaths:
     @property
     def secureExeDir(self):
         return self._secureExeDir
-    """Return the path to the unsecured executable test directory."""
-    @property
-    def unsecureExeDir(self):
-        return self._unsecureExeDir
     """Return the path to the BasicDaemon source directory."""
     @property
     def basicDaemonDir(self):
@@ -117,12 +112,6 @@ class TestPaths:
     @property
     def daemonSecureExePath(self):
         return os.path.join(self.secureExeDir, self.daemon)
-    """
-    Return the path to the daemon in the unsecured executable directory.
-    """
-    @property
-    def daemonUnsecureExePath(self):
-        return os.path.join(self.unsecureExeDir, self.daemon)
 
     # Parent application paths:
     """Return the path to the parent's source directory."""
@@ -141,12 +130,6 @@ class TestPaths:
     @property
     def parentSecureExePath(self):
         return os.path.join(self.secureExeDir, self.parent)
-    """
-    Return the path to the parent app in the unsecured executable directory.
-    """
-    @property
-    def parentUnsecureExePath(self):
-        return os.path.join(self.unsecureExeDir, self.parent)
     """Return the path where the daemon's input pipe file will be created."""
     @property
     def inPipePath(self):
