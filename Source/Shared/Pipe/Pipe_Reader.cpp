@@ -96,7 +96,7 @@ void DaemonFramework::Pipe::Reader::processInput(const int inputBytes)
         return;
     }
     int code = 0;
-    if (inputBytes >= bufSize)
+    if (inputBytes > bufSize)
     {
         DF_DBG(messagePrefix << __func__ << ": Invalid read size "
                 << inputBytes << ", expected < " << bufSize);
