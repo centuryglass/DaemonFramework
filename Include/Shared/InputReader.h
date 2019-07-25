@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <vector>
 #include <mutex>
+#include <string>
 
 namespace DaemonFramework { class InputReader; }
 
@@ -129,7 +130,7 @@ private:
     static void* threadAction(void* keyReader);
 
     // The file path:
-    const char* path;
+    std::string path;
     // The ID of the thread that is/was running the read loop:
     pthread_t threadID = 0;
     // File descriptor for the input file:

@@ -105,7 +105,7 @@ void DaemonFramework::InputReader::stopReading()
 // Gets the path used to open the input file.
 const char* DaemonFramework::InputReader::getPath() const
 {
-    return path;
+    return path.c_str();
 }
 
 
