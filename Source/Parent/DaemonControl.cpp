@@ -159,6 +159,7 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
         {
             DF_DBG(messagePrefix << __func__ << ": Failed to launch daemon.");
             DF_PERROR(messagePrefix);
+            exit(static_cast<int>(ExitCode::daemonExecFailed));
         }
         else
         {
