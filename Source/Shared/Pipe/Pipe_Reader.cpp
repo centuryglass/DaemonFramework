@@ -100,9 +100,9 @@ void DaemonFramework::Pipe::Reader::processInput(const int inputBytes)
     {
         DF_DBG(messagePrefix << __func__ << ": Invalid read size "
                 << inputBytes << ", expected < " << bufSize);
-        DF_ASSERT(inputBytes < bufSize);
+        DF_ASSERT(inputBytes <= bufSize);
     }
-    DF_DBG_V(messagePrefix << __func__ << ": Sending " << inputBytes 
+    DF_DBG_V(messagePrefix << __func__ << ": Passing " << inputBytes 
             << " bytes of data to Listener.");
     listener->processData(buffer, inputBytes);
 }
