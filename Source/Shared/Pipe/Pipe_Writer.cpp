@@ -87,9 +87,20 @@ void DaemonFramework::Pipe::Writer::closePipe()
             << "\"");
     if (pipeFile != 0)
     {
-        close(pipeFile);
+        errno = 0;
+        while(close(pipeFile) == -1)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Error closing pipe:");
+            DF_PERROR(pipePath);
+            if (errno != EINTR)
+            {
+                break;
+            }
+        }
         pipeFile = 0;
     }
+    DF_DBG_V(messagePrefix << __func__ << ": Closed pipe \"" << pipePath
+            << "\"");
 }
 
 
