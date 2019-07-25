@@ -1,9 +1,44 @@
 define HELPTEXT
 ### DaemonFramework Daemon Makefile ###
-#  This makefile provides the daemon target, used to build all files required
-# for daemon implementations. Include this file in your daemon's makefile, and
-# add 'daemon' as a dependency of your daemon's build target.
+#  This makefile provides the df-daemon target, used to build all files required
+# for daemon implementations.
 #
+## Quick Guide: ##
+# 1. Provide valid definitions for the following variables:
+#    - DF_OBJDIR
+#
+# 2. Optionally, provide valid definitions for these additional variables to
+#    enable features or override default values:
+#    - DF_CONFIG
+#    - DF_VERBOSE
+#    - DF_OPTIMIZATION
+#    - DF_GDB_SUPPORT
+#    - DF_INPUT_PIPE_PATH
+#    - DF_OUTPUT_PIPE_PATH
+#    - DF_DAEMON_PATH
+#    - DF_REQUIRED_PARENT_PATH
+#    - DF_LOCK_FILE_PATH
+#    - DF_VERIFY_PATH_SECURITY
+#    - DF_VERIFY_PARENT_PATH_SECURITY
+#    - DF_REQUIRE_RUNNING_PARENT
+#    - DF_TIMEOUT
+#
+# 3. If necessary, define CFLAGS, CXXFLAGS, and/or CPPFLAGS with any extra
+#    compilation flags that should be used when compiling DaemonFramework code
+#    files.
+#
+# 4. Include Daemon.mk in your application's makefile after defining variables.
+#
+# 5. Add df-daemon as a dependency to your main build target to ensure relevant
+#    DaemonFramework code files are compiled.
+#
+# 6. When building code files that include DaemonFramework header files, add
+#    DF_DEFINE_FLAGS and DF_INCLUDE_FLAGS to CPPFLAGS.
+#
+# 7. When linking your application, add DF_OBJECTS_DAEMON to your list of linked
+#    object files.
+#
+##### Variables Descriptions: ####
 ### Build Control:
 #   DF_OBJDIR:  The directory where compiled .o files will be created.
 #
@@ -83,39 +118,41 @@ export HELPTEXT
 
 
 ######################## Initialize build variables: ##########################
-# Save makefile directory:
-DF_ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+# Define DaemonFramework directories:
+DF_ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+DF_INCLUDE_DIR:=$(DF_ROOT_DIR)/Include
+DF_DAEMON_INCLUDE_DIR:=$(DF_INCLUDE_DIR)/Daemon
+DF_SHARED_INCLUDE_DIR:=$(DF_INCLUDE_DIR)/Shared
 
 # Import targets and variables shared with the daemon parent makefile:
 include $(DF_ROOT_DIR)/Shared.mk
 
-# Daemon security options:
-DF_VERIFY_PATH ?= 1
-DF_VERIFY_PATH_SECURITY ?= 1
-DF_VERIFY_PARENT_PATH_SECURITY ?= 1
-DF_REQUIRE_RUNNING_PARENT ?= 1
-
+# Set default daemon security options:
+DF_VERIFY_PATH?=1
+DF_VERIFY_PATH_SECURITY?=1
+DF_VERIFY_PARENT_PATH_SECURITY?=1
+DF_REQUIRE_RUNNING_PARENT?=1
 
 ############################### Set build flags: ##############################
 
-# C preprocessor definitions:
-DF_DEFINE_FLAGS := $(DF_DEFINE_FLAGS) \
-                   $(call addStringDef,DF_LOCK_FILE_PATH) \
-                   $(call addStringDef,DF_REQUIRED_PARENT_PATH) \
-                   $(call addDef,DF_VERIFY_PATH) \
-                   $(call addDef,DF_VERIFY_PATH_SECURITY) \
-                   $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
-                   $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
-                   $(call addDef,DF_TIMEOUT) \
-                   -DDF_IS_DAEMON=1
-
 # Include directories:
-DF_DIR_FLAGS := $(DF_DIR_FLAGS) \
-                $(call recursiveInclude,$(DF_ROOT_DIR)/Include/Daemon)
+DF_INCLUDE_FLAGS:=$(call recursiveInclude,$(DF_DAEMON_INCLUDE_DIR)) \
+                  $(DF_INCLUDE_FLAGS)
 
-DF_CPPFLAGS := $(DF_CPPFLAGS) \
-            $(DF_DEFINE_FLAGS) \
-            $(DF_DIR_FLAGS) 
+# C preprocessor definitions:
+DF_DEFINE_FLAGS:=$(DF_DEFINE_FLAGS) \
+                 $(call addStringDef,DF_LOCK_FILE_PATH) \
+                 $(call addStringDef,DF_REQUIRED_PARENT_PATH) \
+                 $(call addDef,DF_VERIFY_PATH) \
+                 $(call addDef,DF_VERIFY_PATH_SECURITY) \
+                 $(call addDef,DF_VERIFY_PARENT_PATH_SECURITY) \
+                 $(call addDef,DF_REQUIRE_RUNNING_PARENT) \
+                 $(call addDef,DF_TIMEOUT) \
+                 -DDF_IS_DAEMON=1
+
+DF_CPPFLAGS:=$(DF_CPPFLAGS) $(DF_DEFINE_FLAGS) $(DF_INCLUDE_FLAGS) $(CPPFLAGS) 
+
+DF_BUILD_FLAGS:=$(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS)
 
 ######################## Load module source lists: ############################
 include $(DF_ROOT_DIR)/Source/Daemon/daemon.mk
@@ -124,15 +161,15 @@ DF_OBJECTS_DAEMON := $(DF_OBJECTS_SHARED) $(DF_OBJECTS_DAEMON)
 
 ############################# Build Targets: ##################################
 
-.PHONY: daemonFramework check-defs help
+.PHONY: df-daemon df-check-defs df-help
 
 ## Main build target: ##
 # Checks definitions, then compiles daemon support classes.
-daemonFramework : check-defs $(DF_OBJECTS_DAEMON)
+df-daemon : df-check-defs $(DF_OBJECTS_DAEMON)
 	@echo Compiled daemon object files at "$(DF_OBJDIR)"
 
 ## Ensure required variables are defined: ##
-check-defs:
+df-check-defs:
 	@if [ -z "$(DF_OBJDIR)" ]; then \
         echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
     fi
@@ -145,9 +182,15 @@ check-defs:
 
 ## Compile all files needed to build Daemon applications: ##
 $(DF_OBJECTS_DAEMON) :
-	-$(V_AT)mkdir -p $(DF_OBJDIR)
-	@echo "      Compiling: $(<F)"
-	$(V_AT)$(CXX) $(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS) -o "$@" -c "$<"
+	@echo "Compiling $(<F):"
+	$(V_AT)mkdir -p $(DF_OBJDIR)
+	@if [ "$(DF_VERBOSE)" == "1" ]; then \
+        $(DF_ROOT_DIR)/cleanPrint.sh '$(CXX) $(DF_BUILD_FLAGS)'; \
+        echo '    -o "$@" \'; \
+        echo '    -c "$<"'; \
+        echo ''; \
+	fi
+	@$(CXX) $(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS) -o "$@" -c "$<"
 
 ## Enable dependency generation: ##
 -include $(DF_OBJECTS_DAEMON:%.o=%.d)

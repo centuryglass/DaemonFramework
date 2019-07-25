@@ -21,7 +21,7 @@ def getTests(testArgs):
     testCount = 8
     def testFunction(tests):
         daemonPath = paths.daemonSecureExePath
-        altDaemonPath = os.path.join(paths.basicDaemonDir, paths.daemon)
+        altDaemonPath = paths.daemonBuildPath
         testIndex = 0
         while testIndex < testCount:
             runExpected = (testIndex % 2) == 0

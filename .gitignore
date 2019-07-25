@@ -3,7 +3,6 @@ Tests/__pycache__/
 Tests/supportModules/__pycache__/
 Tests/testModules/__pycache__/
 Tests/exec/
-Tests/BasicDaemon/BasicDaemon
-Tests/BasicParent/BasicParent
+Tests/build/
 Tests/tempLog.txt
 Tests/failureLog.txt

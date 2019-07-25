@@ -21,7 +21,7 @@ def getTests(testArgs):
     testCount = 8
     def testFunction(tests):
         parentPath = paths.parentSecureExePath
-        altParentPath = os.path.join(paths.basicParentDir, paths.parent)
+        altParentPath = paths.parentBuildPath
         buildArgs = make.getBuildArgs(testArgs = testArgs)
         result = tests.parentBuildInstall(buildArgs)
         builtParentCorrectly = result == InitCode.parentInitSuccess

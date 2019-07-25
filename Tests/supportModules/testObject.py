@@ -101,6 +101,8 @@ class Test:
     """
     def daemonBuildInstall(self, makeArgs, logOutput = True):
         with self._openOutFile(logOutput) as outFile:
+            if self._args.useVerbose:
+                makeArgs.append('VERBOSE=1')
             if logOutput and self._args.logBuildArgs:
                 make.logBuildArgs(makeArgs, outFile, \
                                   'Daemon build/install arguments:')
@@ -122,6 +124,8 @@ class Test:
     """
     def parentBuildInstall(self, makeArgs, logOutput = True):
         with self._openOutFile(logOutput) as outFile:
+            if self._args.useVerbose:
+                makeArgs.append('VERBOSE=1')
             if logOutput and self._args.logBuildArgs:
                 make.logBuildArgs(makeArgs, outFile, \
                                   'Parent build/install arguments:')

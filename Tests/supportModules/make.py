@@ -192,15 +192,15 @@ Attempts to build a target, returning whether the build succeeded.
 Keyword Arguments:
 makeDir     -- The directory where the target's makefile is found
 
+targetPath  -- The path where the target will be found after compilation.
+
 makeArgs    -- The set of command line arguments to pass to the `make` process.
 
 outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
-def buildTarget(makeDir, makeArgs, outFile = subprocess.DEVNULL):
+def buildTarget(makeDir, targetPath, makeArgs, outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
-    targetName = readMakeVar(makeArgs, 'APP_TARGET')
-    targetPath = os.path.join(makeDir, targetName)
     if os.path.isfile(targetPath):
         os.remove(targetPath)
     subprocess.call(['make'] + makeArgs, stdout = outFile, stderr = outFile)
@@ -247,12 +247,7 @@ outFile     -- A file where test output from stdout and stderr will be sent.
 """
 def cleanTarget(makeDir, pathVarName, outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
-    subprocess.call(['make', 'clean', 'CONFIG=Debug'], \
-                    stdout = outFile, \
-                    stderr = outFile)
-    subprocess.call(['make', 'clean', 'CONFIG=Release'], \
-                    stdout = outFile, \
-                    stderr = outFile)
+    subprocess.call(['make', 'clean'], stdout = outFile, stderr = outFile)
 
 """
 Uninstalls a target.
@@ -270,8 +265,7 @@ def uninstallTarget(makeDir, pathVarName, execPath, \
                     outFile = subprocess.DEVNULL):
     os.chdir(makeDir)
     subprocess.call(['make', 'uninstall', pathVarName + '=' + execPath], \
-                    stdout = outFile, \
-                    stderr = outFile)
+                    stdout = outFile, stderr = outFile)
 
 """
 Attempts to build the BasicDaemon, returning whether the build succeeded.
@@ -283,7 +277,8 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def buildBasicDaemon(makeArgs, outFile = subprocess.DEVNULL):
-    return buildTarget(paths.basicDaemonDir, makeArgs, outFile)
+    return buildTarget(paths.basicDaemonDir, paths.daemonBuildPath, makeArgs, \
+                       outFile)
 
 """
 Attempts to install the BasicDaemon, returning whether installation succeeded.
@@ -330,7 +325,8 @@ outFile     -- A file where test output from stdout and stderr will be sent.
                The default subprocess.DEVNULL value discards all output.
 """
 def buildBasicParent(makeArgs, outFile = subprocess.DEVNULL):
-    return buildTarget(paths.basicParentDir, makeArgs, outFile)
+    return buildTarget(paths.basicParentDir, paths.parentBuildPath, makeArgs, \
+                       outFile)
 
 """
 Attempts to install the BasicParent, returning whether installation succeeded.

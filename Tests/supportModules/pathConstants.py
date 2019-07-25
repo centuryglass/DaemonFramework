@@ -19,9 +19,7 @@ class TestPaths:
         self._includeDir     = os.path.join(self.projectDir, 'Include')
         self._testExecDir    = os.path.join(self.testDir, 'exec')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
-        self._debugBuildDir  = os.path.join(self._testExecDir, 'build', 'Debug')
-        self._releaseBuildDir = os.path.join(self._testExecDir, 'build', \
-                                                               'Release')
+        self._buildDir  = os.path.join(self._testDir, 'build')
         self._basicDaemonDir = os.path.join(self._testDir, 'BasicDaemon')
         self._basicParentDir = os.path.join(self._testDir, 'BasicParent')
 
@@ -34,14 +32,10 @@ class TestPaths:
     @property
     def testDir(self):
         return self._testDir
-    """Return the path to the project's Debug build directory."""
+    """Return the path to the project's build directory."""
     @property
-    def debugBuildDir(self):
-        return self._debugBuildDir
-    """Return the path to the project's Release build directory."""
-    @property
-    def releaseBuildDir(self):
-        return self._releaseBuildDir
+    def buildDir(self):
+        return self._buildDir
     """Return the path to the daemon framework #include directory."""
     @property
     def includeDir(self):
@@ -98,16 +92,10 @@ class TestPaths:
     @property
     def daemonSourceDir(self):
         return self.basicDaemonDir
-    """Return the path where the daemon is found after Debug compilation."""
+    """Return the path where the daemon is found after compilation."""
     @property
-    def daemonDebugBuildPath(self):
-        return os.path.join(self.debugBuildDir, self.testedApp)
-    """
-    Return the path where the daemon is found after Release compilation.
-    """
-    @property
-    def daemonReleaseBuildPath(self):
-        return os.path.join(self.releaseBuildDir, self.testedApp)
+    def daemonBuildPath(self):
+        return os.path.join(self.buildDir, self.daemon)
     """Return the path to the daemon in the secured executable directory."""
     @property
     def daemonSecureExePath(self):
@@ -118,14 +106,10 @@ class TestPaths:
     @property
     def parentSourceDir(self):
         return self.basicParentDir
-    """Return the path where parent app is found after Debug compilation."""
+    """Return the path where parent app is found after compilation."""
     @property
-    def parentDebugBuildPath(self):
-        return os.path.join(self.debugBuildDir, self.parent)
-    """Return the path where parent app is found after Release compilation."""
-    @property
-    def parentReleaseBuildPath(self):
-        return os.path.join(self.releaseBuildDir, self.parent)
+    def parentBuildPath(self):
+        return os.path.join(self.buildDir, self.parent)
     """Return the path to the parent app in the secured executable directory."""
     @property
     def parentSecureExePath(self):
