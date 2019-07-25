@@ -127,6 +127,8 @@ static void cleanupFileTable()
 // daemon communication pipes if needed.
 void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
 {
+    DF_DBG_V(messagePrefix << __func__ << ": Preparing to launch daemon with "
+            << args.size() << " arguments.");
     if (daemonProcess != 0)
     {
         DF_DBG(messagePrefix << __func__
@@ -134,9 +136,11 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
         return;
     }
 #   ifdef DF_INPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Opening daemon input pipe:");
     pipeWriter.openPipe();
 #   endif
 #   ifdef DF_OUTPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Opening daemon output pipe:");
     pipeReader.openPipe();
 #   endif
 
@@ -147,12 +151,14 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
         cleanupFileTable();
         DF_DBG_V(messagePrefix << __func__ << ": Launching \"" << DF_DAEMON_PATH
                 << "\"");
-        std::vector<const char*> cStrings(args.size() + 1);
+        std::vector<const char*> cStrings;
         for (std::string& arg : args)
         {
             cStrings.push_back(arg.c_str());
         }
         cStrings.push_back(nullptr);
+        DF_DBG_V(messagePrefix << __func__ << ": Converted args to "
+                << cStrings.size() << " char pointers.");
         errno = 0;
         int result = execv(DF_DAEMON_PATH, (char* const*) cStrings.data());
         if (result == -1)
