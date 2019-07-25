@@ -26,8 +26,8 @@ static const constexpr int daemonTermTimeout = 2;
 // If relevant, prepares daemon IO pipe objects on construction.
 DaemonFramework::DaemonControl::DaemonControl
 #ifdef DF_OUTPUT_PIPE_PATH
-(Pipe::Listener* listener, const size_t bufferSize) : 
-        pipeReader(DF_OUTPUT_PIPE_PATH, listener, bufferSize),
+(const size_t bufferSize) : 
+        pipeReader(DF_OUTPUT_PIPE_PATH, bufferSize),
 #else
 () :
 #endif
@@ -39,7 +39,7 @@ DaemonFramework::DaemonControl::DaemonControl
 #   ifdef DF_OUTPUT_PIPE_PATH
     // Ensure the daemon output pipe exists:
     Pipe::createPipe(DF_OUTPUT_PIPE_PATH, S_IRUSR);
-    DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: opened "
+    DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: prepared "
             << DF_OUTPUT_PIPE_PATH);
 #   endif
 #   ifdef DF_INPUT_PIPE_PATH
@@ -125,7 +125,12 @@ static void cleanupFileTable()
 
 // If the daemon isn't already running, this launches the daemon and opens
 // daemon communication pipes if needed.
-void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
+void DaemonFramework::DaemonControl::startDaemon
+#ifdef DF_OUTPUT_PIPE_PATH
+(Pipe::Listener* listener, std::vector<std::string> args)
+#else
+(std::vector<std::string> args)
+#endif
 {
     DF_DBG_V(messagePrefix << __func__ << ": Preparing to launch daemon with "
             << args.size() << " arguments.");
@@ -141,7 +146,7 @@ void DaemonFramework::DaemonControl::startDaemon(std::vector<std::string> args)
 #   endif
 #   ifdef DF_OUTPUT_PIPE_PATH
     DF_DBG_V(messagePrefix << __func__ << ": Opening daemon output pipe:");
-    pipeReader.openPipe();
+    pipeReader.openPipe(listener);
 #   endif
 
     daemonProcess = fork();

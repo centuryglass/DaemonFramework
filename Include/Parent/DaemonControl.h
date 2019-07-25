@@ -30,27 +30,30 @@ public:
     /**
      * @brief  If relevant, prepares daemon IO pipe objects on construction.
      *
-     * @param listener    The object that will handle incoming data if the
-     *                    daemon's output pipe is enabled.
-     *
      * @param bufferSize  The amount of memory in bytes to reserve for the
      *                    output pipe's message buffer.
      */
-    DaemonControl(Pipe::Listener* keyListener, const size_t bufferSize); 
-#   else
-    DaemonControl();
-#   endif
-
-    virtual ~DaemonControl() { }
+    DaemonControl(const size_t bufferSize); 
 
     /**
      * @brief  If the Daemon isn't already running, this launches the daemon
      *         and opens daemon communication pipes if needed.
      *
-     * @param args  An array of strings that will be passed to the daemon as
-     *              launch arguments.
+     * @param listener  The object that will handle incoming data if the
+     *                  daemon's output pipe is enabled.
+     *
+     * @param args      An array of strings that will be passed to the daemon as
+     *                  launch arguments.
      */
+    void startDaemon
+    (Pipe::Listener* keyListener, std::vector<std::string> args);
+#   else
+    DaemonControl();
+
     void startDaemon(std::vector<std::string> args);
+#   endif
+
+    virtual ~DaemonControl() { }
 
     /**
      * @brief  If the Daemon is running, this stops the process and closes the

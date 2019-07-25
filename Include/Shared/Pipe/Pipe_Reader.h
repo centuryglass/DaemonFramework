@@ -27,12 +27,9 @@ public:
      *
      * @param path        The path to a named pipe.
      *
-     * @param listener    The object that will handle data read from the pipe.
-     *
      * @param bufferSize  The number of bytes to allocate for the data buffer.
      */
-    Reader(const char* path, Listener* listener, const size_t bufferSize,
-            const bool openNow = false);
+    Reader(const char* path, const size_t bufferSize);
 
     /**
      * @brief  Frees the buffer data on destruction.
@@ -41,8 +38,10 @@ public:
 
     /**
      * @brief  Asynchronously opens the pipe for reading.
+     *
+     * @param listener  The object that will handle data read from the pipe.
      */
-    void openPipe();
+    void openPipe(Listener* listener);
 
     /**
      * @brief  Stops the pipe reading thread and closes the pipe.

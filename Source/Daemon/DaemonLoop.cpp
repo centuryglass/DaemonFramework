@@ -34,7 +34,7 @@ void DaemonFramework::DaemonLoop::flagTermSignal(int signum)
 // Initializes the DaemonLoop.
 DaemonFramework::DaemonLoop::DaemonLoop(const int inputBufferSize) :
 #ifdef DF_INPUT_PIPE_PATH
-inputPipe(DF_INPUT_PIPE_PATH, this, inputBufferSize, true),
+inputPipe(DF_INPUT_PIPE_PATH, inputBufferSize),
 #endif
 #ifdef DF_OUTPUT_PIPE_PATH
 outputPipe(DF_OUTPUT_PIPE_PATH, true),
@@ -42,6 +42,7 @@ outputPipe(DF_OUTPUT_PIPE_PATH, true),
 loopRunning(false)
 {
 #   ifdef DF_INPUT_PIPE_PATH
+    inputPipe.openPipe(this);
     DF_DBG_V(messagePrefix << __func__ << ": Daemon input reader: opened "
             << DF_INPUT_PIPE_PATH);
 #   endif

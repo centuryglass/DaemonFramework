@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         }
     }
     Listener eventListener;
-    DaemonControl daemonController(&eventListener, pipeBufSize);
+    DaemonControl daemonController(pipeBufSize);
     std::cout << messagePrefix << "Starting daemon at \"" << DF_DAEMON_PATH
             << "\"\n";
     std::vector<std::string> args;
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     {
         args.push_back(std::string(argv[1]));
     }
-    daemonController.startDaemon(args);
+    daemonController.startDaemon(&eventListener, args);
     if (!daemonController.isDaemonRunning())
     {
         std::cerr << messagePrefix << "Failed to start daemon thread.\n";

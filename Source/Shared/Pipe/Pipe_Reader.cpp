@@ -16,17 +16,12 @@ static const constexpr char* messagePrefix
 #endif
 
 
-// Configures how pipe data will be found and processed, and optionally
-// asynchronously opens the pipe file.
-DaemonFramework::Pipe::Reader::Reader(const char* path, Listener* listener,
-        const size_t bufferSize, const bool openNow) :
-        InputReader(path), listener(listener), bufSize(bufferSize)
+// Configures how pipe data will be found and processed.
+DaemonFramework::Pipe::Reader::Reader
+(const char* path, const size_t bufferSize) :
+        InputReader(path), listener(nullptr), bufSize(bufferSize)
 {
     buffer = new unsigned char[bufferSize];
-    if (openNow)
-    {
-        startInitThread();
-    }
 }
 
 
@@ -43,8 +38,9 @@ DaemonFramework::Pipe::Reader::~Reader()
 
 
 // Asynchronously opens the pipe for reading.
-void DaemonFramework::Pipe::Reader::openPipe()
+void DaemonFramework::Pipe::Reader::openPipe(Listener* listener)
 {
+    this->listener = listener;
     startInitThread();
 }
 
