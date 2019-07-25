@@ -78,20 +78,24 @@ loopRunning(false)
 DaemonFramework::DaemonLoop::~DaemonLoop()
 {
 #   ifdef DF_INPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Closing input pipe:");
     inputPipe.closePipe();
 #   endif
 #   ifdef DF_OUTPUT_PIPE_PATH
+    DF_DBG_V(messagePrefix << __func__ << ": Closing output pipe:");
     outputPipe.closePipe();
 #   endif
 #   ifdef DF_LOCK_FILE_PATH
     if (lockFD != 0)
     {
+        DF_DBG_V(messagePrefix << __func__ << ": Unlocking lock file:");
         errno = 0;
         if (flock(lockFD, LOCK_UN | LOCK_NB) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error unlocking lock file:");
             DF_PERROR(messagePrefix);
         }
+        DF_DBG_V(messagePrefix << __func__ << ": Closing lock file:");
         while (close(lockFD) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
@@ -103,6 +107,7 @@ DaemonFramework::DaemonLoop::~DaemonLoop()
         }
         lockFD = 0;
     }
+    DF_DBG_V(messagePrefix << __func__ << ": DaemonLoop destroyed.");
 #   endif
 }
 
