@@ -93,16 +93,21 @@ void DaemonFramework::ThreadedInit::cancelInit()
             return;
         }
         DF_DBG_V(messagePrefix << __func__ << ": Force-closing init thread.");
+        errno = 0;
         cancelResult = pthread_cancel(initThreadID);
     }
-    if (cancelResult == 0)
-    {
-        pthread_join(initThreadID, nullptr);
-    }
-    else
+    if (cancelResult != 0)
     {
         DF_DBG(messagePrefix << __func__ 
-                << ": pthread_cancel returned error code " << cancelResult);
+                << ": Encountered an error when cancelling the init thread.");
+        DF_PERROR("Init pthread_cancel error");
+    }
+    errno = 0;
+    if (pthread_join(initThreadID, nullptr) != 0)
+    {
+        DF_DBG(messagePrefix << __func__ 
+                << ": Encountered an error when joining the init thread.");
+        DF_PERROR("Init pthread_join error");
     }
 }
 
