@@ -125,7 +125,10 @@ DF_DAEMON_INCLUDE_DIR:=$(DF_INCLUDE_DIR)/Daemon
 DF_SHARED_INCLUDE_DIR:=$(DF_INCLUDE_DIR)/Shared
 
 # Import targets and variables shared with the daemon parent makefile:
-include $(DF_ROOT_DIR)/Shared.mk
+DF_SHARED_MAKEFILE:=$(DF_ROOT_DIR)/Shared.mk
+ifeq($(findstring $(DF_SHARED_MAKEFILE),$(MAKEFILE_LIST)),)
+    include $(DF_SHARED_MAKEFILE)
+endif
 
 # Set default daemon security options:
 DF_VERIFY_PATH?=1
