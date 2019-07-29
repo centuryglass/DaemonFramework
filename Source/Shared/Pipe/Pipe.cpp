@@ -36,10 +36,9 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
         errno = 0;
         if (stat(path, &pipeInfo) != 0)
         {
-            std::string error(messagePrefix);
-            error = error +  __func__ 
-                    + ": Error when checking existing pipe mode";
-            DF_PERROR(error.c_str());
+            DF_DBG(messagePrefix << __func__ 
+                    << ": Error when checking existing pipe mode");
+            DF_PERROR("stat error");
             return false;
         }
         if (pipeInfo.st_mode == (S_IFIFO | mode))
