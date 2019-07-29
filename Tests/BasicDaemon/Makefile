@@ -28,7 +28,7 @@ PROJECT_DIR:=$(shell dirname $(realpath $(TEST_DIR)))
 TEST_EXEC_DIR:=$(TEST_DIR)/exec
 TEST_BUILD_DIR:=$(TEST_DIR)/build
 TARGET_BUILD_PATH:=$(TEST_BUILD_DIR)/$(APP_TARGET)
-OBJDIR:=$(TEST_BUILD_DIR)/Intermediate
+OBJDIR:=$(TEST_BUILD_DIR)/intermediate
 
 ################ Configure and include framework makefile: ####################
 DF_CONFIG ?= $(CONFIG)
