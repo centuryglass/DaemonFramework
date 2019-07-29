@@ -1,5 +1,6 @@
 #include "Pipe.h"
 #include "Debug.h"
+#include "File_Utils.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,30 +32,16 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
     }
     else // File exists, make sure the mode is correct.
     {
-        return true;
-    /*
-        int pipeFD = 0;
-        errno = 0;
-        pipeFD = open(path, O_RDONLY);
-        if (pipeFD == -1)
-        {
-            error = error +  __func__ 
-                    + ": Failed to open existing pipe file";
-            DF_PERROR(error.c_str());
-            return false;
-        }
         struct stat pipeInfo = {0};
         errno = 0;
-        if (fstat(pipeFD, &pipeInfo) != 0)
+        if (stat(path, &pipeInfo) != 0)
         {
             std::string error(messagePrefix);
             error = error +  __func__ 
                     + ": Error when checking existing pipe mode";
             DF_PERROR(error.c_str());
-            close(pipeFD);
             return false;
         }
-        close(pipeFD);
         if (pipeInfo.st_mode == (S_IFIFO | mode))
         {
             DF_DBG_V(messagePrefix << __func__ 
@@ -72,7 +59,14 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
                     << (int) pipeInfo.st_mode);
             return false;
         }
-    */
+    }
+    // Make sure pipe file directory exists:
+    std::string pipeDir(File::Utils::parentDir(path));
+    if (! pipeDir.empty() && ! File::Utils::createDir(pipeDir))
+    {
+        DF_DBG(messagePrefix << __func__
+                << ": Failed to create pipe directory \"" << pipeDir << "\"");
+        return false;
     }
     // Attempt to create pipe:
     errno = 0;
