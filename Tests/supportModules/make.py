@@ -12,18 +12,18 @@ paths = pathConstants.paths
 """Defines all relevant makefile variable names."""
 class VarNames:
     def __init__(self):
-        self._daemonPath        = 'DF_DAEMON_PATH'
-        self._parentPath        = 'DF_REQUIRED_PARENT_PATH'
-        self._inPipePath        = 'DF_INPUT_PIPE_PATH'
-        self._outPipePath       = 'DF_OUTPUT_PIPE_PATH'
-        self._lockPath          = 'DF_LOCK_FILE_PATH'
-        self._checkPath         = 'DF_VERIFY_PATH'
-        self._securePath        = 'DF_VERIFY_PATH_SECURITY'
-        self._secureParentPath  = 'DF_VERIFY_PARENT_PATH_SECURITY'
-        self._parentRunning     = 'DF_REQUIRE_RUNNING_PARENT'
-        self._timeout           = 'DF_TIMEOUT'
-        self._configMode        = 'DF_CONFIG'
-        self._verbose           = 'DF_VERBOSE'
+        self._daemonPath       = 'DF_DAEMON_PATH'
+        self._parentPath       = 'DF_REQUIRED_PARENT_PATH'
+        self._inPipePath       = 'DF_INPUT_PIPE_PATH'
+        self._outPipePath      = 'DF_OUTPUT_PIPE_PATH'
+        self._lockPath         = 'DF_LOCK_FILE_PATH'
+        self._checkPath        = 'DF_VERIFY_PATH'
+        self._securePath       = 'DF_VERIFY_PATH_SECURITY'
+        self._secureParentPath = 'DF_VERIFY_PARENT_PATH_SECURITY'
+        self._parentRunning    = 'DF_REQUIRE_RUNNING_PARENT'
+        self._timeout          = 'DF_TIMEOUT'
+        self._configMode       = 'DF_CONFIG'
+        self._verbose          = 'DF_VERBOSE'
     """Return the daemon install path variable name."""
     @property
     def daemonPath(self):
@@ -268,6 +268,29 @@ def uninstallTarget(makeDir, pathVarName, execPath, \
                     stdout = outFile, stderr = outFile)
 
 """
+Attempts to build unit tests, returning whether the build succeeded.
+
+Keyword Arguments:
+makeArgs    -- The set of command line arguments to pass to the `make` process.
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def buildUnitTests(makeArgs, outFile = subprocess.DEVNULL):
+    return buildTarget(paths.unitTestDir, paths.unitTestBuildPath, makeArgs, \
+                       outFile)
+
+"""
+Deletes unit test files.
+Keyword Arguments:
+
+outFile     -- A file where test output from stdout and stderr will be sent.
+               The default subprocess.DEVNULL value discards all output.
+"""
+def cleanUnitTests(outFile = subprocess.DEVNULL):
+    cleanTarget(paths.unitTestDir, outFile)
+
+"""
 Attempts to build the BasicDaemon, returning whether the build succeeded.
 
 Keyword Arguments:
@@ -340,6 +363,7 @@ outFile     -- A file where test output from stdout and stderr will be sent.
 def installBasicParent(makeArgs, outFile = subprocess.DEVNULL):
     return installTarget(paths.basicParentDir, makeArgs, varNames.parentPath, \
                          outFile)
+
 
 """
 Deletes the parent's build files.

@@ -6,6 +6,7 @@ class TestPaths:
     def __init__(self):
         self._daemon      = 'BasicDaemon'
         self._parent      = 'BasicParent'
+        self._unitTest    = 'DaemonTest'
         self._tempLog     = 'tempLog.txt'
         self._failureLog  = 'failureLog.txt'
         self._inPipeFile  = '.inPipe'
@@ -19,7 +20,8 @@ class TestPaths:
         self._includeDir     = os.path.join(self.projectDir, 'Include')
         self._testExecDir    = os.path.join(self.testDir, 'exec')
         self._secureExeDir   = os.path.join(self.testExecDir, 'secured')
-        self._buildDir  = os.path.join(self._testDir, 'build')
+        self._unitTestDir    = os.path.join(self.testDir, 'UnitTests')
+        self._buildDir       = os.path.join(self._testDir, 'build')
         self._basicDaemonDir = os.path.join(self._testDir, 'BasicDaemon')
         self._basicParentDir = os.path.join(self._testDir, 'BasicParent')
 
@@ -48,6 +50,10 @@ class TestPaths:
     @property
     def secureExeDir(self):
         return self._secureExeDir
+    """Return the path to the unit test directory."""
+    @property
+    def unitTestDir(self):
+        return self._unitTestDir
     """Return the path to the BasicDaemon source directory."""
     @property
     def basicDaemonDir(self):
@@ -66,6 +72,10 @@ class TestPaths:
     @property
     def parent(self):
         return self._parent
+    """Return the name of the unit testing executable."""
+    @property
+    def unitTest(self):
+        return self._unitTest
     """Return the name of the temporary test output log file."""
     @property
     def tempLog(self):
@@ -86,6 +96,13 @@ class TestPaths:
     @property
     def lockFile(self):
         return self._lockFile
+
+    """
+    Return the path where the unit test executable is found after compilation.
+    """
+    @property
+    def unitTestBuildPath(self):
+        return os.path.join(self.buildDir, self.unitTest)
 
     # Daemon paths:
     """Return the path to the daemon's source directory."""

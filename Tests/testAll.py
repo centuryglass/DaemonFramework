@@ -3,11 +3,24 @@
 
 from testModules import basicBuild, daemonPathChecking, parentPathChecking, \
                         singleRunningDaemon
-from supportModules import testArgs
+from supportModules import testArgs, make, pathConstants
+import sys, subprocess
 
 args = testArgs.read()
 if (args.printHelp):
-    testDefs.printHelp('TestAll.py', 'Runs all DaemonFramework tests.')
+    testArgs.printHelp('TestAll.py', 'Runs all DaemonFramework tests.')
+
+print("Building and running unit tests:")
+if make.buildUnitTests(make.getBuildArgs(testArgs = args), None):
+    process = subprocess.run(pathConstants.paths.unitTestBuildPath)
+    if process.returncode != 0 and args.exitOnFailure:
+        sys.exit(process.returncode)
+else:
+    print("Failed to build unit tests!")
+    if args.exitOnFailure:
+        sys.exit(1)
+
+print("Running python tests:")
 testModules = [basicBuild, daemonPathChecking, parentPathChecking, \
                singleRunningDaemon]
 testObjects = []
