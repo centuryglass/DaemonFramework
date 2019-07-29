@@ -126,7 +126,7 @@ DF_SHARED_INCLUDE_DIR:=$(DF_INCLUDE_DIR)/Shared
 
 # Import targets and variables shared with the daemon parent makefile:
 DF_SHARED_MAKEFILE:=$(DF_ROOT_DIR)/Shared.mk
-ifeq($(findstring $(DF_SHARED_MAKEFILE),$(MAKEFILE_LIST)),)
+ifeq ($(findstring $(DF_SHARED_MAKEFILE),$(MAKEFILE_LIST)),)
     include $(DF_SHARED_MAKEFILE)
 endif
 
@@ -159,20 +159,25 @@ DF_BUILD_FLAGS:=$(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS)
 
 ######################## Load module source lists: ############################
 include $(DF_ROOT_DIR)/Source/Daemon/daemon.mk
-DF_OBJECTS_DAEMON := $(DF_OBJECTS_SHARED) $(DF_OBJECTS_DAEMON)
 
+# Only include shared objects with DF_OBJECTS_DAEMON if they haven't already
+# been included in DF_OBJECTS_PARENT:
+DF_PARENT_MAKEFILE:=$(DF_ROOT_DIR)/Parent.mk
+ifeq ($(findstring $(DF_OBJECTS_SHARED),$(DF_OBJECTS_PARENT)),)
+    DF_OBJECTS_DAEMON:=$(DF_OBJECTS_SHARED) $(DF_OBJECTS_DAEMON)
+endif
 
 ############################# Build Targets: ##################################
 
-.PHONY: df-daemon df-check-defs df-help
+.PHONY: df-daemon df-check-daemon-defs df-help
 
 ## Main build target: ##
 # Checks definitions, then compiles daemon support classes.
-df-daemon : df-check-defs $(DF_OBJECTS_DAEMON)
+df-daemon : df-check-daemon-defs $(DF_OBJECTS_DAEMON)
 	@echo Compiled daemon object files at "$(DF_OBJDIR)"
 
 ## Ensure required variables are defined: ##
-df-check-defs:
+df-check-daemon-defs:
 	@if [ -z "$(DF_OBJDIR)" ]; then \
         echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
     fi

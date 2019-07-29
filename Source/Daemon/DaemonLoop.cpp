@@ -1,5 +1,6 @@
 #include "DaemonLoop.h"
 #include "ExitCode.h"
+#include "File_Utils.h"
 #include "Debug.h"
 #include <unistd.h>
 #include <signal.h>
@@ -118,7 +119,7 @@ int DaemonFramework::DaemonLoop::runLoop()
 {
     if (loopRunning.exchange(true))
     {
-        return (int) ExitCode::daemonAlreadyRunning;
+        return static_cast<int>(ExitCode::daemonAlreadyRunning);
     }
 
     // Check for SIGTERM between all significant actions:
@@ -126,23 +127,66 @@ int DaemonFramework::DaemonLoop::runLoop()
     {
         DF_DBG(messagePrefix << __func__ << ": Exiting, SIGTERM received.");
         loopRunning = false;
-        return (int) ExitCode::success;
+        return static_cast<int>(ExitCode::success);
     }
 
-    DF_DBG_V(messagePrefix << __func__ << ": Starting security checks.");
     // Initial security checks:
+    DF_DBG_V(messagePrefix << __func__ << ": Starting security checks.");
 #   ifdef DF_LOCK_FILE_PATH
     DF_ASSERT(lockFD == 0);
-    errno = 0;
-    lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK);
-    if (lockFD == -1)
+    do
     {
+        errno = 0;
+        lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK);
+        if (lockFD != -1)
+        {
+            break; // opening file worked, no more steps required.
+        }
+        if (errno == EINTR)
+        {
+            if (termSignalReceived)
+            {
+                DF_DBG(messagePrefix << __func__
+                        << ": Lock open interrupted by SIGTERM, exiting.");
+                return static_cast<int>(ExitCode::success);
+            }
+            DF_DBG_V(messagePrefix << __func__
+                    << ": opening lock interrupted, trying again:");
+            continue;
+        }
+        if (errno == ENOENT)
+        {
+            // One or more of the lock's parent directories may need to be
+            // created, try and do that.
+            const std::string lockPath(DF_LOCK_FILE_PATH);
+            const std::string lockDirPath = File::Utils::parentDir(lockPath);
+            if (lockDirPath.empty())
+            {
+                DF_DBG(messagePrefix << __func__
+                        << ": Unable to open lock, lock path \""  << lockPath
+                        << "\" is probably invalid.");
+                DF_ASSERT(false);
+                return static_cast<int>(ExitCode::daemonAlreadyRunning);
+            }
+            if (File::Utils::createDir(lockDirPath))
+            {
+                DF_DBG_V(messagePrefix << __func__ << ": lock directory \""
+                        << lockDirPath << "\" created, trying again:");
+                continue;
+            }
+            DF_DBG(messagePrefix << __func__
+                    << ": Failed to create lock directory \"" << lockDirPath
+                    << "\", exiting.");
+            return static_cast<int>(ExitCode::daemonAlreadyRunning);
+        }
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, unable to open lock file:")
         DF_PERROR("DaemonLoop: Lock opening error");
         lockFD = 0;
-        return (int) ExitCode::daemonAlreadyRunning;
+        return static_cast<int>(ExitCode::daemonAlreadyRunning);
     }
+    while (lockFD == -1);
+
     const int lockResult = flock(lockFD, LOCK_EX|LOCK_NB);
     if (lockResult == -1)
     {
@@ -160,9 +204,8 @@ int DaemonFramework::DaemonLoop::runLoop()
             }
         }
         lockFD = 0;
-        return (int) ExitCode::daemonAlreadyRunning;
+        return static_cast<int>(ExitCode::daemonAlreadyRunning);
     }
-
 
 #   endif
 #   if defined DF_VERIFY_PATH && DF_VERIFY_PATH
@@ -171,7 +214,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, invalid daemon executable path.");
         loopRunning = false;
-        return (int) ExitCode::badDaemonPath;
+        return static_cast<int>(ExitCode::badDaemonPath);
     }
 #   endif
 #   ifdef DF_REQUIRED_PARENT_PATH
@@ -180,7 +223,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         DF_DBG(messagePrefix << __func__
                 << ": Exiting, invalid parent executable path.");
         loopRunning = false;
-        return (int) ExitCode::badParentPath;
+        return static_cast<int>(ExitCode::badParentPath);
     }
 #   endif
 #   if defined DF_VERIFY_PATH_SECURITY && DF_VERIFY_PATH_SECURITY
@@ -189,7 +232,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         DF_DBG(messagePrefix << __func__ << ": Exiting, daemon executable is in"
                 << " an unsecured directory.");
         loopRunning = false;
-        return (int) ExitCode::insecureDaemonDir;
+        return static_cast<int>(ExitCode::insecureDaemonDir);
     }
 #   endif
 #   if defined DF_VERIFY_PARENT_PATH_SECURITY && DF_VERIFY_PARENT_PATH_SECURITY
@@ -198,7 +241,7 @@ int DaemonFramework::DaemonLoop::runLoop()
         DF_DBG(messagePrefix << __func__ << ": Exiting, parent executable is in"
                 << " an unsecured directory.");
         loopRunning = false;
-        return (int) ExitCode::insecureParentDir;
+        return static_cast<int>(ExitCode::insecureParentDir);
     }
 #   endif
 
@@ -208,7 +251,7 @@ int DaemonFramework::DaemonLoop::runLoop()
     {
         DF_DBG(messagePrefix << __func__ << ": Exiting, SIGTERM received.");
         loopRunning = false;
-        return (int) ExitCode::success;
+        return static_cast<int>(ExitCode::success);
     }
 
     DF_DBG_V(messagePrefix << __func__ << ": Calling initLoop():");
@@ -226,14 +269,14 @@ int DaemonFramework::DaemonLoop::runLoop()
         {
             DF_DBG(messagePrefix << __func__ << ": Exiting, SIGTERM received.");
             loopRunning = false;
-            return (int) ExitCode::success;
+            return static_cast<int>(ExitCode::success);
         }
 #       if defined DF_REQUIRE_RUNNING_PARENT && DF_REQUIRE_RUNNING_PARENT
         if(! securityMonitor.parentProcessRunning())
         {
             DF_DBG(messagePrefix << __func__ << ": Exiting, parent stopped.");
             loopRunning = false;
-            return (int) ExitCode::daemonParentEnded;
+            return static_cast<int>(ExitCode::daemonParentEnded);
         }
 #       endif
 #       if defined DF_TIMEOUT && DF_TIMEOUT > 0
@@ -245,7 +288,7 @@ int DaemonFramework::DaemonLoop::runLoop()
             DF_DBG(messagePrefix << __func__ 
                     << ": Exiting, reached end of " << DF_TIMEOUT
                     << " second timeout period.");
-            return (int) ExitCode::success;
+            return static_cast<int>(ExitCode::success);
         }
 #       endif
         resultCode = loopAction();
