@@ -1,11 +1,17 @@
 ## DaemonFramework Parent ##
-# Adds source file targets used by daemon parent applications.
+# Adds source file targets used by daemon parent applications. If defined,
+# targets will apply a $(DAEMON_PREFIX) value so that parents may be compiled
+# for multiple daemons.
 
-DF_PARENT_DIR = $(DF_ROOT_DIR)/Source/Parent
-DF_PARENT_PREFIX = DaemonFramework_Parent_
-DF_PARENT_OBJ = $(DF_OBJDIR)/$(DF_PARENT_PREFIX)
+DF_PARENT_DIR=$(DF_ROOT_DIR)/Source/Parent
 
-DF_OBJECTS_PARENT := \
-  $(DF_PARENT_OBJ)DaemonControl.o
+$(DAEMON_PREFIX)DF_PARENT_PREFIX=DaemonFramework_$(DAEMON_PREFIX)Parent_
 
-$(DF_PARENT_OBJ)DaemonControl.o: $(DF_PARENT_DIR)/DaemonControl.cpp
+$(DAEMON_PREFIX)DF_PARENT_OBJ = \
+        $($(DAEMON_PREFIX)DF_OBJDIR)/$($(DAEMON_PREFIX)DF_PARENT_PREFIX)
+
+$(DAEMON_PREFIX)DF_OBJECTS_PARENT := \
+        $($(DAEMON_PREFIX)DF_PARENT_OBJ)DaemonControl.o
+
+$($(DAEMON_PREFIX)DF_PARENT_OBJ)DaemonControl.o: \
+        $(DF_PARENT_DIR)/DaemonControl.cpp

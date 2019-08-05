@@ -4,6 +4,7 @@ define HELPTEXT
 # by applications that manage DaemonFramework daemons.
 #
 ## Quick Guide: ##
+#
 # 1. Provide valid definitions for the following variables:
 #    - DF_OBJDIR
 #    - DF_DAEMON_PATH
@@ -16,6 +17,7 @@ define HELPTEXT
 #    - DF_GDB_SUPPORT
 #    - DF_INPUT_PIPE_PATH
 #    - DF_OUTPUT_PIPE_PATH
+#    - DF_SHARED_OBJDIR
 # 
 # 3. If necessary, define CFLAGS, CXXFLAGS, and/or CPPFLAGS with any extra
 #    compilation flags that should be used when compiling DaemonFramework code
@@ -32,9 +34,33 @@ define HELPTEXT
 # 7. When linking your application, add DF_OBJECTS_PARENT to your list of linked
 #    object files.
 #
+#### Building applications that control multiple daemons: ####
+#
+# 1. Define a DAEMON_PREFIX value to represent one of the daemons.
+#
+# 2. For each relevant variable DF_VAR listed in step one or two of the quick
+#    guide, define $(DAEMON_PREFIX)DF_VAR with an appropriate value for the
+#    specific daemon.
+#
+# 3. Include Parent.mk in your application's makefile after defining variables.
+#
+# 4. Add $(DAEMON_PREFIX)df-parent as a dependency to your main build target.
+#
+# 6. When building the class that extends DaemonControl for this daemon, add
+#    $(DAEMON_PREFIX)DF_DEFINE_FLAGS and DF_INCLUDE_FLAGS to CPPFLAGS.
+#
+# 7. When linking your application, add $(DAEMON_PREFIX)DF_OBJECTS_PARENT to
+#    your list of linked object files.
+#
+# 8. Repeat steps 1-7 for each other daemon.
+#
 ##### Variables Descriptions: ####
 ### Build Control:
 #   DF_OBJDIR:  The directory where compiled .o files will be created.
+#
+#   DF_SHARED_OBJDIR:
+#      The directory where compiled .o files shared between DaemonControl
+#      subclasses will be created.
 #
 #   DF_CONFIG: (default: 'Release')
 #      Sets whether the daemon or parent compiles in Debug mode, with
@@ -83,6 +109,8 @@ endef
 export HELPTEXT
 
 ######################## Initialize build variables: ##########################
+ifneq (DF_PARENT_REPEATED,1)
+# Check for and prepare to handle multiple inclusions of this makefile:
 # Define DaemonFramework directories:
 DF_ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 DF_INCLUDE_DIR:=$(DF_ROOT_DIR)/Include
@@ -95,16 +123,29 @@ ifeq ($(findstring $(DF_SHARED_MAKEFILE),$(MAKEFILE_LIST)),)
     include $(DF_SHARED_MAKEFILE)
 endif
 
+# Ensure the shared objdir has some sort of valid definition.
+DF_SHARED_OBJDIR?=$($(DAEMON_PREFIX)DF_SHARED_OBJDIR)
+DF_SHARED_OBJDIR?=$($(DAEMON_PREFIX)DF_OBJDIR)
+endif
 ############################### Set build flags: ##############################
 
+ifneq (DF_PARENT_REPEATED,1)
 # Include directories:
 DF_INCLUDE_FLAGS:=$(call recursiveInclude,$(DF_PARENT_INCLUDE_DIR)) \
                    $(DF_INCLUDE_FLAGS) 
 
-# C preprocessor definitions:
-DF_DEFINE_FLAGS:=$(DF_DEFINE_FLAGS) -DDF_IS_PARENT=1
+# Shared C preprocessor definitions:
+DF_SHARED_DEFINE_FLAGS:=$(DF_DEFINE_FLAGS) -DDF_IS_PARENT=1 
+endif
 
-DF_CPPFLAGS:=$(DF_CPPFLAGS) $(DF_DEFINE_FLAGS) $(DF_INCLUDE_FLAGS) $(CPPFLAGS)
+# C preprocessor definitions:
+$(DAEMON_PREFIX)DF_DEFINE_FLAGS:=$(DF_SHARED_DEFINE_FLAGS) \
+    $(call addStringDef,$(DAEMON_PREFIX)DF_DAEMON_PATH) \
+    $(call addStringDef,$(DAEMON_PREFIX)DF_INPUT_PIPE_PATH) \
+    $(call addStringDef,$(DAEMON_PREFIX)DF_OUTPUT_PIPE_PATH)
+
+DF_CPPFLAGS:=$(DF_CPPFLAGS) $($(DAEMON_PREFIX)DF_DEFINE_FLAGS) \
+             $(DF_INCLUDE_FLAGS) $(CPPFLAGS)
 
 DF_BUILD_FLAGS:=$(DF_CFLAGS) $(DF_CXXFLAGS) $(DF_CPPFLAGS)
 
@@ -113,33 +154,35 @@ include $(DF_ROOT_DIR)/Source/Parent/parent.mk
 
 # Only include shared objects with DF_OBJECTS_PARENT if they haven't already
 # been included in DF_OBJECTS_DAEMON:
-DF_DAEMON_MAKEFILE:=$(DF_ROOT_DIR)/Daemon.mk
+ifneq (DF_PARENT_REPEATED,1)
 ifeq ($(findstring $(DF_OBJECTS_SHARED),$(DF_OBJECTS_DAEMON)),)
-    DF_OBJECTS_PARENT:=$(DF_OBJECTS_SHARED) $(DF_OBJECTS_PARENT)
+    $(DAEMON_PREFIX)DF_OBJECTS_PARENT:=$(DF_OBJECTS_SHARED) \
+                                       $($(DAEMON_PREFIX)DF_OBJECTS_PARENT)
 endif
-
+endif
 
 ############################# Build Targets: ##################################
 
-.PHONY: df-parent df-check-parent-defs df-help
+.PHONY: $(DAEMON_PREFIX)df-parent $(DAEMON_PREFIX)df-check-parent-defs df-help
 
 ## Main build target: ##
 # Checks definitions, then compiles daemon parent support classes.
-df-parent: df-check-parent-defs $(DF_OBJECTS_PARENT)
-	@echo Compiled daemon parent object files at "$(DF_OBJDIR)"
+$(DAEMON_PREFIX)df-parent: $(DAEMON_PREFIX)df-check-parent-defs \
+ $($(DAEMON_PREFIX)DF_OBJECTS_PARENT)
+	@echo Compiled daemon parent object files at "$($(DAEMON_PREFIX)DF_OBJDIR)"
 
 ## Ensure required variables are defined: ##
-df-check-parent-defs:
-	@if [ -z "$(DF_OBJDIR)" ]; then \
-        echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
-    elif [ -z "$(DF_DAEMON_PATH)" ]; then \
-        echo >&2 "Build failed, DF_DAEMON_PATH not defined."; exit 1; \
+$(DAEMON_PREFIX)df-check-parent-defs:
+	@if [ -z "$($(DAEMON_PREFIX)DF_OBJDIR)" ]; then \
+        echo >&2 "Build failed, $(DAEMON_PREFIX)DF_OBJDIR not defined."; exit 1; \
+    elif [ -z "$($(DAEMON_PREFIX)DF_DAEMON_PATH)" ]; then \
+        echo >&2 "Build failed, $(DAEMON_PREFIX)DF_DAEMON_PATH not defined."; exit 1; \
     fi
 
 ## Compile all files needed to build Daemon applications: ##
-$(DF_OBJECTS_PARENT) :
+$($(DAEMON_PREFIX)DF_OBJECTS_PARENT) :
 	@echo "Compiling $(<F):"
-	$(V_AT)mkdir -p $(DF_OBJDIR)
+	$(V_AT)mkdir -p $($(DAEMON_PREFIX)DF_OBJDIR)
 	@if [ "$(DF_VERBOSE)" == "1" ]; then \
         $(DF_ROOT_DIR)/cleanPrint.sh '$(CXX) $(DF_BUILD_FLAGS)'; \
         echo '    -o "$@" \'; \
@@ -153,4 +196,8 @@ df-help:
 	$(shell echo "$$HELPTEXT")
 
 ## Enable dependency generation: ##
--include $(DF_OBJECTS_PARENT:%.o=%.d)
+-include $($(DAEMON_PREFIX)DF_OBJECTS_PARENT:%.o=%.d)
+
+# Set DF_PARENT_REPEATED to ensure that this makefile is handled correctly if
+# added again to build an additional DaemonControl object for another daemon.
+DF_PARENT_REPEATED=1
