@@ -129,8 +129,6 @@ df-parent: df-check-parent-defs \
 df-check-parent-defs:
 	@if [ -z "$(DF_OBJDIR)" ]; then \
         echo >&2 "Build failed, DF_OBJDIR not defined."; exit 1; \
-    elif [ -z "$(DF_DAEMON_PATH)" ]; then \
-        echo >&2 "Build failed, DF_DAEMON_PATH not defined."; exit 1; \
     fi
 
 
