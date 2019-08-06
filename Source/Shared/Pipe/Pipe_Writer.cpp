@@ -21,7 +21,7 @@ static const constexpr int writeInitTimeout = 1;
 DaemonFramework::Pipe::Writer::Writer(const char* path, const bool openNow) :
     pipePath(path)
 {
-    if (openNow)
+    if (path != nullptr && openNow)
     {
         startInitThread();
     }
@@ -39,6 +39,13 @@ DaemonFramework::Pipe::Writer::~Writer()
 bool DaemonFramework::Pipe::Writer::sendData
 (const unsigned char* data, const size_t size)
 {
+    if (pipePath.empty())
+    {
+        DF_DBG_V(messagePrefix << __func__
+                << ": Warning: trying to send data through an invalid pipe.");
+        return false;
+    }
+
     DF_DBG_V(messagePrefix << __func__ << ": Sending " << size
             << " bytes of data.");
     if (! finishedInit())
@@ -91,7 +98,7 @@ void DaemonFramework::Pipe::Writer::closePipe()
         while(close(pipeFile) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error closing pipe:");
-            DF_PERROR(pipePath);
+            DF_PERROR(pipePath.c_str());
             if (errno != EINTR)
             {
                 break;
@@ -113,7 +120,7 @@ bool DaemonFramework::Pipe::Writer::threadedInitAction()
         DF_DBG_V(messagePrefix << __func__ << ": Opening pipe \"" << pipePath 
                 << "\" for initial writing.");
         errno = 0;
-        pipeFile = open(pipePath, O_WRONLY); 
+        pipeFile = open(pipePath.c_str(), O_WRONLY); 
         if (errno != 0)
         {
             DF_DBG(messagePrefix << __func__ << ": Failed to open pipe \""

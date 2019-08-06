@@ -93,21 +93,44 @@ void DaemonFramework::ThreadedInit::cancelInit()
             return;
         }
         DF_DBG_V(messagePrefix << __func__ << ": Force-closing init thread.");
-        errno = 0;
         cancelResult = pthread_cancel(initThreadID);
     }
     if (cancelResult != 0)
     {
         DF_DBG(messagePrefix << __func__ 
                 << ": Encountered an error when cancelling the init thread.");
-        DF_PERROR("Init pthread_cancel error");
+        if (cancelResult == ESRCH)
+        {
+            DF_DBG(messagePrefix << __func__ << ": Thread "
+                    << initThreadID << " not found.");
+        }
+        else
+        {
+            DF_DBG(messagePrefix << __func__
+                    << ": Unknown pthread_cancel error " << cancelResult);
+        }
     }
     errno = 0;
-    if (pthread_join(initThreadID, nullptr) != 0)
+    int joinResult = pthread_join(initThreadID, nullptr);
+    if (joinResult != 0)
     {
         DF_DBG(messagePrefix << __func__ 
                 << ": Encountered an error when joining the init thread.");
-        DF_PERROR("Init pthread_join error");
+        switch (joinResult)
+        {
+            case EDEADLK:
+                DF_DBG(messagePrefix << __func__ << ": Error EDEADLK");
+                break;
+            case EINVAL:
+                DF_DBG(messagePrefix << __func__ << ": Error EINVAL");
+                break;
+            case ESRCH:
+                DF_DBG(messagePrefix << __func__ << ": Error ESRCH");
+                break;
+            default:
+                DF_DBG(messagePrefix << __func__ << ": Unknown error "
+                        << joinResult);
+        }
     }
 }
 

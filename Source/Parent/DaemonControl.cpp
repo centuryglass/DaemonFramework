@@ -23,31 +23,32 @@ static const constexpr char* messagePrefix
 static const constexpr int daemonTermTimeout = 2;
 
 
-// If relevant, prepares daemon IO pipe objects on construction.
-DaemonFramework::DaemonControl::DaemonControl
-#ifdef DF_OUTPUT_PIPE_PATH
-(const size_t bufferSize) : 
-        pipeReader(DF_OUTPUT_PIPE_PATH, bufferSize),
-#else
-() :
-#endif
-#       ifdef DF_INPUT_PIPE_PATH
-        pipeWriter(DF_INPUT_PIPE_PATH),
-#       endif
-        exitCode(0)
+// Configures the controller for its specific daemon on construction.
+DaemonFramework::DaemonControl::DaemonControl(
+        const std::string daemonPath,
+        const std::string pipeToDaemon,
+        const std::string pipeFromDaemon,
+        const size_t bufferSize) :
+    daemonPath(daemonPath),
+    pipeWriter(pipeToDaemon.c_str()),
+    writerEnabled(! pipeToDaemon.empty()),
+    pipeReader(pipeFromDaemon.c_str(), bufferSize),
+    readerEnabled(! pipeFromDaemon.empty())
 {
-#   ifdef DF_OUTPUT_PIPE_PATH
-    // Ensure the daemon output pipe exists:
-    Pipe::createPipe(DF_OUTPUT_PIPE_PATH, S_IRUSR);
-    DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: prepared "
-            << DF_OUTPUT_PIPE_PATH);
-#   endif
-#   ifdef DF_INPUT_PIPE_PATH
-    // Ensure the daemon input pipe exists:
-    Pipe::createPipe(DF_INPUT_PIPE_PATH, S_IWUSR);
-    DF_DBG_V(messagePrefix << __func__ << ": Parent output writer: opened "
-            << DF_INPUT_PIPE_PATH);
-#   endif
+    if (readerEnabled)
+    {
+        // Ensure the daemon output pipe exists:
+        Pipe::createPipe(pipeFromDaemon.c_str(), S_IRUSR);
+        DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: prepared "
+                << pipeFromDaemon);
+    }
+    if (writerEnabled)
+    {
+        // Ensure the daemon input pipe exists:
+        Pipe::createPipe(pipeToDaemon.c_str(), S_IWUSR);
+        DF_DBG_V(messagePrefix << __func__ << ": Parent output writer: opened "
+                << pipeToDaemon);
+    }
 }
 
 
@@ -126,11 +127,7 @@ static void cleanupFileTable()
 // If the daemon isn't already running, this launches the daemon and opens
 // daemon communication pipes if needed.
 void DaemonFramework::DaemonControl::startDaemon
-#ifdef DF_OUTPUT_PIPE_PATH
-(Pipe::Listener* listener, std::vector<std::string> args)
-#else
-(std::vector<std::string> args)
-#endif
+(std::vector<std::string> args, Pipe::Listener* listener)
 {
     DF_DBG_V(messagePrefix << __func__ << ": Preparing to launch daemon with "
             << args.size() << " arguments.");
@@ -140,21 +137,23 @@ void DaemonFramework::DaemonControl::startDaemon
                 << ": Aborting, daemon process is already running.");
         return;
     }
-#   ifdef DF_INPUT_PIPE_PATH
-    DF_DBG_V(messagePrefix << __func__ << ": Opening daemon input pipe:");
-    pipeWriter.openPipe();
-#   endif
-#   ifdef DF_OUTPUT_PIPE_PATH
-    DF_DBG_V(messagePrefix << __func__ << ": Opening daemon output pipe:");
-    pipeReader.openPipe(listener);
-#   endif
+    if (writerEnabled)
+    {
+        DF_DBG_V(messagePrefix << __func__ << ": Opening daemon input pipe:");
+        pipeWriter.openPipe();
+    }
+    if (readerEnabled && listener != nullptr)
+    {
+        DF_DBG_V(messagePrefix << __func__ << ": Opening daemon output pipe:");
+        pipeReader.openPipe(listener);
+    }
 
     daemonProcess = fork();
     if (daemonProcess == 0) // If runnning the new process:
     {
         DF_DBG_V(messagePrefix << __func__ << ": Daemon process started.");
         cleanupFileTable();
-        DF_DBG_V(messagePrefix << __func__ << ": Launching \"" << DF_DAEMON_PATH
+        DF_DBG_V(messagePrefix << __func__ << ": Launching \"" << daemonPath
                 << "\"");
         std::vector<const char*> cStrings;
         for (std::string& arg : args)
@@ -165,7 +164,7 @@ void DaemonFramework::DaemonControl::startDaemon
         DF_DBG_V(messagePrefix << __func__ << ": Converted args to "
                 << cStrings.size() << " char pointers.");
         errno = 0;
-        int result = execv(DF_DAEMON_PATH, (char* const*) cStrings.data());
+        int result = execv(daemonPath.c_str(), (char* const*) cStrings.data());
         if (result == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Failed to launch daemon.");
@@ -204,14 +203,16 @@ void DaemonFramework::DaemonControl::stopDaemon()
             DF_DBG(messagePrefix << __func__
                     << ": Daemon process exited with code " << exitCode);
         }
-#       ifdef DF_OUTPUT_PIPE_PATH
-        DF_DBG_V(messagePrefix << __func__ << ": Closing PipeReader:");
-        pipeReader.closePipe();
-#       endif
-#       ifdef DF_INPUT_PIPE_PATH
-        DF_DBG_V(messagePrefix << __func__ << ": Closing PipeWriter:");
-        pipeWriter.closePipe();
-#       endif
+        if (readerEnabled)
+        {
+            DF_DBG_V(messagePrefix << __func__ << ": Closing PipeReader:");
+            pipeReader.closePipe();
+        }
+        if (writerEnabled)
+        {
+            DF_DBG_V(messagePrefix << __func__ << ": Closing PipeWriter:");
+            pipeWriter.closePipe();
+        }
     }
 }
 
@@ -252,14 +253,16 @@ bool DaemonFramework::DaemonControl::isDaemonRunning()
     return false;
 }
 
-#ifdef DF_INPUT_PIPE_PATH
-// Sends arbitrary data to the daemon using the daemon's named input pipe.
+// Sends arbitrary data to the daemon using the daemon's named input pipe, if
+// one exists.
 void DaemonFramework::DaemonControl::messageParent
 (const unsigned char* messageData, const size_t messageSize)
 {
-    pipeWriter.sendData(messageData, messageSize);
+    if (writerEnabled)
+    {
+        pipeWriter.sendData(messageData, messageSize);
+    }
 }
-#endif
 
 // Gets the ID of the daemon process if running.
 pid_t DaemonFramework::DaemonControl::getDaemonProcessID()

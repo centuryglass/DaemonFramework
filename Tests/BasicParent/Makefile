@@ -78,10 +78,15 @@ CXXFLAGS:=-std=gnu++14 $(CXXFLAGS)
 # Disable dependency generation if multiple architectures are set
 DEPFLAGS := $(if $(word 2, $(TARGET_ARCH)), , -MMD)
 
+DEFINE_FLAGS:=$(call addStringDef,DF_DAEMON_PATH) \
+              $(call addStringDef,DF_INPUT_PIPE_PATH) \
+              $(call addStringDef,DF_OUTPUT_PIPE_PATH) \
+              $(DF_DEFINE_FLAGS)
+
 CPPFLAGS := -pthread \
             $(DEPFLAGS) \
             $(CONFIG_FLAGS) \
-            $(DF_DEFINE_FLAGS) \
+            $(DEFINE_FLAGS) \
             $(DF_INCLUDE_FLAGS) \
             $(CPPFLAGS)
 

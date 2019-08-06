@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ThreadedInit.h"
+#include <string>
 #include <mutex>
 
 namespace DaemonFramework { namespace Pipe { class Writer; } }
@@ -64,7 +65,7 @@ private:
     // Named pipe file descriptor:
     int pipeFile = 0;
     // Pipe file path:
-    const char* pipePath = nullptr; 
+    const std::string pipePath = nullptr; 
     // Protects the pipe from concurrent access:
     std::mutex lock;
 };

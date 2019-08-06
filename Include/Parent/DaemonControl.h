@@ -7,15 +7,9 @@
 
 #pragma once
 
-#ifdef DF_OUTPUT_PIPE_PATH
 #include "Pipe_Reader.h"
 #include "Pipe_Listener.h"
-#endif
-
-#ifdef DF_INPUT_PIPE_PATH
 #include "Pipe_Writer.h"
-#endif
-
 #include <pthread.h>
 #include <vector>
 #include <string>
@@ -26,34 +20,41 @@ class DaemonFramework::DaemonControl
 {
 public:
 
-#   ifdef DF_OUTPUT_PIPE_PATH
     /**
-     * @brief  If relevant, prepares daemon IO pipe objects on construction.
+     * @brief  Configures the controller for its specific daemon on
+     *         construction.
      *
-     * @param bufferSize  The amount of memory in bytes to reserve for the
-     *                    output pipe's message buffer.
+     * @param daemonPath      The path to this controller's daemon executable.
+     *
+     * @param pipeToDaemon    An optional path to a named pipe that the daemon
+     *                        will scan for messages from this controller.
+     *
+     * @param pipeFromDaemon  An optional path to a named pipe that the daemon
+     *                        will use to pass messages to this controller.
+     *
+     * @param bufferSize      The amount of memory in bytes to reserve for any 
+     *                        messages sent by the daemon.
      */
-    DaemonControl(const size_t bufferSize); 
+    DaemonControl(const std::string daemonPath,
+            const std::string pipeToDaemon = "",
+            const std::string pipeFromDaemon = "",
+            const size_t bufferSize = 0); 
+
+    virtual ~DaemonControl() { }
 
     /**
      * @brief  If the Daemon isn't already running, this launches the daemon
      *         and opens daemon communication pipes if needed.
      *
-     * @param listener  The object that will handle incoming data if the
-     *                  daemon's output pipe is enabled.
-     *
      * @param args      An array of strings that will be passed to the daemon as
      *                  launch arguments.
+     *
+     * @param listener  The object that will handle incoming data if the
+     *                  daemon's output pipe is enabled.
      */
     void startDaemon
-    (Pipe::Listener* keyListener, std::vector<std::string> args);
-#   else
-    DaemonControl();
+    (std::vector<std::string> args, Pipe::Listener* keyListener = nullptr);
 
-    void startDaemon(std::vector<std::string> args);
-#   endif
-
-    virtual ~DaemonControl() { }
 
     /**
      * @brief  If the Daemon is running, this stops the process and closes the
@@ -68,10 +69,9 @@ public:
      */
     bool isDaemonRunning();
 
-#   ifdef DF_INPUT_PIPE_PATH
     /**
      * @brief  Sends arbitrary data to the daemon using the daemon's named
-     *         input pipe.
+     *         input pipe, if one exists.
      *
      * @param messageData  A generic pointer to a block of memory that holds no
      *                     less than messageSize bytes. The caller is
@@ -83,7 +83,6 @@ public:
      */
     void messageParent(const unsigned char* messageData,
             const size_t messageSize);
-#   endif
 
     /**
      * @brief  Gets the ID of the daemon process if running.
@@ -109,19 +108,20 @@ public:
     int waitToExit();
 
 private:
+    // Daemon executable path:
+    const std::string daemonPath;
+
     // ID of the daemon's process:
     pid_t daemonProcess = 0;
 
-#   ifdef DF_OUTPUT_PIPE_PATH
     // Reads data sent by the daemon:
     Pipe::Reader pipeReader;
-#   endif
+    const bool readerEnabled;
 
-#   ifdef DF_INPUT_PIPE_PATH
     // Sends data to the daemon:
     Pipe::Writer pipeWriter;
-#   endif
+    const bool writerEnabled;
 
     // Exit code returned by the completed process:
-    int exitCode;
+    int exitCode = 0;
 };

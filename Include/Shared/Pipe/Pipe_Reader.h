@@ -8,6 +8,7 @@
 #include "InputReader.h"
 #include "ThreadedInit.h"
 #include <cstddef>
+#include <string>
 
 namespace DaemonFramework
 {

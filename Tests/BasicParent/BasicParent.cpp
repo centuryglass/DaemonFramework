@@ -27,7 +27,15 @@ static const constexpr char* printPathArg = "-PrintDaemonPath";
 static const constexpr char* timeoutArg = "--timeout";
 
 #ifndef DF_DAEMON_PATH
-    #error "Daemon install path DF_DAEMON_PATH not defined!"
+#   error "Daemon install path DF_DAEMON_PATH not defined!"
+#endif
+
+#ifndef DF_INPUT_PIPE_PATH
+#   define DF_INPUT_PIPE_PATH ""
+#endif
+
+#ifndef DF_OUTPUT_PIPE_PATH
+#   define DF_OUTPUT_PIPE_PATH ""
 #endif
 
 // Daemon message buffer size:
@@ -68,7 +76,8 @@ int main(int argc, char** argv)
         }
     }
     Listener eventListener;
-    DaemonControl daemonController(pipeBufSize);
+    DaemonControl daemonController(DF_DAEMON_PATH, DF_INPUT_PIPE_PATH,
+            DF_OUTPUT_PIPE_PATH, pipeBufSize);
     std::cout << messagePrefix << "Starting daemon at \"" << DF_DAEMON_PATH
             << "\"\n";
     std::vector<std::string> args;
@@ -76,7 +85,7 @@ int main(int argc, char** argv)
     {
         args.push_back(std::string(argv[1]));
     }
-    daemonController.startDaemon(&eventListener, args);
+    daemonController.startDaemon(args, &eventListener);
     if (!daemonController.isDaemonRunning())
     {
         std::cerr << messagePrefix << "Failed to start daemon thread.\n";

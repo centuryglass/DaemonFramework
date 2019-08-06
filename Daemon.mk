@@ -144,6 +144,9 @@ DF_INCLUDE_FLAGS:=$(call recursiveInclude,$(DF_DAEMON_INCLUDE_DIR)) \
 
 # C preprocessor definitions:
 DF_DEFINE_FLAGS:=$(DF_DEFINE_FLAGS) \
+                 $(call addStringDef,DF_DAEMON_PATH)\
+                 $(call addStringDef,DF_INPUT_PIPE_PATH)\
+                 $(call addStringDef,DF_OUTPUT_PIPE_PATH)\
                  $(call addStringDef,DF_LOCK_FILE_PATH) \
                  $(call addStringDef,DF_REQUIRED_PARENT_PATH) \
                  $(call addDef,DF_VERIFY_PATH) \

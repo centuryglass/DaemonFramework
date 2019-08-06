@@ -47,7 +47,7 @@ public:
      *
      * @return  The input file path.
      */
-    const char* getPath() const;
+    const std::string& getPath() const;
 
     /**
      * @brief  Values used to store the current state of the reader.

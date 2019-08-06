@@ -21,7 +21,15 @@ DaemonFramework::Pipe::Reader::Reader
 (const char* path, const size_t bufferSize) :
         InputReader(path), listener(nullptr), bufSize(bufferSize)
 {
-    buffer = new unsigned char[bufferSize];
+    if (path != nullptr)
+    {
+        buffer = new unsigned char[bufferSize];
+    }
+    else
+    {
+        DF_DBG_V(messagePrefix << __func__
+                << ": no path provided, this reader will remain inactive.");
+    }
 }
 
 
@@ -40,16 +48,22 @@ DaemonFramework::Pipe::Reader::~Reader()
 // Asynchronously opens the pipe for reading.
 void DaemonFramework::Pipe::Reader::openPipe(Listener* listener)
 {
-    this->listener = listener;
-    startInitThread();
+    if (! getPath().empty())
+    {
+        this->listener = listener;
+        startInitThread();
+    }
 }
 
 
 // Stops the pipe reading thread and closes the pipe.
 void DaemonFramework::Pipe::Reader::closePipe()
 {
-    cancelInit();
-    stopReading();
+    if (! getPath().empty())
+    {
+        cancelInit();
+        stopReading();
+    }
 }
 
 
@@ -63,8 +77,12 @@ bool DaemonFramework::Pipe::Reader::threadedInitAction()
 // Opens the pipe file, handling errors and using appropriate file access modes.
 int DaemonFramework::Pipe::Reader::openFile()
 {
+    if (getPath().empty())
+    {
+        return 0;
+    }
     errno = 0;
-    int pipeFileDescriptor = open(getPath(), O_RDONLY);
+    int pipeFileDescriptor = open(getPath().c_str(), O_RDONLY);
     if (errno != 0)
     {
         DF_DBG(messagePrefix << __func__ 

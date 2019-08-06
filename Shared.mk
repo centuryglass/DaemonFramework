@@ -62,10 +62,7 @@ addStringDef=$(shell if [ ! -z $($(1)) ] && [ $($(1)) != 0 ]; then \
 # directories and their subdirectories.
 recursiveInclude=$(shell find $(1) -type d -printf ' "-I%p"')
 
-DF_DEFINE_FLAGS:=$(call addStringDef,DF_DAEMON_PATH)\
-                 $(call addStringDef,DF_INPUT_PIPE_PATH)\
-                 $(call addStringDef,DF_OUTPUT_PIPE_PATH)\
-                 $(call addDef,DF_VERBOSE)
+DF_DEFINE_FLAGS:=$(call addDef,DF_VERBOSE)
 
 DF_INCLUDE_FLAGS :=$(call recursiveInclude,$(DF_ROOT_DIR)/Include/Shared)
 

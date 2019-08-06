@@ -57,7 +57,7 @@ def getTests(testArgs):
                           If this is a failed test result, the test execution
                           will be cancelled and the test will use this as its
                           result code.
-        expectedResult -- The expected result of the test.<F2>
+        expectedResult -- The expected result of the test.
         """
         def testRun(description, buildResult, expectedResult):
             parentRunArgs = ['--timeout', '1']
