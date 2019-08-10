@@ -19,7 +19,6 @@ namespace DaemonFramework { class DaemonControl; }
 class DaemonFramework::DaemonControl
 {
 public:
-
     /**
      * @brief  Configures the controller for its specific daemon on
      *         construction.
@@ -107,6 +106,41 @@ public:
      */
     int waitToExit();
 
+protected:
+    /**
+     * @brief  Creates the pipe file used to send messages to the daemon if it
+     *         doesn't already exist.
+     *
+     *  By default, this creates the pipe file using Pipe::createPipe, setting
+     * user permissions to read-only.
+     *
+     *  Different setups may require pipes with different permissions, or even
+     * require the pipe file to be created before the parent application runs.
+     * If this is the case, use a DaemonControl subclass that overrides this
+     * function.
+     *
+     * @param pipePath  The path where the daemon's input pipe should be
+     *                  created.
+     */
+    virtual void createDaemonInputPipe(const std::string& pipePath);
+
+    /**
+     * @brief  Creates the pipe file used to read messages from the daemon if it
+     *         doesn't already exist.
+     *
+     *  By default, this creates the pipe file using Pipe::createPipe, setting
+     * user permissions to write-only.
+     *
+     *  Different setups may require pipes with different permissions, or even
+     * require the pipe file to be created before the parent application runs.
+     * If this is the case, use a DaemonControl subclass that overrides this
+     * function.
+     *
+     * @param pipePath  The path where the daemon's output pipe should be
+     *                  created.
+     */
+    virtual void createDaemonOutputPipe(const std::string& pipePath);
+
 private:
     // Daemon executable path:
     const std::string daemonPath;
@@ -115,10 +149,12 @@ private:
     pid_t daemonProcess = 0;
 
     // Reads data sent by the daemon:
+    const std::string outPipePath;
     Pipe::Reader pipeReader;
     const bool readerEnabled;
 
     // Sends data to the daemon:
+    const std::string inPipePath;
     Pipe::Writer pipeWriter;
     const bool writerEnabled;
 

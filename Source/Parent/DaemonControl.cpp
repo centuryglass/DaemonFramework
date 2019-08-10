@@ -32,23 +32,11 @@ DaemonFramework::DaemonControl::DaemonControl(
     daemonPath(daemonPath),
     pipeWriter(pipeToDaemon.c_str()),
     writerEnabled(! pipeToDaemon.empty()),
+    inPipePath(pipeToDaemon),
     pipeReader(pipeFromDaemon.c_str(), bufferSize),
-    readerEnabled(! pipeFromDaemon.empty())
+    readerEnabled(! pipeFromDaemon.empty()),
+    outPipePath(pipeFromDaemon)
 {
-    if (readerEnabled)
-    {
-        // Ensure the daemon output pipe exists:
-        Pipe::createPipe(pipeFromDaemon.c_str(), S_IRUSR);
-        DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: prepared "
-                << pipeFromDaemon);
-    }
-    if (writerEnabled)
-    {
-        // Ensure the daemon input pipe exists:
-        Pipe::createPipe(pipeToDaemon.c_str(), S_IWUSR);
-        DF_DBG_V(messagePrefix << __func__ << ": Parent output writer: opened "
-                << pipeToDaemon);
-    }
 }
 
 
@@ -129,6 +117,20 @@ static void cleanupFileTable()
 void DaemonFramework::DaemonControl::startDaemon
 (std::vector<std::string> args, Pipe::Listener* listener)
 {
+    if (readerEnabled)
+    {
+        // Ensure the daemon output pipe exists:
+        createDaemonOutputPipe(outPipePath);
+        DF_DBG_V(messagePrefix << __func__ << ": Parent input reader: prepared "
+                << outPipePath << " output pipe file.");
+    }
+    if (writerEnabled)
+    {
+        // Ensure the daemon input pipe exists:
+        createDaemonInputPipe(inPipePath);
+        DF_DBG_V(messagePrefix << __func__ << ": Parent output writer: opened "
+                << inPipePath << " input pipe file.");
+    }
     DF_DBG_V(messagePrefix << __func__ << ": Preparing to launch daemon with "
             << args.size() << " arguments.");
     if (daemonProcess != 0)
@@ -322,4 +324,22 @@ int DaemonFramework::DaemonControl::waitToExit()
     DF_DBG_V(messagePrefix << __func__ << ": Daemon exited with code "
             << exitCode);
     return exitCode;
+}
+
+
+// Creates the pipe file used to send messages to the daemon if it doesn't
+// already exist.
+void DaemonFramework::DaemonControl::createDaemonInputPipe
+(const std::string& pipePath)
+{
+    Pipe::createPipe(pipePath.c_str(), S_IWUSR);
+}
+
+
+// Creates the pipe file used to read messages from the daemon if it doesn't
+// already exist.
+void DaemonFramework::DaemonControl::createDaemonOutputPipe
+(const std::string& pipePath)
+{
+    Pipe::createPipe(pipePath.c_str(), S_IRUSR);
 }
