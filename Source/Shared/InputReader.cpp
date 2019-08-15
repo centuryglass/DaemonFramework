@@ -94,12 +94,17 @@ void DaemonFramework::InputReader::stopReading()
     DF_DBG_V(messagePrefix << __func__ << ": closing reader for file \""
             << getPath() << "\".");
     std::lock_guard<std::mutex> lock(readerMutex);
-    DF_DBG_V(messagePrefix << __func__ << ": locked, ready to close \""
-            << getPath() << "\".");
     if (currentState != State::closed && currentState != State::failed)
     {
+        DF_DBG_V(messagePrefix << __func__ << ": locked, ready to close \""
+                << getPath() << "\".");
         closeInputFile();
         currentState = State::closed;
+    }
+    else
+    {
+        DF_DBG_V(messagePrefix << __func__ << ": file \"" << getPath()
+                << "\" was already closed, no action needed.");
     }
 }
 
