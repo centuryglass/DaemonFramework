@@ -151,6 +151,9 @@ private:
      *         synchronizing any communications between the pipe thread and
      *         the main daemon loop's thread.
      *
+     *  By default, this function will do nothing. Override to add real input
+     * handling.
+     *
      * @param messageData  A pointer to the message data array sent by the
      *                     parent.
      *
@@ -158,7 +161,7 @@ private:
      *                     pointer.
      */
     virtual void handleParentMessage(const unsigned char* messageData,
-            const size_t messageSize) = 0;
+            const size_t messageSize) { };
 
     /**
      * @brief  Passes data sent from the parent application to the 
