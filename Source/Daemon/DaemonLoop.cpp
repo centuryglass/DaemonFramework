@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/file.h>
-#include <fcntl.h>
 
 #ifdef DF_TIMEOUT
 #include <chrono>
@@ -91,18 +90,9 @@ DaemonFramework::DaemonLoop::~DaemonLoop()
 #   ifdef DF_LOCK_FILE_PATH
     if (lockFD != 0)
     {
-        DF_DBG_V(messagePrefix << __func__ << ": Unlocking lock file \""
-                << DF_LOCK_FILE_PATH << "\"");
+        DF_DBG_V(messagePrefix << __func__ << ": Unlocking lock file:");
         errno = 0;
-        struct 
-        {
-            short l_type = F_UNLCK;
-            short l_whence = SEEK_SET;
-            off_t l_start = 0;
-            off_t l_len = 0;
-            pid_t l_pid = getpid();
-        } lockInfo;
-        if (fcntl(lockFD, F_GETLK, &lockInfo) == -1)
+        if (flock(lockFD, LOCK_UN | LOCK_NB) == -1)
         {
             DF_DBG(messagePrefix << __func__ << ": Error unlocking lock file:");
             DF_PERROR(messagePrefix);
@@ -147,8 +137,6 @@ int DaemonFramework::DaemonLoop::runLoop()
     do
     {
         errno = 0;
-        DF_DBG_V(messagePrefix << __func__ << ": Locking lock file \""
-                << DF_LOCK_FILE_PATH << "\"");
         lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK);
         if (lockFD != -1)
         {
@@ -199,65 +187,25 @@ int DaemonFramework::DaemonLoop::runLoop()
     }
     while (lockFD == -1);
 
-    struct 
+    const int lockResult = flock(lockFD, LOCK_EX|LOCK_NB);
+    if (lockResult == -1)
     {
-        short l_type = F_WRLCK;
-        short l_whence = SEEK_SET;
-        off_t l_start = 0;
-        off_t l_len = 0;
-        pid_t l_pid = getpid();
-    } lockInfo;
-    int lockResult = 0;
-
-    // Test if a locking action succeeded, closing a lock file and returning
-    // an error code if it failed.
-    const auto testLock = [this, &lockInfo, &lockResult]()
-    {
-        if (lockResult == -1 || (lockInfo.l_pid != getpid()))
+        DF_DBG(messagePrefix << __func__
+                << ": Exiting, lock file \"" << DF_LOCK_FILE_PATH
+                << "\" is already locked:")
+        DF_PERROR("DaemonLoop: Locking error");
+        while(close(lockFD) == -1)
         {
-            DF_DBG(messagePrefix << __func__
-                    << ": Exiting, lock file \"" << DF_LOCK_FILE_PATH
-                    << "\" is already locked:")
-            if (lockResult == -1)
+            DF_DBG(messagePrefix << __func__ << ": Error closing lock file:");
+            DF_PERROR("DaemonLoop: Lock closing error");
+            if (errno != EINTR)
             {
-                DF_PERROR("DaemonLoop: Locking error");
+                break;
             }
-            while(close(lockFD) == -1)
-            {
-                DF_DBG(messagePrefix << __func__
-                        << ": Error closing lock file:");
-                DF_PERROR("DaemonLoop: Lock closing error");
-                if (errno != EINTR)
-                {
-                    break;
-                }
-            }
-            lockFD = 0;
-            return static_cast<int>(ExitCode::daemonAlreadyRunning);
         }
-        return 0;
-    };
-
-    // Check if the lock is already held:
-    lockResult = fcntl(lockFD, F_GETLK, &lockInfo);
-    lockResult = testLock();
-    if (lockResult != 0)
-    {
-        return lockResult;
+        lockFD = 0;
+        return static_cast<int>(ExitCode::daemonAlreadyRunning);
     }
-    // Lock isn't held, try and actually take it:
-    // TODO: If another process manages to lock the file at this point, this
-    //       process will hang until the other one dies or releases the lock.
-    //       Find a way to both check and claim the lock atomically.
-    lockInfo.l_type = F_WRLCK;
-    lockResult = fcntl(lockFD, F_SETLKW, &lockInfo);
-    lockResult = testLock();
-    if (lockResult != 0)
-    {
-        return lockResult;
-    }
-    DF_DBG_V(messagePrefix << __func__ << ": Successfully locked lock file \""
-            << DF_LOCK_FILE_PATH << "\"");
 
 #   endif
 #   if defined DF_VERIFY_PATH && DF_VERIFY_PATH
