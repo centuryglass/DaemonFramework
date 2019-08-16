@@ -50,12 +50,14 @@ bool DaemonFramework::Pipe::createPipe(const char* path, const mode_t mode)
         else
         {
             DF_DBG(messagePrefix << __func__
-                    << ": Pipe file exists with incorrect mode!");
+                    << ": Warning, pipe file exists with unexpected mode.");
             DF_DBG(messagePrefix << __func__ << ": Expected mode: " 
                     << (int) (S_IFIFO | mode) << "(S_IFIFO | mode / "
                     << (int) S_IFIFO << " | " << (int) mode << ")");
             DF_DBG(messagePrefix << __func__ << ": Actual mode: " 
                     << (int) pipeInfo.st_mode);
+            DF_DBG(messagePrefix << __func__ 
+                    << ": Make sure this is intentional!");
             return false;
         }
     }
