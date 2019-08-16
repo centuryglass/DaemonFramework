@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 
 #ifdef DF_TIMEOUT
 #include <chrono>
@@ -137,7 +138,8 @@ int DaemonFramework::DaemonLoop::runLoop()
     do
     {
         errno = 0;
-        lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK);
+        lockFD = open(DF_LOCK_FILE_PATH, O_CREAT|O_RDWR|O_NONBLOCK,
+                S_IRUSR|S_IWUSR);
         if (lockFD != -1)
         {
             break; // opening file worked, no more steps required.
